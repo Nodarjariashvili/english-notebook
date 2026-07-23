@@ -1,0 +1,18 @@
+# API keys are never stored in files by this app (they live only in the
+# browser's localStorage), but these entries guard against ever committing
+# one by accident if that changes later, and clean up OS/editor junk.
+.env
+.env.*
+*.key
+secrets.json
+config.local.json
+
+# OS junk
+desktop.ini
+Thumbs.db
+.DS_Store
+
+# Original textbook photos (personal, bulky source material) — the app only
+# uses the small cropped illustration JPGs (unit*.jpg), not these originals.
+*.HEIC
+*.heic

@@ -1,0 +1,2387 @@
+<!doctype html>
+<html lang="ka">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ჩემი ინგლისურის რვეული — Nono's English Notebook</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Work+Sans:wght@400;500;600&family=Caveat:wght@600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #eee9dd;
+    --paper-rule: rgba(35, 41, 31, 0.09);
+    --surface: #fbf9f2;
+    --ink: #23291f;
+    --ink-soft: #5c5847;
+    --ink-faint: #8b8672;
+    --green: #2e6b4c;
+    --green-ink: #1f4d37;
+    --green-soft: #dbe6dc;
+    --gold: #a3781f;
+    --gold-soft: #f1e3c1;
+    --rust: #a8432b;
+    --rust-soft: #f2dbd0;
+    --tab-bg: #e2d9c1;
+    --tab-bg-active: var(--surface);
+    --border: rgba(35, 41, 31, 0.16);
+    --shadow: rgba(35, 41, 31, 0.18);
+    --focus: #2e6b4c;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --paper: #14180f;
+      --paper-rule: rgba(232, 228, 214, 0.07);
+      --surface: #1b2015;
+      --ink: #e9e5d7;
+      --ink-soft: #aca788;
+      --ink-faint: #756f57;
+      --green: #6fbe8e;
+      --green-ink: #8fd3a9;
+      --green-soft: #1f3327;
+      --gold: #e0b559;
+      --gold-soft: #372c15;
+      --rust: #e28468;
+      --rust-soft: #3a2119;
+      --tab-bg: #20261a;
+      --tab-bg-active: var(--surface);
+      --border: rgba(232, 228, 214, 0.14);
+      --shadow: rgba(0, 0, 0, 0.45);
+      --focus: #8fd3a9;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #14180f;
+    --paper-rule: rgba(232, 228, 214, 0.07);
+    --surface: #1b2015;
+    --ink: #e9e5d7;
+    --ink-soft: #aca788;
+    --ink-faint: #756f57;
+    --green: #6fbe8e;
+    --green-ink: #8fd3a9;
+    --green-soft: #1f3327;
+    --gold: #e0b559;
+    --gold-soft: #372c15;
+    --rust: #e28468;
+    --rust-soft: #3a2119;
+    --tab-bg: #20261a;
+    --tab-bg-active: var(--surface);
+    --border: rgba(232, 228, 214, 0.14);
+    --shadow: rgba(0, 0, 0, 0.45);
+    --focus: #8fd3a9;
+    color-scheme: dark;
+  }
+  :root[data-theme="light"] {
+    --paper: #eee9dd;
+    --paper-rule: rgba(35, 41, 31, 0.09);
+    --surface: #fbf9f2;
+    --ink: #23291f;
+    --ink-soft: #5c5847;
+    --ink-faint: #8b8672;
+    --green: #2e6b4c;
+    --green-ink: #1f4d37;
+    --green-soft: #dbe6dc;
+    --gold: #a3781f;
+    --gold-soft: #f1e3c1;
+    --rust: #a8432b;
+    --rust-soft: #f2dbd0;
+    --tab-bg: #e2d9c1;
+    --tab-bg-active: var(--surface);
+    --border: rgba(35, 41, 31, 0.16);
+    --shadow: rgba(35, 41, 31, 0.18);
+    --focus: #2e6b4c;
+    color-scheme: light;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Work Sans', 'Noto Sans Georgian', system-ui, sans-serif;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background-image: radial-gradient(circle at 1px 1px, var(--paper-rule) 1px, transparent 0);
+    background-size: 22px 22px;
+    opacity: 0.5;
+    z-index: 0;
+  }
+
+  h1, h2, h3, .display { font-family: 'Fraunces', Georgia, serif; font-weight: 600; letter-spacing: -0.01em; text-wrap: balance; margin: 0; }
+  .hand { font-family: 'Caveat', 'Segoe Script', cursive; font-weight: 600; }
+  .eyebrow { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.12em; color: var(--ink-faint); font-weight: 600; }
+  button { font-family: inherit; }
+  :focus-visible { outline: 2.5px solid var(--focus); outline-offset: 2px; border-radius: 4px; }
+  @media (prefers-reduced-motion: reduce) {
+    * { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+  }
+
+  .desk { position: relative; z-index: 1; min-height: 100vh; display: flex; justify-content: center; padding: clamp(12px, 3vw, 40px); }
+  .notebook { width: 100%; max-width: 980px; display: flex; align-items: flex-start; }
+
+  /* --- Tab rail --- */
+  .tabs { display: flex; flex-direction: column; gap: 10px; padding-top: 54px; flex-shrink: 0; z-index: 2; }
+  .tab {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--tab-bg); color: var(--ink-soft);
+    border: 1px solid var(--border); border-right: none;
+    padding: 11px 16px 11px 14px; font-size: 0.92rem; font-weight: 600;
+    border-radius: 10px 0 0 10px; cursor: pointer; margin-right: -1px;
+    transition: transform 0.15s ease, background 0.15s ease, color 0.15s ease;
+    box-shadow: -2px 2px 6px var(--shadow);
+    writing-mode: horizontal-tb; white-space: nowrap;
+  }
+  .tab:hover { transform: translateX(-2px); }
+  .tab.active { background: var(--tab-bg-active); color: var(--ink); transform: translateX(-6px); border-color: var(--border); }
+  .tab .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ink-faint); flex-shrink: 0; }
+  .tab .dot[data-state="green"] { background: var(--green); }
+  .tab .dot[data-state="gold"] { background: var(--gold); }
+  .tab .dot[data-state="rust"] { background: var(--rust); }
+
+  /* --- Page surface --- */
+  .page {
+    flex: 1; min-width: 0; background: var(--surface); border: 1px solid var(--border);
+    border-radius: 4px 14px 14px 14px; box-shadow: 0 18px 40px var(--shadow), 0 2px 0 var(--border);
+    position: relative; overflow: hidden;
+  }
+  .masthead {
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    padding: 20px clamp(18px, 4vw, 34px); border-bottom: 2px solid var(--green);
+    background: linear-gradient(180deg, var(--green-soft), transparent);
+  }
+  .masthead .title-block { display: flex; flex-direction: column; gap: 2px; }
+  .masthead h1 { font-size: clamp(1.3rem, 2.6vw, 1.7rem); color: var(--green-ink); }
+  .masthead .subtitle { color: var(--ink-soft); font-size: 0.88rem; }
+  .theme-toggle {
+    border: 1px solid var(--border); background: var(--surface); color: var(--ink-soft);
+    border-radius: 999px; padding: 6px 12px; font-size: 0.76rem; cursor: pointer;
+    display: inline-flex; align-items: center; gap: 6px; transition: border-color 0.15s ease;
+  }
+  .theme-toggle:hover { border-color: var(--green); }
+
+  .view { display: none; padding: 26px clamp(18px, 4vw, 34px) 40px; }
+  .view.active { display: block; }
+
+  /* --- Dashboard --- */
+  .profile-row { display: flex; gap: 22px; flex-wrap: wrap; margin-bottom: 28px; }
+  .id-card { flex: 1 1 300px; border: 1px solid var(--border); border-radius: 10px; padding: 18px 20px; background: var(--paper); display: flex; gap: 16px; align-items: center; }
+  .avatar { width: 58px; height: 58px; border-radius: 50%; background: var(--green); color: var(--surface); display: flex; align-items: center; justify-content: center; font-family: 'Fraunces', serif; font-size: 1.3rem; font-weight: 600; flex-shrink: 0; }
+  .id-card dl { margin: 8px 0 0; display: grid; grid-template-columns: auto 1fr; gap: 3px 10px; font-size: 0.86rem; }
+  .id-card dt { color: var(--ink-faint); }
+  .id-card dd { margin: 0; color: var(--ink); font-weight: 500; }
+
+  .intro-card { flex: 1 1 320px; border: 1px dashed var(--border); border-radius: 10px; padding: 16px 20px; background: var(--surface); }
+  .intro-card p { margin: 5px 0; font-size: 0.92rem; }
+  .intro-card .blank { color: var(--green-ink); font-weight: 600; }
+
+  .section-heading { display: flex; align-items: baseline; gap: 10px; margin: 30px 0 14px; }
+  .section-heading h2 { font-size: 1.15rem; }
+  .section-heading .rule { flex: 1; height: 1px; background: var(--border); }
+
+  .bar { height: 6px; border-radius: 4px; background: var(--border); overflow: hidden; }
+  .bar > span { display: block; height: 100%; background: var(--ink-faint); border-radius: 4px; transition: width 0.5s cubic-bezier(.2,.8,.2,1); }
+  .bar[data-state="green"] > span { background: var(--green); }
+  .bar[data-state="gold"] > span { background: var(--gold); }
+  .bar[data-state="rust"] > span { background: var(--rust); }
+
+  /* --- Deck / topic pickers --- */
+  .picker-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 14px; margin-bottom: 22px; }
+  .picker-card { border: 1px solid var(--border); background: var(--paper); border-radius: 10px; padding: 16px 18px; cursor: pointer; text-align: left; display: flex; flex-direction: column; gap: 6px; transition: border-color 0.15s ease, transform 0.12s ease; }
+  .picker-card:hover { border-color: var(--green); transform: translateY(-2px); }
+  .picker-card .ka { font-weight: 600; font-size: 1rem; }
+  .picker-card .en { font-size: 0.8rem; color: var(--ink-faint); }
+  .picker-card .meta { font-size: 0.78rem; color: var(--ink-soft); margin-top: 4px; }
+
+  .back-link { background: none; border: none; color: var(--ink-soft); font-size: 0.85rem; cursor: pointer; padding: 4px 0 14px; display: inline-flex; align-items: center; gap: 6px; }
+  .back-link:hover { color: var(--green-ink); }
+
+  /* --- Flashcards --- */
+  .card-stage { display: flex; flex-direction: column; align-items: center; gap: 18px; }
+  .flip-wrap { width: min(420px, 100%); aspect-ratio: 3 / 2; perspective: 1400px; }
+  .flip-card { position: relative; width: 100%; height: 100%; cursor: pointer; transition: transform 0.5s cubic-bezier(.2,.8,.2,1); transform-style: preserve-3d; }
+  .flip-card.flipped { transform: rotateY(180deg); }
+  .face { position: absolute; inset: 0; backface-visibility: hidden; border: 1px solid var(--border); border-radius: 14px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px; background: var(--surface); box-shadow: 0 10px 26px var(--shadow); }
+  .face.back { transform: rotateY(180deg); background: var(--green-soft); }
+  .face .word { font-family: 'Fraunces', serif; font-size: clamp(1.4rem, 4vw, 2rem); color: var(--ink); }
+  .face .ipa { color: var(--ink-faint); font-size: 0.92rem; margin-top: 4px; }
+  .face .ka { font-family: 'Fraunces', serif; font-size: clamp(1.3rem, 3.6vw, 1.8rem); color: var(--green-ink); }
+  .face .example { margin-top: 10px; font-size: 0.85rem; color: var(--ink-soft); max-width: 32ch; }
+  .face .tap-hint { position: absolute; bottom: 10px; font-size: 0.72rem; color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.08em; }
+
+  .rate-row { display: flex; gap: 10px; }
+  .rate-btn { border: 1px solid var(--border); background: var(--paper); padding: 9px 16px; border-radius: 999px; font-size: 0.85rem; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 7px; transition: border-color 0.15s ease, transform 0.1s ease; }
+  .rate-btn .swatch { width: 10px; height: 10px; border-radius: 50%; }
+  .rate-btn[data-level="rust"] .swatch { background: var(--rust); }
+  .rate-btn[data-level="gold"] .swatch { background: var(--gold); }
+  .rate-btn[data-level="green"] .swatch { background: var(--green); }
+  .rate-btn:hover { border-color: var(--ink-faint); transform: translateY(-1px); }
+  .rate-btn.chosen[data-level="rust"] { background: var(--rust-soft); border-color: var(--rust); }
+  .rate-btn.chosen[data-level="gold"] { background: var(--gold-soft); border-color: var(--gold); }
+  .rate-btn.chosen[data-level="green"] { background: var(--green-soft); border-color: var(--green); }
+  .rate-btn.chosen { animation: popIn 0.25s ease; }
+
+  .deck-nav { display: flex; align-items: center; gap: 14px; }
+  .nav-btn { border: 1px solid var(--border); background: var(--surface); color: var(--ink); width: 36px; height: 36px; border-radius: 50%; cursor: pointer; font-size: 1rem; transition: border-color 0.15s ease, transform 0.1s ease; }
+  .nav-btn:hover { border-color: var(--green); transform: scale(1.06); }
+  .deck-count { font-size: 0.85rem; color: var(--ink-faint); font-variant-numeric: tabular-nums; }
+
+  /* --- Quiz --- */
+  .quiz-box { border: 1px solid var(--border); border-radius: 12px; padding: 22px clamp(16px, 4vw, 28px); background: var(--paper); max-width: 640px; margin: 0 auto; }
+  .quiz-progress { font-size: 0.78rem; color: var(--ink-faint); margin-bottom: 6px; font-variant-numeric: tabular-nums; }
+  .quiz-prompt { font-size: 1.08rem; line-height: 1.55; margin: 6px 0 16px; }
+  .quiz-prompt .blank-marker { border-bottom: 2px solid var(--ink-faint); padding: 0 6px; }
+  .answer-row { display: flex; gap: 10px; flex-wrap: wrap; }
+  .answer-input { flex: 1 1 220px; padding: 11px 14px; border-radius: 8px; border: 1.5px solid var(--border); background: var(--surface); color: var(--ink); font-size: 1rem; font-family: inherit; }
+  .answer-input:focus { border-color: var(--green); }
+  .check-btn { border: none; background: var(--green); color: var(--surface); padding: 11px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.92rem; transition: background 0.15s ease, transform 0.1s ease; }
+  .check-btn:hover { background: var(--green-ink); transform: translateY(-1px); }
+  .feedback { margin-top: 16px; display: none; align-items: flex-start; gap: 10px; }
+  .feedback.show { display: flex; }
+  .feedback.correct { animation: popIn 0.35s ease; }
+  .feedback.wrong { animation: shake 0.4s ease; }
+  .feedback .mark { width: 30px; height: 30px; flex-shrink: 0; }
+  .feedback .msg { font-size: 0.94rem; padding-top: 3px; }
+  .feedback .msg .hand { font-size: 1.25rem; }
+  .feedback.correct .msg { color: var(--green-ink); }
+  .feedback.wrong .msg { color: var(--rust); }
+  .feedback .correct-answer { display: block; margin-top: 2px; color: var(--ink-soft); font-size: 0.88rem; }
+  .quiz-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 22px; }
+  .skip-btn { background: none; border: none; color: var(--ink-faint); font-size: 0.82rem; cursor: pointer; text-decoration: underline; }
+  .next-btn { border: 1px solid var(--border); background: var(--surface); color: var(--ink); padding: 9px 18px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.88rem; display: none; transition: border-color 0.15s ease; }
+  .next-btn:hover { border-color: var(--green); }
+  .next-btn.show { display: inline-block; }
+
+  .quiz-done { text-align: center; padding: 30px 10px; }
+  .quiz-done .score { font-family: 'Fraunces', serif; font-size: 2.4rem; color: var(--green-ink); }
+  .redo-btn { margin-top: 16px; border: 1px solid var(--border); background: var(--surface); padding: 9px 18px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: border-color 0.15s ease; }
+  .redo-btn:hover { border-color: var(--green); }
+
+  /* --- Reference --- */
+  .ref-search { width: 100%; padding: 12px 16px; border-radius: 10px; border: 1.5px solid var(--border); background: var(--paper); color: var(--ink); font-size: 0.98rem; margin-bottom: 20px; }
+  .ref-search:focus { border-color: var(--green); }
+  .ref-group { margin-bottom: 24px; }
+  .ref-group h3 { font-size: 1rem; color: var(--green-ink); margin-bottom: 10px; }
+  .ref-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+  .ref-table tr { border-bottom: 1px solid var(--paper-rule); }
+  .ref-table td { padding: 7px 8px; vertical-align: top; }
+  .ref-table td.en { font-weight: 500; width: 40%; }
+  .ref-table td.ipa { color: var(--ink-faint); font-size: 0.82rem; width: 22%; }
+  .ref-table td.ka { color: var(--ink-soft); }
+  .ref-table tr.hide { display: none; }
+  .ref-empty { color: var(--ink-faint); font-size: 0.9rem; padding: 10px 0; }
+
+  .note { font-family: 'Caveat', cursive; font-size: 1.15rem; color: var(--gold); background: var(--gold-soft); border-radius: 10px; padding: 10px 16px; display: inline-block; margin: 14px 0 0; transform: rotate(-1deg); }
+
+  /* --- Unit header --- */
+  .unit-head { display: flex; gap: 20px; align-items: center; margin: 14px 0 26px; flex-wrap: wrap; }
+  .unit-image { width: 160px; height: 160px; object-fit: cover; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 8px 20px var(--shadow); flex-shrink: 0; }
+  .unit-head-text { flex: 1 1 260px; min-width: 220px; }
+  .unit-head-text h2 { margin-bottom: 10px; }
+  .unit-head-text .bar { max-width: 340px; }
+
+  /* --- Vocabulary practice modes --- */
+  .vocab-mode-row { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 22px; }
+  .vocab-mode-btn { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--border); background: var(--paper); color: var(--ink-soft); border-radius: 999px; padding: 9px 16px; font-size: 0.88rem; font-weight: 600; cursor: pointer; transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease; }
+  .vocab-mode-btn:hover { border-color: var(--green); }
+  .vocab-mode-btn.active { background: var(--green); border-color: var(--green); color: var(--surface); }
+  .vocab-mode-btn .icon { font-size: 1rem; }
+
+  .practice-box { border: 1px solid var(--border); border-radius: 12px; padding: 26px clamp(16px, 4vw, 30px); background: var(--paper); max-width: 560px; margin: 0 auto; text-align: center; }
+  .practice-progress { font-size: 0.78rem; color: var(--ink-faint); margin-bottom: 8px; font-variant-numeric: tabular-nums; }
+  .practice-box .bar { margin-bottom: 22px; }
+  .practice-prompt-ka, .practice-prompt-en { font-family: 'Fraunces', serif; font-size: clamp(1.6rem, 5vw, 2.2rem); color: var(--ink); margin-bottom: 20px; }
+  .practice-prompt-en { margin-bottom: 6px; }
+  .practice-ipa { color: var(--ink-faint); font-size: 0.92rem; margin-bottom: 16px; }
+
+  .practice-mic-btn { width: 76px; height: 76px; border-radius: 50%; border: none; background: var(--green); color: var(--surface); font-size: 1.8rem; cursor: pointer; box-shadow: 0 10px 26px var(--shadow); transition: background 0.15s ease, transform 0.1s ease; margin-bottom: 14px; }
+  .practice-mic-btn:hover { background: var(--green-ink); transform: scale(1.04); }
+
+  .practice-status { font-size: 0.86rem; font-weight: 600; color: var(--ink-faint); min-height: 1.2em; margin: 8px 0; display: none; align-items: center; justify-content: center; }
+  .practice-status.show { display: flex; }
+  .practice-status.state-listening { color: var(--green-ink); }
+  .practice-status.state-processing { color: var(--gold); }
+  .practice-status.state-speaking { color: var(--green-ink); }
+
+  .mc-options { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin: 18px 0 6px; }
+  .mc-option { border: 1.5px solid var(--border); background: var(--surface); color: var(--ink); padding: 13px 14px; border-radius: 10px; font-size: 0.95rem; font-weight: 500; cursor: pointer; transition: border-color 0.15s ease, transform 0.1s ease; }
+  .mc-option:hover { border-color: var(--green); }
+  .mc-option.correct { background: var(--green-soft); border-color: var(--green); color: var(--green-ink); animation: popIn 0.3s ease; }
+  .mc-option.wrong { background: var(--rust-soft); border-color: var(--rust); color: var(--rust); animation: shake 0.4s ease; }
+
+  /* --- Animations --- */
+  @keyframes popIn { 0% { transform: scale(0.7); opacity: 0; } 65% { transform: scale(1.06); opacity: 1; } 100% { transform: scale(1); } }
+  @keyframes shake { 0%, 100% { transform: translateX(0); } 20% { transform: translateX(-6px); } 40% { transform: translateX(6px); } 60% { transform: translateX(-4px); } 80% { transform: translateX(4px); } }
+  @keyframes msgIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* --- Chat tab --- */
+  .chat-setup { border: 1px solid var(--border); border-radius: 14px; padding: 26px clamp(16px, 4vw, 28px); background: var(--paper); max-width: 560px; margin: 0 auto; }
+  .chat-setup h2 { font-size: 1.2rem; margin-bottom: 10px; }
+  .chat-setup p { color: var(--ink-soft); font-size: 0.92rem; line-height: 1.55; }
+  .chat-setup label { display: block; font-weight: 600; font-size: 0.86rem; margin: 16px 0 6px; }
+  .chat-key-row { display: flex; gap: 8px; }
+  .chat-key-row input { flex: 1; padding: 11px 14px; border-radius: 10px; border: 1.5px solid var(--border); background: var(--surface); color: var(--ink); font-size: 0.92rem; font-family: monospace; }
+  .chat-key-row input:focus { border-color: var(--green); }
+  .chat-toggle-btn { border: 1px solid var(--border); background: var(--surface); border-radius: 10px; padding: 0 14px; cursor: pointer; color: var(--ink-soft); }
+  .chat-hint { font-size: 0.8rem; color: var(--ink-faint); margin-top: 14px; }
+
+  .chat-topbar { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 6px; }
+  .chat-scope-badge { display: inline-flex; align-items: center; gap: 8px; background: var(--green-soft); color: var(--green-ink); border-radius: 999px; padding: 5px 12px 5px 14px; font-size: 0.82rem; font-weight: 600; }
+  .chat-scope-badge button { background: none; border: none; color: var(--green-ink); cursor: pointer; font-size: 0.95rem; line-height: 1; padding: 0; }
+  .chat-icon-btn { background: none; border: 1px solid var(--border); border-radius: 50%; width: 34px; height: 34px; cursor: pointer; color: var(--ink-soft); transition: border-color 0.15s ease; }
+  .chat-icon-btn:hover { border-color: var(--green); }
+
+  .chat-error { background: var(--rust-soft); border: 1px solid var(--rust); color: var(--rust); border-radius: 10px; padding: 10px 14px; font-size: 0.88rem; margin-bottom: 14px; }
+
+  .chat-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
+  .chat-chip { border: 1px solid var(--border); background: var(--paper); color: var(--ink-soft); border-radius: 999px; padding: 7px 14px; font-size: 0.85rem; cursor: pointer; font-family: inherit; transition: border-color 0.15s ease, color 0.15s ease; }
+  .chat-chip:hover { border-color: var(--green); color: var(--green-ink); }
+
+  .chat-messages { display: flex; flex-direction: column; gap: 14px; margin-bottom: 18px; }
+  .chat-msg { display: flex; animation: msgIn 0.25s ease; }
+  .chat-msg.user { justify-content: flex-end; }
+  .chat-msg.assistant { justify-content: flex-start; flex-direction: column; align-items: flex-start; }
+  .chat-bubble-row { display: flex; align-items: flex-end; gap: 6px; max-width: 88%; }
+  .chat-bubble { padding: 12px 16px; font-size: 0.95rem; line-height: 1.5; }
+  .chat-msg.assistant .chat-bubble { background: var(--surface); border: 1px solid var(--border); border-radius: 4px 14px 14px 14px; box-shadow: 0 2px 8px var(--shadow); }
+  .chat-msg.user .chat-bubble { background: var(--green); color: var(--surface); border-radius: 14px 4px 14px 14px; }
+  .chat-correction { max-width: 82%; margin-top: 6px; padding: 10px 14px; background: var(--gold-soft); border: 1px solid var(--gold); border-radius: 10px; font-size: 0.86rem; color: var(--ink); animation: popIn 0.3s ease; }
+  .chat-correction .label { font-family: 'Caveat', cursive; font-weight: 600; color: var(--gold); font-size: 1.1rem; margin-right: 4px; }
+  .chat-speak-btn { background: none; border: 1px solid var(--border); border-radius: 50%; width: 30px; height: 30px; font-size: 0.85rem; cursor: pointer; color: var(--ink-soft); flex: none; transition: border-color 0.15s ease; }
+  .chat-speak-btn:hover { border-color: var(--green); }
+
+  .chat-typing { display: flex; gap: 4px; padding: 14px 16px; }
+  .chat-typing span { width: 7px; height: 7px; border-radius: 50%; background: var(--ink-faint); animation: typingBounce 1.2s infinite ease-in-out; }
+  .chat-typing span:nth-child(2) { animation-delay: 0.15s; }
+  .chat-typing span:nth-child(3) { animation-delay: 0.3s; }
+  @keyframes typingBounce { 0%, 60%, 100% { transform: translateY(0); opacity: 0.5; } 30% { transform: translateY(-4px); opacity: 1; } }
+
+  .chat-input-bar { display: flex; gap: 8px; align-items: flex-end; }
+  .chat-input-bar textarea { flex: 1; resize: none; padding: 12px 16px; border-radius: 14px; border: 1.5px solid var(--border); background: var(--surface); color: var(--ink); font-family: 'Work Sans', 'Noto Sans Georgian', sans-serif; font-size: 0.95rem; max-height: 120px; box-shadow: 0 2px 8px var(--shadow); }
+  .chat-input-bar textarea:focus { border-color: var(--green); }
+  .chat-send-btn { background: var(--green); color: var(--surface); border: none; border-radius: 50%; width: 44px; height: 44px; font-size: 1.1rem; cursor: pointer; flex: none; box-shadow: 0 2px 8px var(--shadow); transition: background 0.15s ease, transform 0.1s ease; }
+  .chat-send-btn:hover { background: var(--green-ink); transform: translateY(-1px); }
+  .chat-send-btn:disabled { opacity: 0.5; cursor: default; transform: none; }
+  .chat-mic-btn { background: var(--surface); color: var(--ink-soft); border: 1px solid var(--border); border-radius: 50%; width: 44px; height: 44px; font-size: 1.05rem; cursor: pointer; flex: none; box-shadow: 0 2px 8px var(--shadow); transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease; }
+  .chat-mic-btn:hover { border-color: var(--green); }
+  .chat-mic-btn.voice-active { background: var(--green-soft); border-color: var(--green); color: var(--green-ink); }
+  .chat-mic-btn.recording { background: var(--rust-soft); border-color: var(--rust); color: var(--rust); animation: micPulse 1.2s infinite; }
+  @keyframes micPulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(168, 67, 43, 0.35); } 50% { box-shadow: 0 0 0 8px rgba(168, 67, 43, 0); } }
+
+  .chat-voice-status { font-size: 0.85rem; font-weight: 600; padding: 6px 2px 2px; display: none; align-items: center; gap: 6px; }
+  .chat-voice-status.show { display: flex; }
+  .chat-voice-status.state-listening { color: var(--green-ink); }
+  .chat-voice-status.state-processing { color: var(--gold); }
+  .chat-voice-status.state-speaking { color: var(--green-ink); }
+  .chat-voice-status .pulse-dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; animation: statusPulse 1s infinite ease-in-out; }
+  @keyframes statusPulse { 0%, 100% { opacity: 0.4; transform: scale(0.85); } 50% { opacity: 1; transform: scale(1.1); } }
+
+  @media (max-width: 640px) {
+    .notebook { flex-direction: column; }
+    .tabs { flex-direction: row; flex-wrap: wrap; padding-top: 0; margin-bottom: 10px; }
+    .tab { border-radius: 10px; border-right: 1px solid var(--border); margin-right: 0; box-shadow: none; }
+    .tab.active { transform: none; }
+    .page { border-radius: 12px; }
+    .chat-bubble-row, .chat-correction { max-width: 94%; }
+  }
+</style>
+</head>
+<body>
+
+<div class="desk">
+  <div class="notebook">
+    <nav class="tabs" id="tabs"></nav>
+    <div class="page">
+      <header class="masthead">
+        <div class="title-block">
+          <h1>ჩემი ინგლისურის რვეული</h1>
+          <div class="subtitle">Nono's English Notebook — Unit 1 based on Speaking Tags</div>
+        </div>
+        <button class="theme-toggle" id="themeToggle" type="button" aria-label="თემის შეცვლა">◐ თემა</button>
+      </header>
+
+      <section id="view-home" class="view active"></section>
+      <section id="view-cards" class="view"></section>
+      <section id="view-grammar" class="view"></section>
+      <section id="view-reference" class="view"></section>
+      <section id="view-chat" class="view"></section>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var PROFILE = {
+    name: "ნონო", nameEn: "Nono",
+    surname: "ჯარიაშვილი", surnameEn: "Jarieshvili",
+    age: 31,
+    country: "საქართველო", countryEn: "Georgia",
+    city: "თბილისი", cityEn: "Tbilisi",
+    job: "უსაფრთხოების თანამშრომელი", jobEn: "security officer"
+  };
+
+  var DECKS = [
+    {
+      id: "greetings", ka: "მისალმება და გაცნობა", en: "Greetings & introductions",
+      cards: [
+        { en: "Hello", ipa: "/heˈloʊ/", ka: "გამარჯობა" },
+        { en: "Hi", ipa: "/haɪ/", ka: "სალამი" },
+        { en: "Hey", ipa: "/heɪ/", ka: "ჰეი" },
+        { en: "How are you?", ipa: "/haʊ ɑːr juː/", ka: "როგორ ხარ?" },
+        { en: "What's up?", ipa: "/wɑːts ʌp/", ka: "როგორ ხარ? / რას შვრები?" },
+        { en: "How is it going?", ipa: "/haʊ ɪz ɪt ˈɡoʊɪŋ/", ka: "საქმეები როგორ მიდის?" },
+        { en: "How are you doing?", ipa: "/haʊ ɑːr juː ˈduːɪŋ/", ka: "როგორ ხარ?" },
+        { en: "How have you been?", ipa: "/haʊ hæv juː bɪn/", ka: "როგორ იყავი ბოლო დროს?" },
+        { en: "What have you been up to?", ipa: "/wɑːt hæv juː bɪn ʌp tu/", ka: "რას აკეთებდი ბოლო დროს?" },
+        { en: "Good morning", ipa: "/ɡʊd ˈmɔːrnɪŋ/", ka: "დილა მშვიდობისა" },
+        { en: "Good afternoon", ipa: "/ɡʊd ˌæftərˈnuːn/", ka: "დღე მშვიდობისა" },
+        { en: "Good evening", ipa: "/ɡʊd ˈiːvnɪŋ/", ka: "საღამო მშვიდობისა" },
+        { en: "I am good", ipa: "/aɪ æm ɡʊd/", ka: "კარგად ვარ" },
+        { en: "I am great", ipa: "/aɪ æm ɡreɪt/", ka: "კარგად ვარ" },
+        { en: "Doing really well", ipa: "/ˈduːɪŋ ˈrɪəli wɛl/", ka: "საუკეთესოდ ვარ" },
+        { en: "I can't complain", ipa: "/aɪ kænt kəmˈpleɪn/", ka: "ცუდად არ ვარ" },
+        { en: "Could not be better", ipa: "/kʊd nɑt biː ˈbɛtər/", ka: "საუკეთესოდ ვარ" },
+        { en: "Thank you, I am good. How about you?", ipa: "", ka: "გმადლობთ, კარგად ვარ. შენ როგორ ხარ?" },
+        { en: "Me too, thank you", ipa: "/miː tuː θæŋk juː/", ka: "მეც კარგად, გმადლობთ" },
+        { en: "Goodbye", ipa: "/ɡʊd baɪ/", ka: "ნახვამდის" },
+        { en: "Bye", ipa: "/baɪ/", ka: "ნახვამდის" },
+        { en: "Bye-bye", ipa: "/baɪ baɪ/", ka: "ნახვამდის" },
+        { en: "See you later", ipa: "/siː juː ˈleɪtər/", ka: "დროებით" },
+        { en: "See you soon!", ipa: "/siː juː suːn/", ka: "მალე ვნახავთ ერთმანეთს" },
+        { en: "Talk to you later", ipa: "/tɔːk tu juː ˈleɪtər/", ka: "მოგვიანებით დაგელაპარაკები" },
+        { en: "Take care", ipa: "/teɪk kɛr/", ka: "კარგად იყავი" },
+        { en: "Have a nice day!", ipa: "/hæv ə naɪs deɪ/", ka: "კარგად გისურვებთ" },
+        { en: "Have a good day!", ipa: "/hæv ə ɡʊd deɪ/", ka: "კარგად გისურვებთ" },
+        { en: "Have fun", ipa: "/hæv fʌn/", ka: "გაერთეთ / კარგად გატარეთ დრო" },
+        { en: "It was great to see you again", ipa: "", ka: "სასიამოვნო იყო ისევ შენი ნახვა" },
+        { en: "I have to go now", ipa: "/aɪ hæv tu ɡoʊ naʊ/", ka: "ახლა უნდა წავიდე" }
+      ]
+    },
+    {
+      id: "family", ka: "ოჯახი და მეგობრები", en: "Family & friends",
+      cards: [
+        { en: "Family member", ipa: "/ˈfæməli ˈmɛmbər/", ka: "ოჯახის წევრი" },
+        { en: "Mother", ipa: "/ˈmʌðər/", ka: "დედა" },
+        { en: "Father", ipa: "/ˈfɑðər/", ka: "მამა" },
+        { en: "Parents", ipa: "/ˈpɛrənts/", ka: "მშობლები" },
+        { en: "Children", ipa: "/ˈtʃɪldrən/", ka: "ბავშვები" },
+        { en: "Son", ipa: "/sʌn/", ka: "ვაჟი" },
+        { en: "Daughter", ipa: "/ˈdɔtər/", ka: "ქალიშვილი" },
+        { en: "Sister", ipa: "/ˈsɪstər/", ka: "და" },
+        { en: "Brother", ipa: "/ˈbrʌðər/", ka: "ძმა" },
+        { en: "Sibling", ipa: "/ˈsɪblɪŋ/", ka: "და-ძმა" },
+        { en: "Aunt", ipa: "/ænt/", ka: "დეიდა / ბიცოლა / მამიდა" },
+        { en: "Uncle", ipa: "/ˈʌŋkəl/", ka: "ბიძა" },
+        { en: "Grandmother", ipa: "/ˈɡrænˌmʌðər/", ka: "ბებია" },
+        { en: "Grandfather", ipa: "/ˈɡrænˌfɑðər/", ka: "ბაბუა" },
+        { en: "Grandparents", ipa: "/ˈɡrændˌpɛrənts/", ka: "ბებია და ბაბუა" },
+        { en: "Grandchildren", ipa: "/ˈɡrænˌtʃɪldrən/", ka: "შვილიშვილები" },
+        { en: "Cousin", ipa: "/ˈkʌzən/", ka: "ბიძაშვილი / დეიდაშვილი / მამიდაშვილი" },
+        { en: "Nephew", ipa: "/ˈnɛfju/", ka: "ძმისწული, დისწული (ვაჟი)" },
+        { en: "Niece", ipa: "/nis/", ka: "ძმისწული, დისწული (ქალი)" },
+        { en: "Only child", ipa: "", ka: "დედისერთა" },
+        { en: "Relatives", ipa: "/ˈrɛlətɪvz/", ka: "ნათესავები" },
+        { en: "Best friend", ipa: "", ka: "საუკეთესო მეგობარი" },
+        { en: "Close friend", ipa: "/kloʊs frɛnd/", ka: "ახლო მეგობარი" },
+        { en: "Acquaintance", ipa: "/əˈkweɪntəns/", ka: "ნაცნობი" }
+      ]
+    },
+    {
+      id: "likes", ka: "მოწონება და არმოწონება", en: "Likes & dislikes",
+      cards: [
+        { en: "Adore", ka: "ძალიან მიყვარს", ex: "I adore visiting new places.", exKa: "ძალიან მიყვარს ახალი ადგილების მონახულება." },
+        { en: "Love", ka: "მიყვარს", ex: "I love this song.", exKa: "მიყვარს ეს სიმღერა." },
+        { en: "Am crazy about", ka: "გავგიჟებული ვარ", ex: "I am crazy about coffee.", exKa: "გავგიჟებული ვარ ყავაზე." },
+        { en: "Enjoy", ka: "სიამოვნებით ვაკეთებ", ex: "I enjoy chatting online.", exKa: "სიამოვნებით ვსაუბრობ ონლაინ." },
+        { en: "Like", ka: "მომწონს", ex: "I like working for hours.", exKa: "მომწონს დიდხანს მუშაობა." },
+        { en: "Am fond of", ka: "მიყვარს / მომწონს", ex: "I am fond of chatting online.", exKa: "მომწონს ონლაინ საუბარი." },
+        { en: "Am keen on", ka: "მიმაქვს თავი", ex: "Are you keen on drinking soda?", exKa: "მოგწონს გაზიანი სასმელების დალევა?" },
+        { en: "Am not too fond of", ka: "განსაკუთრებით არ მომწონს", ex: "I am not too fond of driving.", exKa: "განსაკუთრებით არ მომწონს მანქანის ტარება." },
+        { en: "Dislike", ka: "არ მომწონს", ex: "What do you dislike most?", exKa: "რა არ მოგწონს ყველაზე მეტად?" },
+        { en: "Don't like", ka: "არ მომწონს", ex: "I don't like being asked many questions.", exKa: "არ მომწონს ბევრი კითხვის დასმა." },
+        { en: "Hate", ka: "მძულს", ex: "Do you hate what you do?", exKa: "გძულს ის, რასაც აკეთებ?" },
+        { en: "Can't stand", ka: "ვერ ვიტან", ex: "I can't stand being asked many questions.", exKa: "ვერ ვიტან ბევრი კითხვის დასმას." }
+      ]
+    },
+    {
+      id: "routine", ka: "დღის რეჟიმი", en: "Daily routine",
+      cards: [
+        { en: "Wake up", ipa: "/weɪk ʌp/", ka: "გაღვიძება" },
+        { en: "Take a shower", ipa: "/teɪk ə ˈʃaʊər/", ka: "შხაპის მიღება" },
+        { en: "Get dressed", ipa: "/ɡɛt drɛst/", ka: "ჩაცმა" },
+        { en: "Have breakfast", ipa: "/hæv ˈbrɛkfəst/", ka: "საუზმობა" },
+        { en: "Leave home", ipa: "/liv hoʊm/", ka: "სახლიდან გასვლა" },
+        { en: "Get to work", ipa: "/ɡɛt tu wɜrk/", ka: "სამსახურში მისვლა" },
+        { en: "Drive", ipa: "/draɪv/", ka: "მანქანის ტარება" },
+        { en: "Study", ipa: "/ˈstʌdi/", ka: "სწავლა" },
+        { en: "Read", ipa: "/rid/", ka: "კითხვა" },
+        { en: "Cook", ipa: "/kʊk/", ka: "საჭმლის მომზადება" },
+        { en: "Clean", ipa: "/klin/", ka: "დალაგება" },
+        { en: "Exercise", ipa: "/ˈɛksərˌsaɪz/", ka: "ვარჯიში" },
+        { en: "Go shopping", ipa: "/ɡoʊ ˈʃɑpɪŋ/", ka: "საყიდლებზე სიარული" },
+        { en: "Finish work", ipa: "/ˈfɪnɪʃ wɜrk/", ka: "სამსახურის დამთავრება" },
+        { en: "Have dinner", ipa: "/hæv ˈdɪnər/", ka: "სადილობა" }
+      ]
+    },
+    {
+      id: "calendar", ka: "დრო, დღეები, თვეები", en: "Time, days & months",
+      cards: [
+        { en: "Sunday", ipa: "/ˈsʌndeɪ/", ka: "კვირა" },
+        { en: "Monday", ipa: "/ˈmʌndeɪ/", ka: "ორშაბათი" },
+        { en: "Tuesday", ipa: "/ˈtuzdeɪ/", ka: "სამშაბათი" },
+        { en: "Wednesday", ipa: "/ˈwɛnzdeɪ/", ka: "ოთხშაბათი" },
+        { en: "Thursday", ipa: "/ˈθɜrzdeɪ/", ka: "ხუთშაბათი" },
+        { en: "Friday", ipa: "/ˈfraɪdeɪ/", ka: "პარასკევი" },
+        { en: "Saturday", ipa: "/ˈsætərdeɪ/", ka: "შაბათი" },
+        { en: "January – June", ipa: "", ka: "იანვარი, თებერვალი, მარტი, აპრილი, მაისი, ივნისი" },
+        { en: "July – December", ipa: "", ka: "ივლისი, აგვისტო, სექტემბერი, ოქტომბერი, ნოემბერი, დეკემბერი" },
+        { en: "Spring", ipa: "/sprɪŋ/", ka: "გაზაფხული" },
+        { en: "Summer", ipa: "/ˈsʌmər/", ka: "ზაფხული" },
+        { en: "Fall / Autumn", ipa: "/fɔl/", ka: "შემოდგომა" },
+        { en: "Winter", ipa: "/ˈwɪntər/", ka: "ზამთარი" },
+        { en: "It's five o'clock", ipa: "", ka: "საათია ხუთი (5:00)" },
+        { en: "It's ten after five", ipa: "", ka: "ხუთის ათი წუთი (5:10)" },
+        { en: "It's a quarter after five", ipa: "", ka: "ხუთის ერთი მეოთხედი (5:15)" },
+        { en: "It's half past five", ipa: "", ka: "ხუთის ნახევარი (5:30)" },
+        { en: "It's twenty to six", ipa: "", ka: "ექვსს ოცი წუთი აკლია (5:40)" },
+        { en: "It's a quarter to six", ipa: "", ka: "ექვსს ერთი მეოთხედი აკლია (5:45)" }
+      ]
+    },
+    {
+      id: "freqAdverbs", ka: "სიხშირის ზმნისართები", en: "Frequency adverbs & time expressions",
+      cards: [
+        { en: "Never", ipa: "/ˈnɛvər/", ka: "არასოდეს (0%)" },
+        { en: "Rarely", ipa: "/ˈrɛrli/", ka: "იშვიათად" },
+        { en: "Sometimes", ipa: "/ˈsʌmˌtaɪmz/", ka: "ხანდახან" },
+        { en: "Often", ipa: "/ˈɔfən/", ka: "ხშირად" },
+        { en: "Usually", ipa: "/ˈjuʒəwəli/", ka: "ჩვეულებრივ" },
+        { en: "Always", ipa: "/ˈɔlˌweɪz/", ka: "ყოველთვის (100%)" },
+        { en: "At + time", ipa: "", ka: "საათის წინ: at 8 o'clock, at night" },
+        { en: "On + days", ipa: "", ka: "დღეების წინ: on Mondays, on the weekend" },
+        { en: "In + months/time of day", ipa: "", ka: "თვის/დღის მონაკვეთის წინ: in September, in the morning" },
+        { en: "Every hour/day/week/month", ipa: "", ka: "ყოველ საათს/დღეს/კვირას/თვეს" },
+        { en: "Once/twice/three times a day/week", ipa: "", ka: "ერთხელ/ორჯერ/სამჯერ დღეში/კვირაში" }
+      ]
+    }
+  ];
+
+  var GRAMMAR = [
+    {
+      id: "pronouns", ka: "პირის ნაცვალსახელები", en: "Subject & object pronouns",
+      note: "ობიექტური ნაცვალსახელები (me, you, him, her, it, us, them) გამოიყენება მაშინ, როცა სახელი ზმნის შემდეგ ან წინდებულის შემდეგ დგას.",
+      items: [
+        { prompt: "I always help out <u>my friends</u>.", instruction: "ჩაანაცვლე ხაზგასმული ნაწილი ნაცვალსახელით.", answer: "them" },
+        { prompt: "I am helping out <u>my girlfriend</u>.", instruction: "ჩაანაცვლე ხაზგასმული ნაწილი ნაცვალსახელით.", answer: "her" },
+        { prompt: "The boys are riding <u>their bikes</u>.", instruction: "ჩაანაცვლე ხაზგასმული ნაწილი ნაცვალსახელით.", answer: "them" },
+        { prompt: "My mother is texting <u>Salome</u>.", instruction: "ჩაანაცვლე ხაზგასმული ნაწილი ნაცვალსახელით.", answer: "her" },
+        { prompt: "I don't know <u>the answer</u>.", instruction: "ჩაანაცვლე ხაზგასმული ნაწილი ნაცვალსახელით.", answer: "it" },
+        { prompt: "Alex is meeting <u>Thomas</u>.", instruction: "ჩაანაცვლე ხაზგასმული ნაწილი ნაცვალსახელით.", answer: "him" },
+        { prompt: "Please tell <u>Alexander and me</u> what you think.", instruction: "ჩაანაცვლე ხაზგასმული ნაწილი ნაცვალსახელით.", answer: "us" },
+        { prompt: "Sally doesn't like <u>cookies</u>.", instruction: "ჩაანაცვლე ხაზგასმული ნაწილი ნაცვალსახელით.", answer: "them" },
+        { prompt: "Do you love ___? (he / him)", instruction: "აირჩიე სწორი ფორმა.", answer: "him" },
+        { prompt: "Where are ___? (they / them)", instruction: "აირჩიე სწორი ფორმა.", answer: "they" },
+        { prompt: "Is it for ___? (me / I)", instruction: "აირჩიე სწორი ფორმა.", answer: "me" },
+        { prompt: "They told ___ about the holiday. (we / us)", instruction: "აირჩიე სწორი ფორმა.", answer: "us" },
+        { prompt: "Don't you know he/him? ___ is my brother. (He / Him)", instruction: "აირჩიე სწორი ფორმა.", answer: "He" },
+        { prompt: "___ love New York. (I / me)", instruction: "აირჩიე სწორი ფორმა.", answer: "I" },
+        { prompt: "I want to go with ___. (they / them)", instruction: "აირჩიე სწორი ფორმა.", answer: "them" },
+        { prompt: "___ am very well. (I / me)", instruction: "აირჩიე სწორი ფორმა.", answer: "I" },
+        { prompt: "We are looking at ___ because she is beautiful. (her / she)", instruction: "აირჩიე სწორი ფორმა.", answer: "her" },
+        { prompt: "Can ___ eat this salad? (we / us)", instruction: "აირჩიე სწორი ფორმა.", answer: "we" },
+        { prompt: "No, the salad is not for ___. (we / us)", instruction: "აირჩიე სწორი ფორმა.", answer: "us" }
+      ]
+    },
+    {
+      id: "possAdj", ka: "კუთვნილებითი ნაცვალსახელები", en: "my / your / his / her / its / our / their",
+      note: "კუთვნილებითი ნაცვალსახელი ყოველთვის არსებით სახელს უსწრებს წინ: my brother, her name, our friends.",
+      items: [
+        { prompt: "Hi, I am Sandra. What is ___ name?", instruction: "შეავსე სწორი კუთვნილებითი ნაცვალსახელით.", answer: "your" },
+        { prompt: "We are from Georgia. ___ names are Saba and Tatia.", instruction: "შეავსე სწორი კუთვნილებითი ნაცვალსახელით.", answer: "our" },
+        { prompt: "This is my sister. ___ name is Kristine.", instruction: "შეავსე სწორი კუთვნილებითი ნაცვალსახელით.", answer: "her" },
+        { prompt: "My father is a doctor. ___ name is James.", instruction: "შეავსე სწორი კუთვნილებითი ნაცვალსახელით.", answer: "his" },
+        { prompt: "These are my friends from England. ___ names are Tom and Simon.", instruction: "შეავსე სწორი კუთვნილებითი ნაცვალსახელით.", answer: "their" },
+        { prompt: "I am Davit, and this is ___ brother, George.", instruction: "შეავსე სწორი კუთვნილებითი ნაცვალსახელით.", answer: "my" },
+        { prompt: "Is this your dog? What is ___ name?", instruction: "შეავსე სწორი კუთვნილებითი ნაცვალსახელით.", answer: "its" },
+        { prompt: "Is this a photo of ___ family? They are nice.", instruction: "შეავსე სწორი კუთვნილებითი ნაცვალსახელით.", answer: "your" }
+      ]
+    },
+    {
+      id: "possS", ka: "კუთვნილება 's / s'", en: "Alex's sister / the Jacksons' jobs",
+      note: "მხოლობითში ემატება 's (Nick's), ხოლო -s-ზე დაბოლოებულ მრავლობითს — მხოლოდ ' (the Jacksons').",
+      items: [
+        { prompt: "Tamar is his wife. (Nick)", instruction: "გადააკეთე კუთვნილებით ფორმაში.", answer: "Tamar is Nick's wife.", accept: ["nick's wife"] },
+        { prompt: "Ana is her sister. (Emili)", instruction: "გადააკეთე კუთვნილებით ფორმაში.", answer: "Ana is Emili's sister.", accept: ["emili's sister"] },
+        { prompt: "His office is near here. (Peter)", instruction: "გადააკეთე კუთვნილებით ფორმაში.", answer: "Peter's office is near here." },
+        { prompt: "This is her workplace. (my friend)", instruction: "გადააკეთე კუთვნილებით ფორმაში.", answer: "This is my friend's workplace." },
+        { prompt: "They are his children. (Mike)", instruction: "გადააკეთე კუთვნილებით ფორმაში.", answer: "They are Mike's children." },
+        { prompt: "Steve and Jacob are their sons. (the Jacksons)", instruction: "გადააკეთე კუთვნილებით ფორმაში.", answer: "Steve and Jacob are the Jacksons' sons." },
+        { prompt: "His children are at university. (my brothers)", instruction: "გადააკეთე კუთვნილებით ფორმაში.", answer: "My brothers' children are at university." },
+        { prompt: "Rover is their dog. (my parents)", instruction: "გადააკეთე კუთვნილებით ფორმაში.", answer: "Rover is my parents' dog." }
+      ]
+    },
+    {
+      id: "demonstratives", ka: "This / That / These / Those", en: "ახლოს და შორს მყოფი საგნები",
+      note: "This/that — მხოლობითისთვის (ახლოს/შორს), these/those — მრავლობითისთვის (ახლოს/შორს).",
+      items: [
+        { prompt: "Is <u>these</u> a photo of your brother?", instruction: "იპოვე შეცდომა და გაასწორე.", answer: "this" },
+        { prompt: "What's in <u>these</u> box?", instruction: "იპოვე შეცდომა და გაასწორე.", answer: "this" },
+        { prompt: "These <u>is</u> my friends from university.", instruction: "იპოვე შეცდომა და გაასწორე.", answer: "are" },
+        { prompt: "<u>That</u> are my books on the table.", instruction: "იპოვე შეცდომა და გაასწორე.", answer: "Those" },
+        { prompt: "How do you say this <u>words</u> in English?", instruction: "იპოვე შეცდომა და გაასწორე.", answer: "word" },
+        { prompt: "This <u>are</u> my friend, Jack.", instruction: "იპოვე შეცდომა და გაასწორე.", answer: "is" },
+        { prompt: "Where are those <u>student</u> from?", instruction: "იპოვე შეცდომა და გაასწორე.", answer: "students" },
+        { prompt: "Those aren't my keys. <u>Those</u> are my keys on this table.", instruction: "იპოვე შეცდომა და გაასწორე.", answer: "These" }
+      ]
+    },
+    {
+      id: "presentForms", ka: "Present Simple — do / does", en: "s / es დაბოლოებები",
+      note: "He/she/it-თან ზმნას ემატება s/es. კითხვით და უარყოფით წინადადებებში he/she/it-თან გვჭირდება does, დანარჩენთან — do.",
+      items: [
+        { prompt: "My brother <u>like</u> music and he downloads many songs.", instruction: "იპოვე შეცდომა და გაასწორე.", answer: "likes" },
+        { prompt: "<u>Do</u> Sarah have interesting hobbies?", instruction: "იპოვე შეცდომა და გაასწორე.", answer: "Does" },
+        { prompt: "I love this song, but my girlfriend <u>don't</u> like it at all.", instruction: "იპოვე შეცდომა და გაასწორე.", answer: "doesn't" },
+        { prompt: "<u>Does</u> you like this song?", instruction: "იპოვე შეცდომა და გაასწორე.", answer: "Do" },
+        { prompt: "Does Simon <u>plays</u> the piano?", instruction: "იპოვე შეცდომა და გაასწორე.", answer: "play" },
+        { prompt: "We are <u>have</u> breakfast in a café on Fridays.", instruction: "იპოვე შეცდომა და გაასწორე — ჯერ სწორი ზმნის ფორმა დაწერე.", answer: "have" },
+        { prompt: "She <u>have</u> a shower every day.", instruction: "იპოვე შეცდომა და გაასწორე.", answer: "has" },
+        { prompt: "My sister <u>don't</u> like junk food that much!", instruction: "იპოვე შეცდომა და გაასწორე.", answer: "doesn't" }
+      ]
+    },
+    {
+      id: "presentQuestions", ka: "კითხვების აგება", en: "Do / Does + subject + verb",
+      note: "კითხვა: (კითხვითი სიტყვა) + do/does + ქვემდებარე + ზმნა (ძირითადი ფორმით).",
+      items: [
+        { prompt: "where / you / work?", instruction: "ააგე კითხვა სიტყვებისგან.", answer: "Where do you work?" },
+        { prompt: "what / she / do?", instruction: "ააგე კითხვა სიტყვებისგან.", answer: "What does she do?" },
+        { prompt: "you / walk / to work?", instruction: "ააგე კითხვა სიტყვებისგან.", answer: "Do you walk to work?" },
+        { prompt: "your colleagues / go / to work / by car?", instruction: "ააგე კითხვა სიტყვებისგან.", answer: "Do your colleagues go to work by car?" },
+        { prompt: "what time / you / leave / home?", instruction: "ააგე კითხვა სიტყვებისგან.", answer: "What time do you leave home?" },
+        { prompt: "you / take / a bus / to the office?", instruction: "ააგე კითხვა სიტყვებისგან.", answer: "Do you take a bus to the office?" },
+        { prompt: "she / take / a train / to the office?", instruction: "ააგე კითხვა სიტყვებისგან.", answer: "Does she take a train to the office?" },
+        { prompt: "he / take / a taxi / to the office?", instruction: "ააგე კითხვა სიტყვებისგან.", answer: "Does he take a taxi to the office?" }
+      ]
+    },
+    {
+      id: "frequency", ka: "სიხშირის ზმნისართები", en: "never · rarely · sometimes · often · usually · always",
+      note: "სიხშირის ზმნისართი დგას to be-ს შემდეგ (He is always late), მაგრამ სხვა ზმნების წინ (He always arrives late).",
+      items: [
+        { prompt: "Peter ___ polite and listens to everyone's opinion. (be / always)", instruction: "შეავსე ზმნა და სიხშირის ზმნისართი სწორი რიგით.", answer: "is always" },
+        { prompt: "I ___ think I need to find a new hobby. (think / often)", instruction: "შეავსე ზმნა და სიხშირის ზმნისართი სწორი რიგით.", answer: "often think" },
+        { prompt: "___ you ___ take the bus home after work? (take / always)", instruction: "ააგე კითხვა სწორი სიხშირის ზმნისართით.", answer: "Do you always" },
+        { prompt: "You ___ too old to start a new hobby! (be / never)", instruction: "შეავსე ზმნა და სიხშირის ზმნისართი სწორი რიგით.", answer: "are never" },
+        { prompt: "They ___ show good TV shows. (show / rarely)", instruction: "შეავსე ზმნა და სიხშირის ზმნისართი სწორი რიგით.", answer: "rarely show" },
+        { prompt: "They ___ too busy to go to the gym. (be / sometimes)", instruction: "შეავსე ზმნა და სიხშირის ზმნისართი სწორი რიგით.", answer: "are sometimes" },
+        { prompt: "We usually ___ for a walk on Sundays. (go)", instruction: "შეავსე ზმნა სწორი ფორმით.", answer: "go" },
+        { prompt: "My parents ___ TV. (watch / -)", instruction: "შეავსე ზმნა სწორი ფორმით (უარყოფითი).", answer: "don't watch" },
+        { prompt: "We ___ for a small company. (work)", instruction: "შეავსე ზმნა სწორი ფორმით.", answer: "work" },
+        { prompt: "Mike and Ali ___ in a big house with a lovely garden. (live)", instruction: "შეავსე ზმნა სწორი ფორმით.", answer: "live" },
+        { prompt: "I ___ basketball every week. (play / -)", instruction: "შეავსე ზმნა სწორი ფორმით (უარყოფითი).", answer: "don't play" },
+        { prompt: "We ___ in the sea once a year. (swim)", instruction: "შეავსე ზმნა სწორი ფორმით.", answer: "swim" },
+        { prompt: "I ___ online in the evening. (watch / -)", instruction: "შეავსე ზმნა სწორი ფორმით (უარყოფითი).", answer: "don't watch" }
+      ]
+    },
+    {
+      id: "wrapupPoss", ka: "შერეული გამეორება — კუთვნილება", en: "Language Wrap-up: possession review",
+      note: "შეცდომების გასწორება — ზოგან საჭიროა კუთვნილებითი ნაცვალსახელი (my/your/his...), ზოგან — 's.",
+      items: [
+        { prompt: "That's <u>I</u> bag.", instruction: "იპოვე შეცდომა და გაასწორე.", answer: "my" },
+        { prompt: "Look at <u>they're</u> new car!", instruction: "იპოვე შეცდომა და გაასწორე.", answer: "their", accept: ["Their"] },
+        { prompt: "George is <u>her</u> brother.", instruction: "იპოვე შეცდომა და გაასწორე. (თუ წინადადება უკვე სწორია, დაწერე იგივე სიტყვა)", answer: "his" },
+        { prompt: "That's my brother. <u>Her</u> name is Nigel.", instruction: "იპოვე შეცდომა და გაასწორე.", answer: "his" },
+        { prompt: "Is that <u>you</u> passport?", instruction: "იპოვე შეცდომა და გაასწორე.", answer: "your" },
+        { prompt: "This is my dog. <u>It</u> name is Lucky.", instruction: "იპოვე შეცდომა და გაასწორე.", answer: "its" },
+        { prompt: "What is his mother <u>name</u>?", instruction: "იპოვე შეცდომა და გაასწორე — დაამატე 's.", answer: "mother's" },
+        { prompt: "<u>Me</u> new cell phone is great.", instruction: "იპოვე შეცდომა და გაასწორე.", answer: "my" },
+        { prompt: "What is <u>you</u> name?", instruction: "იპოვე შეცდომა და გაასწორე.", answer: "your" },
+        { prompt: "My brother <u>friend</u> lives with us.", instruction: "იპოვე შეცდომა და გაასწორე — დაამატე 's.", answer: "brother's" }
+      ]
+    },
+    {
+      id: "dialogueClub", ka: "დიალოგი: კლუბის ახალი წევრი", en: "David & Beth — new club member",
+      note: "შეავსე დიალოგის ცარიელი ადგილები — David გაცნობის დიალოგი წიგნიდან.",
+      items: [
+        { prompt: "David: Hello, I'm David Garza. I am a new club member.\nBeth: Hi, ___ Elisabeth Silva, but please call me Beth.", instruction: "შეავსე გამოტოვებული ადგილი.", answer: "my name is", accept: ["my name's"] },
+        { prompt: "David: OK. ___, Beth?\nBeth: Brazil. How about you?", instruction: "შეავსე გამოტოვებული ადგილი (საიდან ხარ?).", answer: "where are you from" },
+        { prompt: "David: Oh, good. Sun-hee is here.\nBeth: Who's Sun-hee?\nDavid: She's my classmate... Beth: Where is she from?\nDavid: South Korea. Let's go and say hello. Sorry, ___ again? Garcia?\nBeth: Actually, it's Garza.", instruction: "შეავსე გამოტოვებული ადგილი (რა გქვია გვარად?).", answer: "what is your surname", accept: ["what's your surname", "what is your last name"] }
+      ]
+    },
+    {
+      id: "dialogueFriends", ka: "დიალოგი: ახალი მეგობარი", en: "Josh & Max — meeting a new classmate",
+      note: "შეავსე დიალოგის ცარიელი ადგილები — Josh და Max-ის გაცნობის დიალოგი წიგნიდან.",
+      items: [
+        { prompt: "Josh: Hi, I am Josh. Are you new?\nMax: Hi, Josh. Yes, I am.\nJosh: Welcome! ___?", instruction: "შეავსე გამოტოვებული ადგილი (რა გქვია?).", answer: "what's your name", accept: ["what is your name"] },
+        { prompt: "Max: I am Max.\nJosh: ___, Max. Where are you from?", instruction: "შეავსე გამოტოვებული ადგილი (სასიამოვნოა გაცნობა).", answer: "nice to meet you" },
+        { prompt: "Max: I am from Halifax.\nJosh: ___?\nMax: It's in Canada.", instruction: "შეავსე გამოტოვებული ადგილი (ეს სად არის?).", answer: "where's that", accept: ["where is that"] },
+        { prompt: "Josh: Oh, I see. ___?\nMax: Yes, I am.\nJosh: Who's our coach?", instruction: "შეავსე გამოტოვებული ადგილი (ხარ კანადელი?).", answer: "are you canadian" },
+        { prompt: "Josh: It's Mr. Vern, over there. He's really good.\nMax: ___?\nJosh: He's 35. And you?\nMax: I am 21.", instruction: "შეავსე გამოტოვებული ადგილი (რამდენი წლის არის?).", answer: "how old is he" }
+      ]
+    },
+    {
+      id: "dialogueFrequency", ka: "დიალოგი: სიხშირის ზმნისართებით", en: "Rick & Alicia — talking about free time",
+      note: "შეავსე დიალოგის ცარიელი ადგილები სწორი სიხშირის ზმნისართით (never/rarely/sometimes/often/usually/always).",
+      items: [
+        { prompt: "Rick: I'm ___ so busy! (always)", instruction: "შეავსე სწორი სიხშირის ზმნისართით.", answer: "always" },
+        { prompt: "Rick: I ___ have any free time. (never)", instruction: "შეავსე სწორი სიხშირის ზმნისართით.", answer: "never" },
+        { prompt: "Rick: I'm ___ at work in the morning. (usually)", instruction: "შეავსე სწორი სიხშირის ზმნისართით.", answer: "usually" },
+        { prompt: "Rick: I ___ study in the afternoon. (always)", instruction: "შეავსე სწორი სიხშირის ზმნისართით.", answer: "always" },
+        { prompt: "Alicia: I don't work, so I ___ get up late. (often)", instruction: "შეავსე სწორი სიხშირის ზმნისართით.", answer: "often" },
+        { prompt: "Alicia: I ___ study in the morning and relax in the afternoon. (sometimes)", instruction: "შეავსე სწორი სიხშირის ზმნისართით.", answer: "sometimes" },
+        { prompt: "Rick: I ___ have time to go out — maybe just once a month. (rarely)", instruction: "შეავსე სწორი სიხშირის ზმნისართით.", answer: "rarely" },
+        { prompt: "Rick: How ___ do you go to the movies? (often)", instruction: "შეავსე სწორი სიხშირის ზმნისართით.", answer: "often" }
+      ]
+    },
+    {
+      id: "readingJacob", ka: "წაკითხვის გაგება: ჯეიქობის ოჯახი", en: "Reading comprehension — Jacob's Family",
+      note: "წაკითხვის ტექსტი: \"My name is Jacob Thompson, and I am 28 years old. I am from Great Britain and live in London with my family. I have a big family — mother, father, grandparents, wife, and children — but I don't have any sisters or brothers. I am the only child. This is a photo of my family, but only 7 of us are there; my parents are not with us. My mum is a very busy person. She is a teacher and works at a school. My father is a truck driver who is always on the road. Grandma is a 78-year-old woman, and she is retired. Grandpa is 80 years old, and he is a university professor. He is so energetic. As for my wife and children, I got married at a very early stage of my life. I fell in love with my wife, Helen, when I was 17 and soon married. She is beautiful and a good mother. She loves our children so much and takes care of them every hour. We have two sons and a daughter. The boys' names are Alex and Jack, and the daughter's name is Sally. They are 6, 8, and 7 years old. We all love each other, respect and care for each other's feelings.\" — უპასუხე true ან false.",
+      items: [
+        { prompt: "Jacob Thompson lives alone.", instruction: "true თუ false?", answer: "false" },
+        { prompt: "Jacob lives in Great Britain.", instruction: "true თუ false?", answer: "true" },
+        { prompt: "There are 7 people in Jacob's family in total.", instruction: "true თუ false?", answer: "false" },
+        { prompt: "Jacob doesn't have any siblings.", instruction: "true თუ false?", answer: "true" },
+        { prompt: "Jacob lives with his grandparents.", instruction: "true თუ false?", answer: "true" },
+        { prompt: "Jacob's grandfather is retired.", instruction: "true თუ false?", answer: "false" },
+        { prompt: "Jacob has two daughters and a son.", instruction: "true თუ false?", answer: "false" },
+        { prompt: "Jacob's wife takes care of the children.", instruction: "true თუ false?", answer: "true" },
+        { prompt: "Jacob's daughter's name is Sally.", instruction: "true თუ false?", answer: "true" },
+        { prompt: "Jacob says they all love each other.", instruction: "true თუ false?", answer: "true" }
+      ]
+    },
+    {
+      id: "readingKeiraLiam", ka: "მოსმენა: კეირა და ლიამის დღე", en: "Listening — Keira & Liam's routines",
+      note: "KEIRA: \"Keira gets up at 2 a.m. She has a shower and then gets dressed. She leaves home at 3 a.m. and gets to work at 3.30. She has a quick breakfast at work and then gets ready for the breakfast TV program. She reads the plan for the morning. The program starts at 5 a.m. when most people are asleep.\" LIAM: \"Liam loves his job, but it's hard work. He gets up at 3 p.m. and spends time with his family. He leaves for work at 8.30 p.m. because he worries about the traffic. He starts work at 10 p.m. He works in the hospital and helps the patients and doctors. He doesn't have lunch, but he has coffee and a snack. He finishes work at 6 a.m. and has dinner. He gets home at 7 a.m. and goes to bed because he's exhausted!\" — უპასუხე true ან false თითოეულ წინადადებაზე.",
+      items: [
+        { prompt: "Keira gets up at 2 a.m.", instruction: "true თუ false?", answer: "true" },
+        { prompt: "Liam gets up at 2 a.m.", instruction: "true თუ false?", answer: "false" },
+        { prompt: "Keira gets up at 3 p.m.", instruction: "true თუ false?", answer: "false" },
+        { prompt: "Liam gets up at 3 p.m.", instruction: "true თუ false?", answer: "true" },
+        { prompt: "Keira worries about the traffic.", instruction: "true თუ false?", answer: "false" },
+        { prompt: "Liam worries about the traffic.", instruction: "true თუ false?", answer: "true" },
+        { prompt: "Keira has a quick breakfast at work.", instruction: "true თუ false?", answer: "true" },
+        { prompt: "Liam has a quick breakfast at work.", instruction: "true თუ false?", answer: "false" },
+        { prompt: "Keira reads the plan for the morning.", instruction: "true თუ false?", answer: "true" },
+        { prompt: "Liam reads the plan for the morning.", instruction: "true თუ false?", answer: "false" },
+        { prompt: "Keira works in the hospital and helps the patients and doctors.", instruction: "true თუ false?", answer: "false" },
+        { prompt: "Liam works in the hospital and helps the patients and doctors.", instruction: "true თუ false?", answer: "true" },
+        { prompt: "Keira finishes work at 6 a.m. and has dinner.", instruction: "true თუ false?", answer: "false" },
+        { prompt: "Liam finishes work at 6 a.m. and has dinner.", instruction: "true თუ false?", answer: "true" },
+        { prompt: "Keira gets home at 7 a.m. and goes to bed.", instruction: "true თუ false?", answer: "false" },
+        { prompt: "Liam gets home at 7 a.m. and goes to bed.", instruction: "true თუ false?", answer: "true" }
+      ]
+    }
+  ];
+
+  var REFERENCE_GRAMMAR = [
+    { title: "პირის ნაცვალსახელები (Subject)", rows: [["I", "", "მე"], ["You", "", "შენ"], ["He / She / It", "", "ის"], ["We", "", "ჩვენ"], ["You", "", "თქვენ"], ["They", "", "ისინი"]] },
+    { title: "პირის ნაცვალსახელები (Object)", rows: [["me", "", "მე"], ["you", "", "შენ"], ["him / her / it", "", "მას"], ["us", "", "ჩვენ"], ["them", "", "მათ"]] },
+    { title: "კუთვნილებითი ნაცვალსახელები", rows: [["my", "", "ჩემი"], ["your", "", "შენი"], ["his / her / its", "", "მისი"], ["our", "", "ჩვენი"], ["their", "", "მათი"]] },
+    { title: "This / That / These / Those", rows: [["this", "", "ეს (ახლოს, მხოლობითი)"], ["that", "", "ის (შორს, მხოლობითი)"], ["these", "", "ეს (ახლოს, მრავლობითი)"], ["those", "", "ის (შორს, მრავლობითი)"]] }
+  ];
+
+  var UNITS = [
+    { id: "u1", ka: "Unit 1 — მისალმება და გაცნობა", deckIds: ["greetings"], grammarIds: ["pronouns", "dialogueClub"], image: "unit1-greetings.jpg" },
+    { id: "u2", ka: "Unit 2 — კუთვნილება", deckIds: [], grammarIds: ["possAdj", "possS", "wrapupPoss"], image: null },
+    { id: "u3", ka: "Unit 3 — ოჯახი", deckIds: ["family"], grammarIds: ["demonstratives", "readingJacob", "dialogueFriends"], image: "unit3-family.jpg" },
+    { id: "u4", ka: "Unit 4 — აწმყო განუსაზღვრელი დრო", deckIds: [], grammarIds: ["presentForms", "presentQuestions"], image: null },
+    { id: "u5", ka: "Unit 5 — სიხშირის ზმნისართები", deckIds: ["freqAdverbs"], grammarIds: ["frequency", "dialogueFrequency"], image: null },
+    { id: "u6", ka: "Unit 6 — მოწონება და არმოწონება", deckIds: ["likes"], grammarIds: [], image: "unit6-likes.jpg" },
+    { id: "u7", ka: "Unit 7 — დღის რეჟიმი და დრო", deckIds: ["routine", "calendar"], grammarIds: ["readingKeiraLiam"], image: "unit7-routine.jpg" }
+  ];
+
+  var STORAGE_KEY = "nonaEnglishNotebook.v1";
+  var state = loadState();
+
+  function loadState() {
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) return JSON.parse(raw);
+    } catch (e) {}
+    return { cards: {}, quiz: {} };
+  }
+  function saveState() {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) {}
+  }
+
+  function normalize(s) {
+    return String(s || "")
+      .toLowerCase()
+      .replace(/[’‘]/g, "'")
+      .replace(/[.!?]+$/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  function checkMarkSvg(ok) {
+    var color = ok ? "var(--green)" : "var(--rust)";
+    if (ok) {
+      return '<svg viewBox="0 0 30 30" width="30" height="30" style="transform:rotate(-6deg)"><polyline points="5,16 12,23 25,7" fill="none" stroke="' + color + '" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    }
+    return '<svg viewBox="0 0 30 30" width="30" height="30" style="transform:rotate(3deg)"><line x1="6" y1="6" x2="24" y2="24" stroke="' + color + '" stroke-width="3.4" stroke-linecap="round"/><line x1="24" y1="6" x2="6" y2="24" stroke="' + color + '" stroke-width="3.4" stroke-linecap="round"/></svg>';
+  }
+
+  function el(tag, attrs, children) {
+    var node = document.createElement(tag);
+    if (attrs) for (var k in attrs) {
+      if (k === "class") node.className = attrs[k];
+      else if (k === "html") node.innerHTML = attrs[k];
+      else node.setAttribute(k, attrs[k]);
+    }
+    (children || []).forEach(function (c) { if (c) node.appendChild(c); });
+    return node;
+  }
+
+  /* ---------- mastery helpers ---------- */
+  function deckMastery(deck) {
+    var ratings = state.cards[deck.id] || {};
+    var total = deck.cards.length, rated = 0, green = 0;
+    for (var i = 0; i < total; i++) {
+      var lvl = ratings[i];
+      if (lvl) { rated++; if (lvl === "green") green++; }
+    }
+    var pct = total ? green / total : 0;
+    var colorState = rated === 0 ? "none" : pct >= 0.75 ? "green" : pct >= 0.35 ? "gold" : "rust";
+    return { rated: rated, total: total, green: green, pct: pct, colorState: colorState };
+  }
+  function topicMastery(topic) {
+    var rec = state.quiz[topic.id] || { answers: {} };
+    var total = topic.items.length, attempted = 0, correct = 0;
+    for (var i = 0; i < total; i++) {
+      var a = rec.answers[i];
+      if (a !== undefined) { attempted++; if (a) correct++; }
+    }
+    var pct = total ? correct / total : 0;
+    var colorState = attempted === 0 ? "none" : pct >= 0.75 ? "green" : pct >= 0.4 ? "gold" : "rust";
+    return { attempted: attempted, total: total, correct: correct, pct: pct, colorState: colorState };
+  }
+  function overallMastery(list, fn) {
+    var sum = 0, cnt = 0, anyAttempt = false;
+    list.forEach(function (x) {
+      var m = fn(x);
+      sum += m.pct; cnt++;
+      if ((m.rated || m.attempted)) anyAttempt = true;
+    });
+    var pct = cnt ? sum / cnt : 0;
+    var colorState = !anyAttempt ? "none" : pct >= 0.75 ? "green" : pct >= 0.35 ? "gold" : "rust";
+    return { pct: pct, colorState: colorState };
+  }
+
+  function unitDecks(unit) { return DECKS.filter(function (d) { return unit.deckIds.indexOf(d.id) !== -1; }); }
+  function unitGrammarTopics(unit) { return GRAMMAR.filter(function (g) { return unit.grammarIds.indexOf(g.id) !== -1; }); }
+
+  function unitMastery(unit) {
+    var parts = unitDecks(unit).map(deckMastery).concat(unitGrammarTopics(unit).map(topicMastery));
+    var sum = 0, cnt = parts.length, any = false;
+    parts.forEach(function (m) { sum += m.pct; if (m.rated || m.attempted) any = true; });
+    var pct = cnt ? sum / cnt : 0;
+    var colorState = !any ? "none" : pct >= 0.75 ? "green" : pct >= 0.35 ? "gold" : "rust";
+    return { pct: pct, colorState: colorState };
+  }
+
+  function unitProgressCounts(unit) {
+    var done = 0, total = 0;
+    unitDecks(unit).forEach(function (d) { var m = deckMastery(d); done += m.green; total += m.total; });
+    unitGrammarTopics(unit).forEach(function (t) { var m = topicMastery(t); done += m.correct; total += m.total; });
+    return { done: done, total: total };
+  }
+
+  /* ---------- tabs ---------- */
+  var TABS = [
+    { id: "home", ka: "დაფა", en: "Dashboard" },
+    { id: "reference", ka: "ცნობარი", en: "Reference" },
+    { id: "chat", ka: "ჩატი", en: "Chat" }
+  ];
+  var currentView = "home";
+  var currentUnit = null;
+  var cardsSub = null;
+  var grammarSub = null;
+
+  function renderTabs() {
+    var wrap = document.getElementById("tabs");
+    wrap.innerHTML = "";
+    TABS.forEach(function (t) {
+      var dotState = "none";
+      if (t.id === "home") dotState = overallMastery(UNITS, unitMastery).colorState;
+      var dot = el("span", { class: "dot" });
+      if (dotState !== "none") dot.setAttribute("data-state", dotState);
+      var btn = el("button", { class: "tab" + (currentView === t.id ? " active" : ""), type: "button" }, [
+        dot, document.createTextNode(t.ka)
+      ]);
+      btn.addEventListener("click", function (id) { return function () {
+        if (id === "chat" && chatScopeUnit !== null) { chatScopeUnit = null; chatHistory = []; chatStarted = false; }
+        switchView(id);
+      }; }(t.id));
+      wrap.appendChild(btn);
+    });
+  }
+
+  function switchView(id) {
+    stopPracticeMic();
+    currentView = id;
+    if (id === "home") currentUnit = null;
+    document.querySelectorAll(".view").forEach(function (v) { v.classList.remove("active"); });
+    document.getElementById("view-" + id).classList.add("active");
+    renderTabs();
+    if (id === "home") renderHome();
+    if (id === "reference") renderReferenceView();
+    if (id === "chat") renderChatView();
+  }
+
+  function currentUnitObj() {
+    return currentUnit ? UNITS.filter(function (u) { return u.id === currentUnit; })[0] : null;
+  }
+
+  function openUnit(id) {
+    var unit = UNITS.filter(function (u) { return u.id === id; })[0];
+    currentUnit = id;
+    cardsSub = null; grammarSub = null; practicePos = 0; cardsMode = "flip";
+    currentView = "home";
+    document.querySelectorAll(".view").forEach(function (v) { v.classList.remove("active"); });
+    document.getElementById("view-home").classList.add("active");
+    if (unit.deckIds.length) document.getElementById("view-cards").classList.add("active");
+    if (unit.grammarIds.length) document.getElementById("view-grammar").classList.add("active");
+    renderTabs();
+    renderHome();
+    if (unit.deckIds.length) renderCardsView();
+    if (unit.grammarIds.length) renderGrammarView();
+  }
+
+  function backToUnits() {
+    stopPracticeMic();
+    currentUnit = null;
+    document.querySelectorAll(".view").forEach(function (v) { v.classList.remove("active"); });
+    document.getElementById("view-home").classList.add("active");
+    renderTabs();
+    renderHome();
+  }
+
+  function openUnitChat(unit) {
+    chatScopeUnit = unit.id;
+    chatHistory = [];
+    chatStarted = false;
+    switchView("chat");
+  }
+
+  /* ---------- home / dashboard ---------- */
+  function renderHome() {
+    var root = document.getElementById("view-home");
+    root.innerHTML = "";
+
+    if (currentUnit) {
+      renderUnitHeader(root);
+      return;
+    }
+
+    var initials = (PROFILE.nameEn[0] + PROFILE.surnameEn[0]).toUpperCase();
+    var idCard = el("div", { class: "id-card" }, [
+      el("div", { class: "avatar" }, [document.createTextNode(initials)]),
+      el("div", {}, [
+        el("div", { class: "eyebrow" }, [document.createTextNode("PERSONAL PROFILE")]),
+        el("h3", { class: "display" }, [document.createTextNode(PROFILE.nameEn + " " + PROFILE.surnameEn)]),
+        el("dl", {}, [
+          el("dt", {}, [document.createTextNode("Age")]), el("dd", {}, [document.createTextNode(String(PROFILE.age))]),
+          el("dt", {}, [document.createTextNode("From")]), el("dd", {}, [document.createTextNode(PROFILE.countryEn)]),
+          el("dt", {}, [document.createTextNode("City")]), el("dd", {}, [document.createTextNode(PROFILE.cityEn)]),
+          el("dt", {}, [document.createTextNode("Job")]), el("dd", {}, [document.createTextNode(PROFILE.jobEn)])
+        ])
+      ])
+    ]);
+
+    var introHtml =
+      "<p>Hello, I am <span class='blank'>" + PROFILE.nameEn + "</span>.</p>" +
+      "<p>My surname is <span class='blank'>" + PROFILE.surnameEn + "</span>.</p>" +
+      "<p>I am a <span class='blank'>" + PROFILE.jobEn + "</span>.</p>" +
+      "<p>I am <span class='blank'>" + PROFILE.age + "</span> years old.</p>" +
+      "<p>I am from <span class='blank'>" + PROFILE.countryEn + "</span> and I live in <span class='blank'>" + PROFILE.cityEn + "</span>.</p>";
+    var introCard = el("div", { class: "intro-card" }, [
+      el("div", { class: "eyebrow" }, [document.createTextNode("საკუთარი თავის წარდგენა")]),
+      el("div", { html: introHtml })
+    ]);
+
+    root.appendChild(el("div", { class: "profile-row" }, [idCard, introCard]));
+
+    root.appendChild(el("div", { class: "section-heading" }, [
+      el("h2", {}, [document.createTextNode("თავები")]), el("div", { class: "rule" })
+    ]));
+    var unitGrid = el("div", { class: "picker-grid" });
+    UNITS.forEach(function (unit) {
+      var m = unitMastery(unit);
+      var counts = unitProgressCounts(unit);
+      var card = el("button", { class: "picker-card", type: "button" }, [
+        el("span", { class: "ka" }, [document.createTextNode(unit.ka)]),
+        el("span", { class: "meta" }, [document.createTextNode("დასრულებული: " + counts.done + " / " + counts.total)]),
+        el("div", { class: "bar", "data-state": m.colorState === "none" ? "" : m.colorState, html: "<span style='width:" + Math.round(m.pct * 100) + "%'></span>" })
+      ]);
+      card.addEventListener("click", function (id) { return function () { openUnit(id); }; }(unit.id));
+      unitGrid.appendChild(card);
+    });
+    root.appendChild(unitGrid);
+
+    var resetWrap = el("div", { style: "margin-top:30px" });
+    var resetBtn = el("button", { class: "back-link", type: "button" }, [document.createTextNode("↺ პროგრესის გასუფთავება")]);
+    resetBtn.addEventListener("click", function () {
+      if (confirm("წავშალო მთელი პროგრესი?")) {
+        state = { cards: {}, quiz: {} };
+        saveState();
+        renderHome();
+        renderTabs();
+      }
+    });
+    resetWrap.appendChild(resetBtn);
+    root.appendChild(resetWrap);
+  }
+
+  function renderUnitHeader(root) {
+    var unit = currentUnitObj();
+    var back = el("button", { class: "back-link", type: "button" }, [document.createTextNode("← თავებთან დაბრუნება")]);
+    back.addEventListener("click", backToUnits);
+    root.appendChild(back);
+
+    var m = unitMastery(unit);
+    var counts = unitProgressCounts(unit);
+    var head = el("div", { class: "unit-head" });
+    if (unit.image) head.appendChild(el("img", { src: unit.image, alt: unit.ka, class: "unit-image" }));
+    var headText = el("div", { class: "unit-head-text" });
+    headText.appendChild(el("h2", {}, [document.createTextNode(unit.ka)]));
+    headText.appendChild(el("div", { class: "bar", "data-state": m.colorState === "none" ? "" : m.colorState, html: "<span style='width:" + Math.round(m.pct * 100) + "%'></span>" }));
+    headText.appendChild(el("div", { class: "practice-progress", style: "text-align:left;margin-top:6px" }, [document.createTextNode("დასრულებული: " + counts.done + " / " + counts.total)]));
+    var chatBtn = el("button", { class: "check-btn", type: "button", style: "margin-top:12px" }, [document.createTextNode("💬 ამ თავზე საუბარი")]);
+    chatBtn.addEventListener("click", function () { openUnitChat(unit); });
+    headText.appendChild(chatBtn);
+    head.appendChild(headText);
+    root.appendChild(head);
+  }
+
+  /* ---------- flashcards & vocabulary practice ---------- */
+  var cardIndex = {};
+  var cardsMode = "flip";
+  var practicePos = 0;
+
+  function openDeck(id) { stopPracticeMic(); cardsSub = id; practicePos = 0; renderCardsView(); }
+  function backToDecks() { stopPracticeMic(); cardsSub = null; renderCardsView(); }
+
+  function renderCardsView() {
+    var root = document.getElementById("view-cards");
+    root.innerHTML = "";
+    if (!cardsSub) {
+      root.appendChild(el("h2", {}, [document.createTextNode("ლექსიკური ბარათები")]));
+      root.appendChild(el("p", { style: "color:var(--ink-soft);margin:6px 0 20px;max-width:60ch" }, [
+        document.createTextNode("აირჩიე სავარჯიშოს ტიპი, შემდეგ — კომპლექტი.")
+      ]));
+
+      var modeRow = el("div", { class: "vocab-mode-row" });
+      [
+        ["flip", "🗂", "ბარათები"],
+        ["voice", "🎙", "ხმოვანი თარგმანი"],
+        ["written", "✍️", "წერითი თარგმანი"],
+        ["mc", "☑️", "არჩევანის ტესტი"]
+      ].forEach(function (m) {
+        var btn = el("button", { class: "vocab-mode-btn" + (cardsMode === m[0] ? " active" : ""), type: "button" }, [
+          el("span", { class: "icon" }, [document.createTextNode(m[1])]),
+          document.createTextNode(m[2])
+        ]);
+        btn.addEventListener("click", function (mode) { return function () { cardsMode = mode; renderCardsView(); }; }(m[0]));
+        modeRow.appendChild(btn);
+      });
+      root.appendChild(modeRow);
+
+      var grid = el("div", { class: "picker-grid" });
+      unitDecks(currentUnitObj()).forEach(function (deck) {
+        var m = deckMastery(deck);
+        var card = el("button", { class: "picker-card", type: "button" }, [
+          el("span", { class: "ka" }, [document.createTextNode(deck.ka)]),
+          el("span", { class: "en" }, [document.createTextNode(deck.en)]),
+          el("span", { class: "meta" }, [document.createTextNode(deck.cards.length + " ბარათი · ვიცი " + m.green + "/" + m.total)])
+        ]);
+        card.addEventListener("click", function (id) { return function () { openDeck(id); }; }(deck.id));
+        grid.appendChild(card);
+      });
+      root.appendChild(grid);
+      return;
+    }
+
+    if (cardsMode === "voice") { renderVoicePractice(root); return; }
+    if (cardsMode === "written") { renderWrittenPractice(root); return; }
+    if (cardsMode === "mc") { renderMcPractice(root); return; }
+
+    var deck = DECKS.filter(function (d) { return d.id === cardsSub; })[0];
+    var back = el("button", { class: "back-link", type: "button" }, [document.createTextNode("← კომპლექტებთან დაბრუნება")]);
+    back.addEventListener("click", backToDecks);
+    root.appendChild(back);
+
+    if (cardIndex[deck.id] === undefined) cardIndex[deck.id] = 0;
+    var idx = cardIndex[deck.id];
+    var total = deck.cards.length;
+    var item = deck.cards[idx];
+    var ratings = state.cards[deck.id] || {};
+
+    var stage = el("div", { class: "card-stage" });
+    stage.appendChild(el("h2", {}, [document.createTextNode(deck.ka)]));
+
+    var flipWrap = el("div", { class: "flip-wrap" });
+    var flip = el("div", { class: "flip-card" });
+    var frontHtml = "<div class='word'>" + item.en + "</div>" +
+      (item.ipa ? "<div class='ipa'>" + item.ipa + "</div>" : "") +
+      "<div class='tap-hint'>დააჭირე გადასაბრუნებლად</div>";
+    var backHtml = "<div class='ka'>" + item.ka + "</div>" +
+      (item.ex ? "<div class='example'>" + item.ex + (item.exKa ? "<br>" + item.exKa : "") + "</div>" : "") +
+      "<div class='tap-hint'>დააჭირე უკან გადასატრიალებლად</div>";
+    var front = el("div", { class: "face front", html: frontHtml });
+    var backFace = el("div", { class: "face back", html: backHtml });
+    flip.appendChild(front); flip.appendChild(backFace);
+    flip.addEventListener("click", function () { flip.classList.toggle("flipped"); });
+    flipWrap.appendChild(flip);
+    stage.appendChild(flipWrap);
+
+    var nav = el("div", { class: "deck-nav" });
+    var prevBtn = el("button", { class: "nav-btn", type: "button", "aria-label": "წინა" }, [document.createTextNode("←")]);
+    var nextBtn = el("button", { class: "nav-btn", type: "button", "aria-label": "შემდეგი" }, [document.createTextNode("→")]);
+    prevBtn.addEventListener("click", function () { cardIndex[deck.id] = (idx - 1 + total) % total; renderCardsView(); });
+    nextBtn.addEventListener("click", function () { cardIndex[deck.id] = (idx + 1) % total; renderCardsView(); });
+    nav.appendChild(prevBtn);
+    nav.appendChild(el("span", { class: "deck-count" }, [document.createTextNode((idx + 1) + " / " + total)]));
+    nav.appendChild(nextBtn);
+    stage.appendChild(nav);
+
+    var rateRow = el("div", { class: "rate-row" });
+    [["rust", "არ ვიცი"], ["gold", "თითქმის"], ["green", "ვიცი"]].forEach(function (pair) {
+      var level = pair[0], label = pair[1];
+      var chosen = ratings[idx] === level;
+      var b = el("button", { class: "rate-btn" + (chosen ? " chosen" : ""), type: "button", "data-level": level }, [
+        el("span", { class: "swatch" }), document.createTextNode(label)
+      ]);
+      b.addEventListener("click", function () {
+        state.cards[deck.id] = state.cards[deck.id] || {};
+        state.cards[deck.id][idx] = level;
+        saveState();
+        renderCardsView();
+        renderTabs();
+      });
+      rateRow.appendChild(b);
+    });
+    stage.appendChild(rateRow);
+
+    root.appendChild(stage);
+  }
+
+  /* ---------- vocabulary practice: shared helpers ---------- */
+  function shuffleArr(arr) {
+    var a = arr.slice();
+    for (var i = a.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var tmp = a[i]; a[i] = a[j]; a[j] = tmp;
+    }
+    return a;
+  }
+
+  function pickDistractors(deck, correctIdx, count) {
+    var pool = [];
+    deck.cards.forEach(function (c, i) { if (i !== correctIdx && c.ka) pool.push(c); });
+    pool = shuffleArr(pool);
+    var picked = pool.slice(0, count);
+    if (picked.length < count) {
+      var extra = [];
+      DECKS.forEach(function (d) { if (d.id !== deck.id) d.cards.forEach(function (c) { if (c.ka) extra.push(c); }); });
+      extra = shuffleArr(extra);
+      while (picked.length < count && extra.length) picked.push(extra.pop());
+    }
+    return picked;
+  }
+
+  function markPracticeResult(deck, idx, ok) {
+    state.cards[deck.id] = state.cards[deck.id] || {};
+    state.cards[deck.id][idx] = ok ? "green" : "rust";
+    saveState();
+    renderTabs();
+  }
+
+  function renderPracticeDone(root, deck) {
+    stopPracticeMic();
+    var m = deckMastery(deck);
+    var done = el("div", { class: "quiz-box quiz-done" }, [
+      el("div", { class: "eyebrow" }, [document.createTextNode("დასრულებულია")]),
+      el("div", { class: "score" }, [document.createTextNode(m.green + " / " + m.total)])
+    ]);
+    var redo = el("button", { class: "redo-btn", type: "button" }, [document.createTextNode("თავიდან დაწყება")]);
+    redo.addEventListener("click", function () { practicePos = 0; renderCardsView(); });
+    done.appendChild(redo);
+    root.appendChild(done);
+  }
+
+  function practiceHeader(root, deck, modeLabel) {
+    var back = el("button", { class: "back-link", type: "button" }, [document.createTextNode("← კომპლექტებთან დაბრუნება")]);
+    back.addEventListener("click", backToDecks);
+    root.appendChild(back);
+    root.appendChild(el("h2", {}, [document.createTextNode(deck.ka + " — " + modeLabel)]));
+  }
+
+  /* ---------- vocabulary practice: text-to-speech ---------- */
+  function hasVoiceForLang(prefix) {
+    if (!window.speechSynthesis) return false;
+    var voices = window.speechSynthesis.getVoices() || [];
+    var re = new RegExp("^" + prefix, "i");
+    return voices.some(function (v) { return re.test(v.lang); });
+  }
+
+  function speakPracticeText(text, lang, onEnd) {
+    if (!window.speechSynthesis) { if (onEnd) onEnd(); return; }
+    window.speechSynthesis.cancel();
+    var u = new SpeechSynthesisUtterance(text);
+    u.lang = lang || "en-US";
+    u.rate = 0.9;
+    if (onEnd) { u.onend = onEnd; u.onerror = onEnd; }
+    window.speechSynthesis.speak(u);
+  }
+
+  /* ---------- vocabulary practice: mic (independent from the chat mic) ---------- */
+  var practiceMicStream = null;
+  var practiceRecorder = null;
+  var practiceChunks = [];
+  var practiceSilenceInterval = null;
+  var practiceAudioCtx = null;
+
+  function ensurePracticeMic() {
+    if (practiceMicStream && practiceMicStream.getAudioTracks().some(function (t) { return t.readyState === "live"; })) {
+      return Promise.resolve(practiceMicStream);
+    }
+    return navigator.mediaDevices.getUserMedia({ audio: true }).then(function (stream) {
+      practiceMicStream = stream;
+      return stream;
+    });
+  }
+
+  function stopPracticeMic() {
+    stopPracticeSilenceWatcher();
+    if (practiceRecorder && practiceRecorder.state === "recording") { try { practiceRecorder.stop(); } catch (e) {} }
+    if (practiceMicStream) { practiceMicStream.getTracks().forEach(function (t) { t.stop(); }); practiceMicStream = null; }
+    if (window.speechSynthesis) window.speechSynthesis.cancel();
+  }
+
+  function startPracticeSilenceWatcher(stream, onSilence) {
+    try {
+      var AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContextClass) return;
+      practiceAudioCtx = new AudioContextClass();
+      var source = practiceAudioCtx.createMediaStreamSource(stream);
+      var analyserNode = practiceAudioCtx.createAnalyser();
+      analyserNode.fftSize = 512;
+      var data = new Uint8Array(analyserNode.frequencyBinCount);
+      source.connect(analyserNode);
+      var hasSpoken = false, lastLoud = Date.now(), start = Date.now();
+      var MIN_RECORD_MS = 700;
+      practiceSilenceInterval = setInterval(function () {
+        analyserNode.getByteTimeDomainData(data);
+        var sum = 0;
+        for (var i = 0; i < data.length; i++) { var v = data[i] - 128; sum += v * v; }
+        var rms = Math.sqrt(sum / data.length);
+        var now = Date.now();
+        if (now - start < MIN_RECORD_MS) return;
+        if (rms > 14) { hasSpoken = true; lastLoud = now; }
+        if (hasSpoken && (now - lastLoud) > 2200) { onSilence(); return; }
+        if ((now - start) > 15000) { onSilence(); }
+      }, 150);
+    } catch (e) {}
+  }
+  function stopPracticeSilenceWatcher() {
+    if (practiceSilenceInterval) { clearInterval(practiceSilenceInterval); practiceSilenceInterval = null; }
+    if (practiceAudioCtx) { try { practiceAudioCtx.close(); } catch (e) {} practiceAudioCtx = null; }
+  }
+
+  function recordPracticeUtterance(stream, onDone) {
+    var mimeType = pickRecorderMimeType();
+    try {
+      practiceRecorder = mimeType ? new MediaRecorder(stream, { mimeType: mimeType }) : new MediaRecorder(stream);
+    } catch (e) {
+      showPracticeNotice("ჩაწერის შეცდომა: " + e.message);
+      return;
+    }
+    practiceChunks = [];
+    practiceRecorder.addEventListener("dataavailable", function (e) {
+      if (e.data && e.data.size > 0) practiceChunks.push(e.data);
+    });
+    practiceRecorder.addEventListener("stop", function () {
+      stopPracticeSilenceWatcher();
+      var base = baseMimeType(practiceRecorder.mimeType || mimeType) || "audio/webm";
+      var blob = new Blob(practiceChunks, { type: base });
+      onDone(blob);
+    });
+    practiceRecorder.start();
+    startPracticeSilenceWatcher(stream, function () {
+      if (practiceRecorder && practiceRecorder.state === "recording") practiceRecorder.stop();
+    });
+  }
+
+  function showPracticeNotice(msg) {
+    var n = document.getElementById("practiceNotice");
+    if (n) { n.textContent = msg; n.style.display = "block"; }
+  }
+  function hidePracticeNotice() {
+    var n = document.getElementById("practiceNotice");
+    if (n) n.style.display = "none";
+  }
+
+  function setPracticeStatus(state, label) {
+    var s = document.getElementById("practiceStatus");
+    if (!s) return;
+    s.textContent = label || "";
+    s.className = "practice-status" + (label ? " show" : "") + (state ? " state-" + state : "");
+  }
+
+  /* ---------- exercise 1: voice translation (KA spoken -> EN spoken) ---------- */
+  function renderVoicePractice(root) {
+    var deck = DECKS.filter(function (d) { return d.id === cardsSub; })[0];
+    practiceHeader(root, deck, "ხმოვანი თარგმანი");
+    if (practicePos >= deck.cards.length) { renderPracticeDone(root, deck); return; }
+
+    var item = deck.cards[practicePos];
+    var box = el("div", { class: "practice-box" });
+    box.appendChild(el("div", { class: "practice-progress" }, [document.createTextNode((practicePos + 1) + " / " + deck.cards.length)]));
+    box.appendChild(el("div", { class: "bar", "data-state": "green" }, [el("span", { style: "width:" + Math.round((practicePos / deck.cards.length) * 100) + "%" })]));
+    box.appendChild(el("div", { class: "practice-prompt-ka" }, [document.createTextNode(item.ka)]));
+
+    var micBtn = el("button", { class: "practice-mic-btn", id: "practiceMicBtn", type: "button", title: "პასუხის თქმა" }, [document.createTextNode("🎙")]);
+    box.appendChild(micBtn);
+    box.appendChild(el("div", { class: "practice-status", id: "practiceStatus" }));
+    box.appendChild(el("div", { class: "chat-error", id: "practiceNotice", style: "display:none" }));
+    box.appendChild(el("div", { class: "feedback", id: "practiceFeedback" }));
+    root.appendChild(box);
+
+    function askAgain() {
+      hidePracticeNotice();
+      var fb = document.getElementById("practiceFeedback");
+      if (fb) fb.className = "feedback";
+      if (hasVoiceForLang("ka")) {
+        setPracticeStatus("speaking", "ისმენ ქართულ სიტყვას...");
+        speakPracticeText(item.ka, "ka-GE", function () { listenForAnswer(); });
+      } else {
+        listenForAnswer();
+      }
+    }
+
+    function listenForAnswer() {
+      if (!getOpenAiKey()) {
+        showPracticeNotice("ხმოვანი სავარჯიშოსთვის საჭიროა OpenAI API გასაღები — დაამატე ⚙ ჩატის ტაბში.");
+        setPracticeStatus("", "");
+        return;
+      }
+      setPracticeStatus("listening", "გისმენ...");
+      ensurePracticeMic().then(function (stream) {
+        recordPracticeUtterance(stream, function (blob) {
+          setPracticeStatus("processing", "ვამუშავებ...");
+          transcribePracticeAnswer(blob, function (heard, err) {
+            if (err === "TOO_SHORT") { listenForAnswer(); return; }
+            if (err) { showPracticeNotice(err); setPracticeStatus("", ""); return; }
+            evaluateVoiceAnswer(deck, item, heard);
+          });
+        });
+      }).catch(function (err) {
+        showPracticeNotice("მიკროფონზე წვდომა ვერ მოხერხდა: " + err.message);
+        setPracticeStatus("", "");
+      });
+    }
+
+    function evaluateVoiceAnswer(deck, item, heard) {
+      var accepted = [item.en].concat(item.accept || []).map(normalize);
+      var ok = accepted.indexOf(normalize(heard)) !== -1;
+      markPracticeResult(deck, practicePos, ok);
+      var fb = document.getElementById("practiceFeedback");
+      if (fb) {
+        fb.className = "feedback show " + (ok ? "correct" : "wrong");
+        fb.innerHTML = "<span class='mark'>" + checkMarkSvg(ok) + "</span><span class='msg'>" +
+          (ok
+            ? "<span class='hand'>ზუსტად ასეა!</span> — გავიგონე: \"" + chatEscapeHtml(heard) + "\""
+            : "<span class='hand'>თითქმის!</span><span class='correct-answer'>გავიგონე: \"" + chatEscapeHtml(heard) + "\" — სწორი პასუხია: " + item.en + "</span>") +
+          "</span>";
+      }
+      if (ok) {
+        setPracticeStatus("speaking", "პასუხობს...");
+        speakPracticeText(item.en, "en-US", function () { practicePos++; renderCardsView(); });
+      } else {
+        setPracticeStatus("speaking", "სწორი პასუხი...");
+        speakPracticeText("Not quite. The correct answer is: " + item.en, "en-US", function () {
+          askAgain();
+        });
+      }
+    }
+
+    micBtn.addEventListener("click", listenForAnswer);
+    askAgain();
+  }
+
+  function transcribePracticeAnswer(blob, cb) {
+    if (blob.size < 2000) {
+      /* Too little audio to be a real answer — ask again instead of sending
+         junk to Whisper (this is what caused the decode error). */
+      cb(null, "TOO_SHORT");
+      return;
+    }
+    var ext = extensionForMimeType(blob.type);
+    var form = new FormData();
+    form.append("file", blob, "answer." + ext);
+    form.append("model", "whisper-1");
+    form.append("language", "en");
+    fetch(WHISPER_API_URL, {
+      method: "POST",
+      headers: { "Authorization": "Bearer " + getOpenAiKey() },
+      body: form
+    }).then(function (res) {
+      return res.json().then(function (data) { return { ok: res.ok, status: res.status, data: data }; });
+    }).then(function (result) {
+      if (!result.ok) {
+        var msg = result.data && result.data.error && result.data.error.message ? result.data.error.message : "ტრანსკრიფცია ვერ შესრულდა";
+        if (result.status === 401) msg = "OpenAI გასაღები არასწორია — შეამოწმე ⚙ ჩატის ტაბში.";
+        cb(null, "Whisper შეცდომა: " + msg);
+        return;
+      }
+      cb((result.data.text || "").trim(), null);
+    }).catch(function (err) {
+      cb(null, "კავშირის შეცდომა: " + err.message);
+    });
+  }
+
+  /* ---------- exercise 2: written translation (KA shown -> EN typed) ---------- */
+  function renderWrittenPractice(root) {
+    var deck = DECKS.filter(function (d) { return d.id === cardsSub; })[0];
+    practiceHeader(root, deck, "წერითი თარგმანი");
+    if (practicePos >= deck.cards.length) { renderPracticeDone(root, deck); return; }
+
+    var item = deck.cards[practicePos];
+    var box = el("div", { class: "practice-box" });
+    box.appendChild(el("div", { class: "practice-progress" }, [document.createTextNode((practicePos + 1) + " / " + deck.cards.length)]));
+    box.appendChild(el("div", { class: "bar", "data-state": "green" }, [el("span", { style: "width:" + Math.round((practicePos / deck.cards.length) * 100) + "%" })]));
+    box.appendChild(el("div", { class: "practice-prompt-ka" }, [document.createTextNode(item.ka)]));
+
+    var answerRow = el("div", { class: "answer-row" });
+    var input = el("input", { class: "answer-input", type: "text", autocomplete: "off", spellcheck: "false", placeholder: "დაწერე ინგლისურად..." });
+    var checkBtn = el("button", { class: "check-btn", type: "button" }, [document.createTextNode("შემოწმება")]);
+    answerRow.appendChild(input); answerRow.appendChild(checkBtn);
+    box.appendChild(answerRow);
+
+    var feedback = el("div", { class: "feedback" });
+    box.appendChild(feedback);
+    var nextBtn = el("button", { class: "next-btn", type: "button" }, [document.createTextNode("შემდეგი →")]);
+    box.appendChild(nextBtn);
+    root.appendChild(box);
+
+    function submit() {
+      if (!input.value.trim()) { input.focus(); return; }
+      var accepted = [item.en].concat(item.accept || []).map(normalize);
+      var ok = accepted.indexOf(normalize(input.value)) !== -1;
+      markPracticeResult(deck, practicePos, ok);
+      feedback.className = "feedback show " + (ok ? "correct" : "wrong");
+      feedback.innerHTML = "<span class='mark'>" + checkMarkSvg(ok) + "</span><span class='msg'>" +
+        (ok ? "<span class='hand'>ზუსტად ასეა!</span>" : "<span class='hand'>თითქმის!</span><span class='correct-answer'>სწორი პასუხია: " + item.en + "</span>") +
+        "</span>";
+      input.disabled = true; checkBtn.disabled = true;
+      if (ok) {
+        speakPracticeText(item.en, "en-US", function () { practicePos++; renderCardsView(); });
+      } else {
+        nextBtn.classList.add("show");
+      }
+    }
+    checkBtn.addEventListener("click", submit);
+    input.addEventListener("keydown", function (e) { if (e.key === "Enter") submit(); });
+    nextBtn.addEventListener("click", function () { practicePos++; renderCardsView(); });
+    input.focus();
+  }
+
+  /* ---------- exercise 3: multiple choice (EN shown+spoken -> pick KA) ---------- */
+  function renderMcPractice(root) {
+    var deck = DECKS.filter(function (d) { return d.id === cardsSub; })[0];
+    practiceHeader(root, deck, "არჩევანის ტესტი");
+    if (practicePos >= deck.cards.length) { renderPracticeDone(root, deck); return; }
+
+    var item = deck.cards[practicePos];
+    var box = el("div", { class: "practice-box" });
+    box.appendChild(el("div", { class: "practice-progress" }, [document.createTextNode((practicePos + 1) + " / " + deck.cards.length)]));
+    box.appendChild(el("div", { class: "bar", "data-state": "green" }, [el("span", { style: "width:" + Math.round((practicePos / deck.cards.length) * 100) + "%" })]));
+    box.appendChild(el("div", { class: "practice-prompt-en" }, [document.createTextNode(item.en)]));
+    if (item.ipa) box.appendChild(el("div", { class: "practice-ipa" }, [document.createTextNode(item.ipa)]));
+
+    var speakBtn = el("button", { class: "chat-speak-btn", type: "button", title: "მოსმენა" }, [document.createTextNode("🔊")]);
+    speakBtn.addEventListener("click", function () { speakPracticeText(item.en, "en-US"); });
+    box.appendChild(speakBtn);
+
+    var options = item.ka ? shuffleArr([item].concat(pickDistractors(deck, practicePos, 3))) : [item];
+    var answered = false;
+    var optWrap = el("div", { class: "mc-options" });
+    options.forEach(function (opt) {
+      var optBtn = el("button", { class: "mc-option", type: "button" }, [document.createTextNode(opt.ka)]);
+      optBtn.addEventListener("click", function () {
+        if (answered) return;
+        var ok = opt === item;
+        if (ok) {
+          answered = true;
+          optBtn.classList.add("correct");
+          markPracticeResult(deck, practicePos, true);
+          setPracticeStatus("speaking", "პასუხობს...");
+          speakPracticeText(item.en, "en-US", function () { practicePos++; renderCardsView(); });
+        } else {
+          optBtn.classList.add("wrong");
+          markPracticeResult(deck, practicePos, false);
+        }
+      });
+      optWrap.appendChild(optBtn);
+    });
+    box.appendChild(optWrap);
+    box.appendChild(el("div", { class: "practice-status", id: "practiceStatus" }));
+    root.appendChild(box);
+
+    speakPracticeText(item.en, "en-US");
+  }
+
+  /* ---------- grammar quiz ---------- */
+  var quizPos = {};
+
+  function openTopic(id) { grammarSub = id; renderGrammarView(); }
+
+  function renderGrammarView() {
+    var root = document.getElementById("view-grammar");
+    root.innerHTML = "";
+    if (!grammarSub) {
+      root.appendChild(el("h2", {}, [document.createTextNode("გრამატიკის ვარჯიშები")]));
+      root.appendChild(el("p", { style: "color:var(--ink-soft);margin:6px 0 20px;max-width:60ch" }, [
+        document.createTextNode("იგივე წინადადებები, რომლებიც წიგნში ივარჯიშე — დაწერე პასუხი და მაშინვე ნახავ, სწორია თუ არა.")
+      ]));
+      var grid = el("div", { class: "picker-grid" });
+      unitGrammarTopics(currentUnitObj()).forEach(function (topic) {
+        var m = topicMastery(topic);
+        var card = el("button", { class: "picker-card", type: "button" }, [
+          el("span", { class: "ka" }, [document.createTextNode(topic.ka)]),
+          el("span", { class: "en" }, [document.createTextNode(topic.en)]),
+          el("span", { class: "meta" }, [document.createTextNode(topic.items.length + " კითხვა · " + m.correct + "/" + m.total + " სწორი")])
+        ]);
+        card.addEventListener("click", function (id) { return function () { openTopic(id); }; }(topic.id));
+        grid.appendChild(card);
+      });
+      root.appendChild(grid);
+      return;
+    }
+
+    var topic = GRAMMAR.filter(function (t) { return t.id === grammarSub; })[0];
+    var back = el("button", { class: "back-link", type: "button" }, [document.createTextNode("← თემებთან დაბრუნება")]);
+    back.addEventListener("click", function () { grammarSub = null; renderGrammarView(); });
+    root.appendChild(back);
+    root.appendChild(el("h2", {}, [document.createTextNode(topic.ka)]));
+    if (topic.note) root.appendChild(el("p", { style: "color:var(--ink-soft);max-width:64ch;margin:6px 0 18px;font-size:0.92rem" }, [document.createTextNode(topic.note)]));
+
+    if (quizPos[topic.id] === undefined) quizPos[topic.id] = 0;
+    var pos = quizPos[topic.id];
+
+    if (pos >= topic.items.length) {
+      var m = topicMastery(topic);
+      var done = el("div", { class: "quiz-box quiz-done" }, [
+        el("div", { class: "eyebrow" }, [document.createTextNode("დასრულებულია")]),
+        el("div", { class: "score" }, [document.createTextNode(m.correct + " / " + m.total)])
+      ]);
+      var redo = el("button", { class: "redo-btn", type: "button" }, [document.createTextNode("თავიდან დაწყება")]);
+      redo.addEventListener("click", function () { quizPos[topic.id] = 0; renderGrammarView(); });
+      done.appendChild(redo);
+      root.appendChild(done);
+      return;
+    }
+
+    var item = topic.items[pos];
+    var box = el("div", { class: "quiz-box" });
+    box.appendChild(el("div", { class: "quiz-progress" }, [document.createTextNode((pos + 1) + " / " + topic.items.length)]));
+    box.appendChild(el("div", { class: "quiz-prompt", html: item.instruction + "<br><strong>" + item.prompt + "</strong>" }));
+
+    var answerRow = el("div", { class: "answer-row" });
+    var input = el("input", { class: "answer-input", type: "text", autocomplete: "off", spellcheck: "false", placeholder: "დაწერე პასუხი..." });
+    var checkBtn = el("button", { class: "check-btn", type: "button" }, [document.createTextNode("შემოწმება")]);
+    answerRow.appendChild(input);
+    answerRow.appendChild(checkBtn);
+    box.appendChild(answerRow);
+
+    var feedback = el("div", { class: "feedback" });
+    box.appendChild(feedback);
+
+    var footer = el("div", { class: "quiz-footer" });
+    var skip = el("button", { class: "skip-btn", type: "button" }, [document.createTextNode("პასუხის ნახვა")]);
+    var next = el("button", { class: "next-btn", type: "button" }, [document.createTextNode("შემდეგი →")]);
+    footer.appendChild(skip);
+    footer.appendChild(next);
+    box.appendChild(footer);
+    root.appendChild(box);
+
+    function recordResult(ok) {
+      state.quiz[topic.id] = state.quiz[topic.id] || { answers: {} };
+      state.quiz[topic.id].answers[pos] = ok;
+      saveState();
+      renderTabs();
+    }
+
+    function showFeedback(ok, revealed) {
+      feedback.className = "feedback show " + (ok ? "correct" : "wrong");
+      var msgHtml = ok
+        ? "<span class='hand'>ზუსტად ასეა!</span>"
+        : "<span class='hand'>თითქმის!</span><span class='correct-answer'>სწორი პასუხია: " + (item.answer) + "</span>";
+      feedback.innerHTML = "<span class='mark'>" + checkMarkSvg(ok) + "</span><span class='msg'>" + msgHtml + "</span>";
+      input.disabled = true; checkBtn.disabled = true; skip.style.display = "none";
+      next.classList.add("show");
+      if (!revealed) recordResult(ok);
+    }
+
+    checkBtn.addEventListener("click", function () {
+      if (!input.value.trim()) { input.focus(); return; }
+      var accepted = [item.answer].concat(item.accept || []).map(normalize);
+      var ok = accepted.indexOf(normalize(input.value)) !== -1;
+      showFeedback(ok, false);
+    });
+    input.addEventListener("keydown", function (e) { if (e.key === "Enter") checkBtn.click(); });
+    skip.addEventListener("click", function () { showFeedback(false, true); });
+    next.addEventListener("click", function () { quizPos[topic.id] = pos + 1; renderGrammarView(); });
+  }
+
+  /* ---------- reference ---------- */
+  function renderReferenceView() {
+    var root = document.getElementById("view-reference");
+    root.innerHTML = "";
+    root.appendChild(el("h2", {}, [document.createTextNode("ცნობარი")]));
+    var search = el("input", { class: "ref-search", type: "search", placeholder: "მოძებნე სიტყვა..." });
+    root.appendChild(search);
+
+    var groups = [];
+    REFERENCE_GRAMMAR.forEach(function (g) { groups.push({ title: g.title, rows: g.rows }); });
+    DECKS.forEach(function (deck) {
+      groups.push({
+        title: deck.ka, rows: deck.cards.map(function (c) { return [c.en, c.ipa || "", c.ka]; })
+      });
+    });
+
+    var allRowEls = [];
+    groups.forEach(function (g) {
+      var groupEl = el("div", { class: "ref-group" });
+      groupEl.appendChild(el("h3", {}, [document.createTextNode(g.title)]));
+      var table = el("table", { class: "ref-table" });
+      g.rows.forEach(function (row) {
+        var tr = el("tr", {}, [
+          el("td", { class: "en" }, [document.createTextNode(row[0])]),
+          el("td", { class: "ipa" }, [document.createTextNode(row[1])]),
+          el("td", { class: "ka" }, [document.createTextNode(row[2])])
+        ]);
+        tr.setAttribute("data-search", (row[0] + " " + row[2]).toLowerCase());
+        table.appendChild(tr);
+        allRowEls.push({ tr: tr, group: groupEl });
+      });
+      groupEl.appendChild(table);
+      root.appendChild(groupEl);
+    });
+
+    search.addEventListener("input", function () {
+      var q = search.value.trim().toLowerCase();
+      var groupHasVisible = new Map();
+      allRowEls.forEach(function (r) {
+        var match = !q || r.tr.getAttribute("data-search").indexOf(q) !== -1;
+        r.tr.classList.toggle("hide", !match);
+        if (match) groupHasVisible.set(r.group, true);
+      });
+      root.querySelectorAll(".ref-group").forEach(function (g) {
+        g.style.display = groupHasVisible.get(g) ? "" : "none";
+      });
+    });
+  }
+
+  /* ---------- chat ---------- */
+  var CHAT_KEY_STORAGE = "nonaEnglishNotebook.apiKey";
+  var OPENAI_KEY_STORAGE = "nonaEnglishNotebook.openaiKey";
+  var CHAT_API_URL = "https://api.anthropic.com/v1/messages";
+  var WHISPER_API_URL = "https://api.openai.com/v1/audio/transcriptions";
+  var CHAT_MODEL = "claude-opus-4-8";
+  var chatHistory = [];
+  var chatScopeUnit = null;
+  var chatStarted = false;
+  var chatSettingsOpen = false;
+  var mediaRecorder = null;
+  var audioChunks = [];
+  var isRecording = false;
+  var voiceModeOn = false;
+  var voiceState = "";
+  var recordingCancelled = false;
+  var audioCtx = null;
+  var analyser = null;
+  var silenceCheckInterval = null;
+
+  var CHAT_OUTPUT_SCHEMA = {
+    type: "object",
+    properties: {
+      reply: { type: "string", description: "Natural English conversational reply." },
+      has_correction: { type: "boolean", description: "True if the learner's last message had a mistake." },
+      corrected: { type: "string", description: "The corrected English phrase, or empty string." },
+      explanation: { type: "string", description: "One short sentence in Georgian explaining the correction, or empty string." }
+    },
+    required: ["reply", "has_correction", "corrected", "explanation"],
+    additionalProperties: false
+  };
+
+  function getChatKey() { return localStorage.getItem(CHAT_KEY_STORAGE) || ""; }
+  function setChatKey(k) { localStorage.setItem(CHAT_KEY_STORAGE, k); }
+  function clearChatKey() { localStorage.removeItem(CHAT_KEY_STORAGE); }
+  function getOpenAiKey() { return localStorage.getItem(OPENAI_KEY_STORAGE) || ""; }
+  function setOpenAiKey(k) { localStorage.setItem(OPENAI_KEY_STORAGE, k); }
+  function clearOpenAiKey() { localStorage.removeItem(OPENAI_KEY_STORAGE); }
+
+  function buildSystemPrompt() {
+    var scopedUnit = chatScopeUnit ? UNITS.filter(function (u) { return u.id === chatScopeUnit; })[0] : null;
+    var relevantDecks = scopedUnit ? unitDecks(scopedUnit) : DECKS;
+    var relevantGrammar = scopedUnit ? unitGrammarTopics(scopedUnit) : GRAMMAR;
+    var relevantIds = relevantGrammar.map(function (g) { return g.id; });
+    var deckTopics = relevantDecks.map(function (d) { return d.ka + " (" + d.en + ")"; }).join(", ") || "(none for this unit — focus on the grammar below)";
+    var grammarTopics = relevantGrammar.map(function (g) { return g.ka + " — " + g.en; }).join("; ") || "(none for this unit — focus on the vocabulary above)";
+
+    var passages = [];
+    if (relevantIds.indexOf("readingJacob") !== -1) {
+      passages.push("PASSAGE — Jacob's Family: \"My name is Jacob Thompson, and I am 28 years old. I am from Great Britain and live in London with my family. I have a big family — mother, father, grandparents, wife, and children — but I don't have any sisters or brothers. I am the only child. Only 7 of us are in the family photo; my parents are not with us. My mum is a busy teacher. My father is a truck driver who is always on the road. Grandma is 78 and retired. Grandpa is 80 and an energetic university professor. I fell in love with my wife, Helen, when I was 17 and we soon married. We have two sons, Alex and Jack, and a daughter, Sally, aged 6, 8, and 7. We all love and respect each other.\"");
+    }
+    if (relevantIds.indexOf("readingKeiraLiam") !== -1) {
+      passages.push("PASSAGE — Keira & Liam's routines: \"Keira gets up at 2 a.m., showers, gets dressed, leaves home at 3 a.m., gets to work at 3.30, has a quick breakfast at work, reads the plan for the morning — her breakfast TV program starts at 5 a.m. Liam gets up at 3 p.m., spends time with family, leaves for work at 8.30 p.m. because he worries about traffic, starts work at 10 p.m. at the hospital helping patients and doctors, has coffee and a snack instead of lunch, finishes at 6 a.m., has dinner, gets home at 7 a.m. and goes to bed exhausted.\"");
+    }
+
+    var lines = [
+      "You are " + PROFILE.nameEn + "'s friendly English conversation partner for spoken/written practice.",
+      "",
+      "Learner profile: " + PROFILE.nameEn + " (" + PROFILE.name + ") " + PROFILE.surnameEn + ", " + PROFILE.age + ", from " + PROFILE.countryEn + ", lives in " + PROFILE.cityEn + ", works as a " + PROFILE.jobEn + ".",
+      "She is an elementary (A1-A2) English learner working through Unit 1 of a textbook called \"Speaking Tags.\"",
+      ""
+    ];
+    if (scopedUnit) {
+      lines.push("This conversation is focused specifically on " + scopedUnit.ka + " — keep it centered on this unit's material only, don't wander into other units' vocabulary or grammar.");
+      lines.push("");
+    }
+    lines.push("Vocabulary topics she has studied — steer the conversation toward these: " + deckTopics + ".");
+    lines.push("Grammar she has studied — stay within this level: " + grammarTopics + ".");
+    lines.push("");
+    if (passages.length) {
+      lines.push("She has also read " + (passages.length > 1 ? "these passages" : "this passage") + " from her textbook, and can be quizzed on " + (passages.length > 1 ? "them" : "it") + " by voice:");
+      passages.forEach(function (p) { lines.push(p); });
+      lines.push("When she asks to be quizzed on a passage, ask her simple comprehension questions about it ONE AT A TIME in English, wait for her spoken answer, gently confirm or correct the factual content in your reply, and continue with the next question — in addition to the grammar correction in has_correction/corrected/explanation.");
+      lines.push("");
+    }
+    lines.push("Your job on every turn:");
+    var tail = [
+      "1. Reply naturally and warmly in ENGLISH ONLY, continuing the conversation, asking a simple follow-up question, short sentences, common A1-A2 words. Keep it brief (2-4 sentences).",
+      "2. Separately, check her most recent message for English grammar or vocabulary mistakes.",
+      "   - If there IS a mistake: set has_correction to true, give the corrected English phrase in 'corrected', and a very short explanation IN GEORGIAN (one sentence) in 'explanation'.",
+      "   - If her message has no mistakes: set has_correction to false and leave 'corrected'/'explanation' as empty strings.",
+      "3. Never blend the correction into the reply — keep them completely separate."
+    ];
+    return lines.concat(tail).join("\n");
+  }
+
+  function chatEscapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+
+  function renderChatView() {
+    var root = document.getElementById("view-chat");
+    root.innerHTML = "";
+
+    if (!getChatKey()) {
+      renderChatKeyForm(root, { mode: "setup" });
+      return;
+    }
+    if (chatSettingsOpen) {
+      renderChatKeyForm(root, { mode: "settings" });
+      return;
+    }
+    renderChatMain(root);
+  }
+
+  function renderChatKeyForm(root, opts) {
+    var isSettings = opts.mode === "settings";
+    var box = el("div", { class: "chat-setup" });
+    box.appendChild(el("h2", {}, [document.createTextNode(isSettings ? "API გასაღებების მართვა" : "API გასაღების დაყენება")]));
+    box.appendChild(el("p", {
+      html: "ეს ტაბი პირდაპირ შენს ბრაუზერში მუშაობს. საჭიროა შენი პირადი Anthropic API " +
+        "გასაღები (<a href='https://console.anthropic.com' target='_blank' rel='noopener'>console.anthropic.com</a>-დან) — ჩატისთვის. " +
+        "OpenAI გასაღები (<a href='https://platform.openai.com/api-keys' target='_blank' rel='noopener'>platform.openai.com</a>-დან) " +
+        "საჭიროა მხოლოდ <strong>ხმით საუბრისთვის</strong> (მიკროფონი) — თუ ეს არ გჭირდება, ცარიელი დატოვე. " +
+        "ორივე გასაღები ინახება <strong>მხოლოდ ამ ბრაუზერში</strong> — არსად არ იგზავნება, გარდა შესაბამის სერვერზე პირდაპირ."
+    }));
+
+    box.appendChild(el("label", { for: "chatApiKeyInput" }, [document.createTextNode("Anthropic API გასაღები (ჩატისთვის)")]));
+    var row1 = el("div", { class: "chat-key-row" });
+    var input1 = el("input", { type: "password", id: "chatApiKeyInput", placeholder: "sk-ant-api03-...", autocomplete: "off", spellcheck: "false" });
+    input1.value = getChatKey();
+    var toggle1 = el("button", { class: "chat-toggle-btn", type: "button" }, [document.createTextNode("👁")]);
+    toggle1.addEventListener("click", function () { input1.type = input1.type === "password" ? "text" : "password"; });
+    row1.appendChild(input1); row1.appendChild(toggle1);
+    box.appendChild(row1);
+
+    box.appendChild(el("label", { for: "chatOpenAiKeyInput" }, [document.createTextNode("OpenAI API გასაღები (ხმით საუბრისთვის — არასავალდებულო)")]));
+    var row2 = el("div", { class: "chat-key-row" });
+    var input2 = el("input", { type: "password", id: "chatOpenAiKeyInput", placeholder: "sk-proj-...", autocomplete: "off", spellcheck: "false" });
+    input2.value = getOpenAiKey();
+    var toggle2 = el("button", { class: "chat-toggle-btn", type: "button" }, [document.createTextNode("👁")]);
+    toggle2.addEventListener("click", function () { input2.type = input2.type === "password" ? "text" : "password"; });
+    row2.appendChild(input2); row2.appendChild(toggle2);
+    box.appendChild(row2);
+
+    var btnRow = el("div", { style: "display:flex;gap:10px;flex-wrap:wrap;margin-top:16px" });
+    var saveBtn = el("button", { class: "check-btn", type: "button" }, [document.createTextNode(isSettings ? "შენახვა" : "შენახვა და დაწყება")]);
+    saveBtn.addEventListener("click", function () {
+      var v1 = input1.value.trim();
+      if (!v1) { input1.focus(); return; }
+      setChatKey(v1);
+      var v2 = input2.value.trim();
+      if (v2) setOpenAiKey(v2); else clearOpenAiKey();
+      chatSettingsOpen = false;
+      renderChatView();
+    });
+    btnRow.appendChild(saveBtn);
+
+    if (isSettings) {
+      var cancelBtn = el("button", { class: "redo-btn", type: "button" }, [document.createTextNode("გაუქმება")]);
+      cancelBtn.addEventListener("click", function () { chatSettingsOpen = false; renderChatView(); });
+      btnRow.appendChild(cancelBtn);
+
+      var clearBtn = el("button", { class: "redo-btn", type: "button", style: "color:var(--rust);border-color:var(--rust)" }, [document.createTextNode("ორივე გასაღების წაშლა")]);
+      clearBtn.addEventListener("click", function () {
+        if (!confirm("წავშალო ორივე API გასაღები და ჩატის ისტორია?")) return;
+        clearChatKey(); clearOpenAiKey();
+        chatHistory = []; chatStarted = false; chatSettingsOpen = false;
+        renderChatView();
+      });
+      btnRow.appendChild(clearBtn);
+    }
+
+    box.appendChild(btnRow);
+    box.appendChild(el("div", { class: "chat-hint" }, [document.createTextNode("რჩევა: არასდროს გაუზიარო ეს გასაღებები არავის.")]));
+    root.appendChild(box);
+  }
+
+  function renderChatMain(root) {
+    var topbar = el("div", { class: "chat-topbar" });
+    var scopedUnit = chatScopeUnit ? UNITS.filter(function (u) { return u.id === chatScopeUnit; })[0] : null;
+    if (scopedUnit) {
+      var badge = el("div", { class: "chat-scope-badge" }, [document.createTextNode("თემა: " + scopedUnit.ka)]);
+      var clearBtn = el("button", { type: "button", title: "ზოგად ჩატზე დაბრუნება" }, [document.createTextNode("✕")]);
+      clearBtn.addEventListener("click", function () {
+        chatScopeUnit = null; chatHistory = []; chatStarted = false;
+        renderChatView();
+      });
+      badge.appendChild(clearBtn);
+      topbar.appendChild(badge);
+    } else {
+      topbar.appendChild(el("span", {}));
+    }
+    var settingsBtn = el("button", { class: "chat-icon-btn", type: "button", title: "API გასაღებების მართვა" }, [document.createTextNode("⚙")]);
+    settingsBtn.addEventListener("click", function () {
+      chatSettingsOpen = true;
+      renderChatView();
+    });
+    topbar.appendChild(settingsBtn);
+    root.appendChild(topbar);
+
+    var errorBanner = el("div", { class: "chat-error", id: "chatErrorBanner", style: "display:none" });
+    root.appendChild(errorBanner);
+
+    var chips = el("div", { class: "chat-chips" });
+    [
+      ["მისალმება", "Hello! My name is Nono."],
+      ["ოჯახი", "I want to talk about my family."],
+      ["დღის რეჟიმი", "Let's talk about my daily routine."],
+      ["მოწონება/არმოწონება", "I want to talk about things I like and dislike."],
+      ["კითხვები ჩემზე", "Can you ask me questions about myself?"],
+      ["ჯეიქობის ოჯახზე კითხვები", "Can you quiz me about Jacob's family from the reading?"],
+      ["კეირასა და ლიამზე", "Can you quiz me about Keira and Liam's daily routines?"]
+    ].forEach(function (pair) {
+      var chip = el("button", { class: "chat-chip", type: "button" }, [document.createTextNode(pair[0])]);
+      chip.addEventListener("click", function () {
+        var ta = document.getElementById("chatUserInput");
+        ta.value = pair[1];
+        ta.focus();
+      });
+      chips.appendChild(chip);
+    });
+    root.appendChild(chips);
+
+    var messagesEl = el("div", { class: "chat-messages", id: "chatMessages" });
+    root.appendChild(messagesEl);
+
+    var inputBar = el("div", { class: "chat-input-bar" });
+    var micBtn = el("button", { class: "chat-mic-btn", id: "chatMicBtn", type: "button", title: "ხმოვანი დიალოგის დაწყება" }, [document.createTextNode("🎙")]);
+    var textarea = el("textarea", { id: "chatUserInput", rows: "1", placeholder: "დაწერე ინგლისურად ან დააჭირე 🎙-ს ხმოვანი დიალოგისთვის..." });
+    var sendBtn = el("button", { class: "chat-send-btn", id: "chatSendBtn", type: "button" }, [document.createTextNode("➤")]);
+    inputBar.appendChild(micBtn);
+    inputBar.appendChild(textarea);
+    inputBar.appendChild(sendBtn);
+    root.appendChild(inputBar);
+    var statusEl = el("div", { class: "chat-voice-status", id: "chatVoiceStatus" }, [el("span", { class: "pulse-dot" }), el("span", { id: "chatVoiceStatusText" })]);
+    root.appendChild(statusEl);
+
+    sendBtn.addEventListener("click", function () { sendChatMessage(); });
+    micBtn.addEventListener("click", toggleVoiceMode);
+    textarea.addEventListener("keydown", function (e) {
+      if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendChatMessage(); }
+    });
+    textarea.addEventListener("input", function () {
+      textarea.style.height = "auto";
+      textarea.style.height = Math.min(textarea.scrollHeight, 120) + "px";
+    });
+
+    updateMicButton();
+    if (voiceModeOn) setVoiceStatus(voiceState || "listening");
+
+    if (!chatStarted) {
+      chatStarted = true;
+      addChatBubble("assistant", "Hi Nono! 😊 How are you today? Let's practice some English — tell me about your day, or pick a topic above to get started.", null);
+    } else {
+      chatHistory.forEach(function (m) {
+        if (m.role === "user") addChatBubble("user", m.content, null);
+        else addChatBubble("assistant", m.content, null);
+      });
+    }
+    textarea.focus();
+  }
+
+  function addChatBubble(role, text, correction) {
+    var messagesEl = document.getElementById("chatMessages");
+    if (!messagesEl) return;
+    var wrap = el("div", { class: "chat-msg " + role });
+    var bubbleRow = el("div", { class: "chat-bubble-row" });
+    bubbleRow.appendChild(el("div", { class: "chat-bubble", html: chatEscapeHtml(text) }));
+    if (role === "assistant") {
+      var speakBtn = el("button", { class: "chat-speak-btn", type: "button", title: "ხმამაღლა მოსმენა" }, [document.createTextNode("🔊")]);
+      speakBtn.addEventListener("click", function () { speakChatText(text); });
+      bubbleRow.appendChild(speakBtn);
+    }
+    wrap.appendChild(bubbleRow);
+    if (correction && correction.has_correction) {
+      wrap.appendChild(el("div", { class: "chat-correction", html:
+        "<span class='label'>შესწორება:</span> <strong>" + chatEscapeHtml(correction.corrected) + "</strong> — " + chatEscapeHtml(correction.explanation)
+      }));
+    }
+    messagesEl.appendChild(wrap);
+    window.scrollTo(0, document.body.scrollHeight);
+  }
+
+  function addChatTyping() {
+    var messagesEl = document.getElementById("chatMessages");
+    if (!messagesEl) return;
+    var wrap = el("div", { class: "chat-msg assistant", id: "chatTyping" });
+    wrap.appendChild(el("div", { class: "chat-bubble chat-typing", html: "<span></span><span></span><span></span>" }));
+    messagesEl.appendChild(wrap);
+    window.scrollTo(0, document.body.scrollHeight);
+  }
+  function removeChatTyping() {
+    var el2 = document.getElementById("chatTyping");
+    if (el2) el2.remove();
+  }
+
+  function showChatError(msg) {
+    var banner = document.getElementById("chatErrorBanner");
+    if (!banner) return;
+    banner.textContent = msg;
+    banner.style.display = "block";
+  }
+  function hideChatError() {
+    var banner = document.getElementById("chatErrorBanner");
+    if (banner) banner.style.display = "none";
+  }
+
+  function sendChatMessage(voiceText) {
+    var isVoiceTurn = typeof voiceText === "string";
+    var textarea = document.getElementById("chatUserInput");
+    var sendBtn = document.getElementById("chatSendBtn");
+    var text = isVoiceTurn ? voiceText.trim() : (textarea ? textarea.value.trim() : "");
+    if (!text) {
+      if (voiceModeOn) resumeListening();
+      return;
+    }
+    hideChatError();
+    addChatBubble("user", text, null);
+    chatHistory.push({ role: "user", content: text });
+    if (!isVoiceTurn && textarea) { textarea.value = ""; textarea.style.height = "auto"; }
+    if (sendBtn) sendBtn.disabled = true;
+    addChatTyping();
+    if (voiceModeOn) setVoiceStatus("processing");
+
+    fetch(CHAT_API_URL, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "x-api-key": getChatKey(),
+        "anthropic-version": "2023-06-01",
+        "anthropic-dangerous-direct-browser-access": "true"
+      },
+      body: JSON.stringify({
+        model: CHAT_MODEL,
+        max_tokens: 700,
+        system: buildSystemPrompt(),
+        messages: chatHistory,
+        output_config: {
+          effort: "medium",
+          format: { type: "json_schema", schema: CHAT_OUTPUT_SCHEMA }
+        }
+      })
+    }).then(function (res) {
+      return res.json().then(function (data) { return { ok: res.ok, status: res.status, data: data }; });
+    }).then(function (result) {
+      removeChatTyping();
+      if (!result.ok) {
+        if (result.status === 401) {
+          showChatError("API გასაღები არასწორია ან ვადაგასულია. გთხოვ შეამოწმე ⚙ მენიუში.");
+        } else if (result.status === 429) {
+          showChatError("მოთხოვნები ძალიან ხშირია (rate limit) — მოიცადე ცოტა ხანი და სცადე ისევ.");
+        } else {
+          showChatError("შეცდომა: " + (result.data && result.data.error && result.data.error.message ? result.data.error.message : "უცნობი შეცდომა"));
+        }
+        chatHistory.pop();
+        if (sendBtn) sendBtn.disabled = false;
+        if (voiceModeOn) exitVoiceMode();
+        return;
+      }
+      var content = result.data.content || [];
+      var textBlock = null;
+      for (var i = 0; i < content.length; i++) {
+        if (content[i].type === "text") { textBlock = content[i]; break; }
+      }
+      if (!textBlock) {
+        showChatError("პასუხი ვერ მოვიდა — სცადე ისევ.");
+        if (sendBtn) sendBtn.disabled = false;
+        if (voiceModeOn) exitVoiceMode();
+        return;
+      }
+      var parsed = JSON.parse(textBlock.text);
+      addChatBubble("assistant", parsed.reply, parsed);
+      chatHistory.push({ role: "assistant", content: parsed.reply });
+      if (sendBtn) sendBtn.disabled = false;
+      if (voiceModeOn) {
+        setVoiceStatus("speaking");
+        speakChatTextAuto(parsed.reply);
+      } else if (!isVoiceTurn && textarea) {
+        textarea.focus();
+      }
+    }).catch(function (err) {
+      removeChatTyping();
+      showChatError("კავშირის შეცდომა: " + err.message);
+      chatHistory.pop();
+      if (sendBtn) sendBtn.disabled = false;
+      if (voiceModeOn) exitVoiceMode();
+    });
+  }
+
+  /* ---------- voice: status indicator ---------- */
+  var VOICE_STATUS_LABELS = { listening: "გისმენ...", processing: "ვამუშავებ...", speaking: "პასუხობს..." };
+
+  function setVoiceStatus(state) {
+    voiceState = state;
+    var wrap = document.getElementById("chatVoiceStatus");
+    var text = document.getElementById("chatVoiceStatusText");
+    if (!wrap || !text) return;
+    text.textContent = VOICE_STATUS_LABELS[state] || "";
+    wrap.className = "chat-voice-status show state-" + state;
+  }
+  function hideVoiceStatus() {
+    voiceState = "";
+    var wrap = document.getElementById("chatVoiceStatus");
+    if (wrap) wrap.className = "chat-voice-status";
+  }
+
+  /* ---------- voice: text-to-speech ---------- */
+  function speakChatText(text) {
+    if (!window.speechSynthesis) {
+      showChatError("ეს ბრაუზერი ხმის სინთეზს ვერ უჭერს მხარს.");
+      return;
+    }
+    window.speechSynthesis.cancel();
+    var u = new SpeechSynthesisUtterance(text);
+    u.lang = "en-US";
+    u.rate = 0.95;
+    window.speechSynthesis.speak(u);
+  }
+
+  function speakChatTextAuto(text) {
+    if (!window.speechSynthesis) {
+      if (voiceModeOn) resumeListening();
+      return;
+    }
+    window.speechSynthesis.cancel();
+    var u = new SpeechSynthesisUtterance(text);
+    u.lang = "en-US";
+    u.rate = 0.95;
+    u.onend = function () { if (voiceModeOn) resumeListening(); };
+    u.onerror = function () { if (voiceModeOn) resumeListening(); };
+    window.speechSynthesis.speak(u);
+  }
+
+  /* ---------- voice: continuous hands-free dialogue mode ----------
+     One getUserMedia() permission request per voice-mode session: the
+     mic MediaStream is acquired once in enterVoiceMode() and reused for
+     every recording turn (a fresh MediaRecorder per turn, same stream) —
+     it's only released when the mode is exited. This is what keeps the
+     browser from re-prompting for microphone access on every turn. */
+  var voiceStream = null;
+
+  function toggleVoiceMode() {
+    if (voiceModeOn) exitVoiceMode(); else enterVoiceMode();
+  }
+
+  function enterVoiceMode() {
+    hideChatError();
+    if (!getOpenAiKey()) {
+      showChatError("ხმოვანი დიალოგისთვის საჭიროა OpenAI API გასაღები — დაამატე ⚙ მენიუში.");
+      return;
+    }
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || !window.MediaRecorder) {
+      showChatError("ეს ბრაუზერი მიკროფონის ჩაწერას ვერ უჭერს მხარს.");
+      return;
+    }
+    voiceModeOn = true;
+    updateMicButton();
+    setVoiceStatus("listening");
+    navigator.mediaDevices.getUserMedia({ audio: true }).then(function (stream) {
+      if (!voiceModeOn) { stream.getTracks().forEach(function (t) { t.stop(); }); return; }
+      voiceStream = stream;
+      beginRecordingTurn();
+    }).catch(function (err) {
+      showChatError("მიკროფონზე წვდომა ვერ მოხერხდა: " + err.message);
+      voiceModeOn = false;
+      updateMicButton();
+      hideVoiceStatus();
+    });
+  }
+
+  function exitVoiceMode() {
+    voiceModeOn = false;
+    if (window.speechSynthesis) window.speechSynthesis.cancel();
+    if (mediaRecorder && mediaRecorder.state === "recording") {
+      recordingCancelled = true;
+      mediaRecorder.stop();
+    }
+    stopSilenceWatcher();
+    teardownAnalyser();
+    if (voiceStream) {
+      voiceStream.getTracks().forEach(function (t) { t.stop(); });
+      voiceStream = null;
+    }
+    isRecording = false;
+    updateMicButton();
+    hideVoiceStatus();
+  }
+
+  function resumeListening() {
+    if (!voiceModeOn) return;
+    setVoiceStatus("listening");
+    var trackLive = voiceStream && voiceStream.getAudioTracks().some(function (t) { return t.readyState === "live"; });
+    if (trackLive) {
+      beginRecordingTurn();
+      return;
+    }
+    /* Mic track ended unexpectedly (e.g. device unplugged) — re-acquire once. */
+    navigator.mediaDevices.getUserMedia({ audio: true }).then(function (stream) {
+      if (!voiceModeOn) { stream.getTracks().forEach(function (t) { t.stop(); }); return; }
+      voiceStream = stream;
+      beginRecordingTurn();
+    }).catch(function (err) {
+      showChatError("მიკროფონზე წვდომა ვერ მოხერხდა: " + err.message);
+      exitVoiceMode();
+    });
+  }
+
+  function updateMicButton() {
+    var btn = document.getElementById("chatMicBtn");
+    if (!btn) return;
+    btn.classList.toggle("recording", isRecording);
+    btn.classList.toggle("voice-active", voiceModeOn);
+    if (voiceModeOn) {
+      btn.textContent = "⏹";
+      btn.title = "ხმოვანი დიალოგის შეწყვეტა";
+    } else {
+      btn.textContent = "🎙";
+      btn.title = "ხმოვანი დიალოგის დაწყება";
+    }
+  }
+
+  /* ---------- voice: speech-to-text via MediaRecorder + Whisper ---------- */
+  function pickRecorderMimeType() {
+    var candidates = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4", "audio/mp4;codecs=mp4a.40.2", "audio/ogg;codecs=opus"];
+    for (var i = 0; i < candidates.length; i++) {
+      if (window.MediaRecorder && MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(candidates[i])) return candidates[i];
+    }
+    return "";
+  }
+
+  /* The MediaRecorder needs the full "audio/webm;codecs=opus" string to pick
+     the right encoder, but Whisper's format-sniffing gets confused when that
+     same codecs parameter rides along as the uploaded file's Content-Type —
+     that mismatch is what produced "audio file could not be decoded". Strip
+     it down to the bare container type ("audio/webm") for the Blob/upload. */
+  function baseMimeType(m) {
+    return m ? m.split(";")[0] : "";
+  }
+
+  function extensionForMimeType(base) {
+    if (base.indexOf("mp4") !== -1) return "m4a";
+    if (base.indexOf("ogg") !== -1) return "ogg";
+    if (base.indexOf("wav") !== -1) return "wav";
+    return "webm";
+  }
+
+  function beginRecordingTurn() {
+    if (!voiceStream) {
+      showChatError("მიკროფონის ნაკადი ვერ მოიძებნა.");
+      exitVoiceMode();
+      return;
+    }
+    var mimeType = pickRecorderMimeType();
+    try {
+      mediaRecorder = mimeType ? new MediaRecorder(voiceStream, { mimeType: mimeType }) : new MediaRecorder(voiceStream);
+    } catch (e) {
+      showChatError("ჩაწერის დაწყება ვერ მოხერხდა: " + e.message);
+      exitVoiceMode();
+      return;
+    }
+    audioChunks = [];
+    mediaRecorder.addEventListener("dataavailable", function (e) {
+      if (e.data && e.data.size > 0) audioChunks.push(e.data);
+    });
+    mediaRecorder.addEventListener("stop", function () {
+      stopSilenceWatcher();
+      isRecording = false;
+      updateMicButton();
+      if (recordingCancelled) { recordingCancelled = false; return; }
+      var base = baseMimeType(mediaRecorder.mimeType || mimeType) || "audio/webm";
+      var blob = new Blob(audioChunks, { type: base });
+      handleVoiceTurn(blob);
+    });
+    mediaRecorder.start();
+    isRecording = true;
+    updateMicButton();
+    startSilenceWatcher(voiceStream);
+  }
+
+  function stopRecordingForSilence() {
+    if (mediaRecorder && mediaRecorder.state === "recording") mediaRecorder.stop();
+  }
+
+  /* Web Audio API AnalyserNode: watches mic input level and auto-stops
+     recording after ~2.5s of silence (following at least a bit of speech),
+     or after a hard cap so a stuck mic can't record forever. The
+     AudioContext/analyser are created once per voice-mode session
+     (ensureAnalyser) and just re-armed each turn — not recreated. */
+  function ensureAnalyser(stream) {
+    if (analyser) return true;
+    try {
+      var AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContextClass) return false;
+      audioCtx = new AudioContextClass();
+      var source = audioCtx.createMediaStreamSource(stream);
+      analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 512;
+      source.connect(analyser);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function teardownAnalyser() {
+    if (audioCtx) { try { audioCtx.close(); } catch (e) {} audioCtx = null; }
+    analyser = null;
+  }
+
+  function startSilenceWatcher(stream) {
+    if (!ensureAnalyser(stream)) return;
+    var data = new Uint8Array(analyser.frequencyBinCount);
+    var SPEECH_RMS_THRESHOLD = 14;
+    var SILENCE_MS = 2500;
+    var MAX_RECORD_MS = 25000;
+    var MIN_RECORD_MS = 700;
+    var hasSpoken = false;
+    var lastLoudTs = Date.now();
+    var startTs = Date.now();
+
+    silenceCheckInterval = setInterval(function () {
+      if (!analyser) return;
+      analyser.getByteTimeDomainData(data);
+      var sumSq = 0;
+      for (var i = 0; i < data.length; i++) {
+        var v = data[i] - 128;
+        sumSq += v * v;
+      }
+      var rms = Math.sqrt(sumSq / data.length);
+      var now = Date.now();
+      if (now - startTs < MIN_RECORD_MS) return;
+      if (rms > SPEECH_RMS_THRESHOLD) { hasSpoken = true; lastLoudTs = now; }
+      if (hasSpoken && (now - lastLoudTs) > SILENCE_MS) { stopRecordingForSilence(); return; }
+      if ((now - startTs) > MAX_RECORD_MS) { stopRecordingForSilence(); }
+    }, 150);
+  }
+
+  function stopSilenceWatcher() {
+    if (silenceCheckInterval) { clearInterval(silenceCheckInterval); silenceCheckInterval = null; }
+  }
+
+  function handleVoiceTurn(blob) {
+    if (!voiceModeOn) return;
+    if (blob.size < 2000) {
+      /* Too little audio to be a real answer (mic blip, or silence-detection
+         fired before any speech) — re-listen instead of sending junk to Whisper. */
+      resumeListening();
+      return;
+    }
+    setVoiceStatus("processing");
+    var ext = extensionForMimeType(blob.type);
+    var form = new FormData();
+    form.append("file", blob, "recording." + ext);
+    form.append("model", "whisper-1");
+    form.append("language", "en");
+
+    fetch(WHISPER_API_URL, {
+      method: "POST",
+      headers: { "Authorization": "Bearer " + getOpenAiKey() },
+      body: form
+    }).then(function (res) {
+      return res.json().then(function (data) { return { ok: res.ok, status: res.status, data: data }; });
+    }).then(function (result) {
+      if (!voiceModeOn) return;
+      if (!result.ok) {
+        var msg = result.data && result.data.error && result.data.error.message ? result.data.error.message : "ტრანსკრიფცია ვერ შესრულდა";
+        if (result.status === 401) msg = "OpenAI გასაღები არასწორია — შეამოწმე ⚙ მენიუში.";
+        showChatError("Whisper შეცდომა: " + msg);
+        exitVoiceMode();
+        return;
+      }
+      var text = (result.data.text || "").trim();
+      if (!text) { resumeListening(); return; }
+      sendChatMessage(text);
+    }).catch(function (err) {
+      if (!voiceModeOn) return;
+      showChatError("კავშირის შეცდომა (Whisper): " + err.message);
+      exitVoiceMode();
+    });
+  }
+
+  /* ---------- theme ---------- */
+  function initTheme() {
+    var saved = null;
+    try { saved = localStorage.getItem("nonaEnglishNotebook.theme"); } catch (e) {}
+    if (saved) document.documentElement.setAttribute("data-theme", saved);
+    document.getElementById("themeToggle").addEventListener("click", function () {
+      var cur = document.documentElement.getAttribute("data-theme");
+      var prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+      var effectiveDark = cur ? cur === "dark" : prefersDark;
+      var next = effectiveDark ? "light" : "dark";
+      document.documentElement.setAttribute("data-theme", next);
+      try { localStorage.setItem("nonaEnglishNotebook.theme", next); } catch (e) {}
+    });
+  }
+
+  initTheme();
+  switchView("home");
+})();
+</script>
+
+</body>
+</html>
