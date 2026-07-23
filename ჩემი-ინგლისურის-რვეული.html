@@ -145,6 +145,10 @@
   .tab .dot[data-state="green"] { background: var(--green); }
   .tab .dot[data-state="gold"] { background: var(--gold); }
   .tab .dot[data-state="rust"] { background: var(--rust); }
+  .tab-divider { height: 1px; background: var(--border); margin: 4px 10px 4px 0; }
+  .tab-unit { font-size: 0.82rem; font-weight: 500; padding: 8px 14px 8px 12px; opacity: 0.88; }
+  .tab-unit.active { opacity: 1; }
+  @media (max-width: 640px) { .tab-divider { display: none; } }
 
   /* --- Page surface --- */
   .page {
@@ -787,13 +791,13 @@
   ];
 
   var UNITS = [
-    { id: "u1", ka: "Unit 1 — მისალმება და გაცნობა", deckIds: ["greetings"], grammarIds: ["pronouns", "dialogueClub"], image: "unit1-greetings.jpg" },
-    { id: "u2", ka: "Unit 2 — კუთვნილება", deckIds: [], grammarIds: ["possAdj", "possS", "wrapupPoss"], image: null },
-    { id: "u3", ka: "Unit 3 — ოჯახი", deckIds: ["family"], grammarIds: ["demonstratives", "readingJacob", "dialogueFriends"], image: "unit3-family.jpg" },
-    { id: "u4", ka: "Unit 4 — აწმყო განუსაზღვრელი დრო", deckIds: [], grammarIds: ["presentForms", "presentQuestions"], image: null },
-    { id: "u5", ka: "Unit 5 — სიხშირის ზმნისართები", deckIds: ["freqAdverbs"], grammarIds: ["frequency", "dialogueFrequency"], image: null },
-    { id: "u6", ka: "Unit 6 — მოწონება და არმოწონება", deckIds: ["likes"], grammarIds: [], image: "unit6-likes.jpg" },
-    { id: "u7", ka: "Unit 7 — დღის რეჟიმი და დრო", deckIds: ["routine", "calendar"], grammarIds: ["readingKeiraLiam"], image: "unit7-routine.jpg" }
+    { id: "u1", short: "Unit 1", ka: "Unit 1 — მისალმება და გაცნობა", deckIds: ["greetings"], grammarIds: ["pronouns", "dialogueClub"], image: "unit1-greetings.jpg" },
+    { id: "u2", short: "Unit 2", ka: "Unit 2 — კუთვნილება", deckIds: [], grammarIds: ["possAdj", "possS", "wrapupPoss"], image: null },
+    { id: "u3", short: "Unit 3", ka: "Unit 3 — ოჯახი", deckIds: ["family"], grammarIds: ["demonstratives", "readingJacob", "dialogueFriends"], image: "unit3-family.jpg" },
+    { id: "u4", short: "Unit 4", ka: "Unit 4 — აწმყო განუსაზღვრელი დრო", deckIds: [], grammarIds: ["presentForms", "presentQuestions"], image: null },
+    { id: "u5", short: "Unit 5", ka: "Unit 5 — სიხშირის ზმნისართები", deckIds: ["freqAdverbs"], grammarIds: ["frequency", "dialogueFrequency"], image: null },
+    { id: "u6", short: "Unit 6", ka: "Unit 6 — მოწონება და არმოწონება", deckIds: ["likes"], grammarIds: [], image: "unit6-likes.jpg" },
+    { id: "u7", short: "Unit 7", ka: "Unit 7 — დღის რეჟიმი და დრო", deckIds: ["routine", "calendar"], grammarIds: ["readingKeiraLiam"], image: "unit7-routine.jpg" }
   ];
 
   var STORAGE_KEY = "nonaEnglishNotebook.v1";
@@ -894,7 +898,7 @@
 
   /* ---------- tabs ---------- */
   var TABS = [
-    { id: "home", ka: "დაფა", en: "Dashboard" },
+    { id: "home", ka: "მთავარი", en: "Home" },
     { id: "reference", ka: "ცნობარი", en: "Reference" },
     { id: "chat", ka: "ჩატი", en: "Chat" }
   ];
@@ -918,6 +922,18 @@
         if (id === "chat" && chatScopeUnit !== null) { chatScopeUnit = null; chatHistory = []; chatStarted = false; }
         switchView(id);
       }; }(t.id));
+      wrap.appendChild(btn);
+    });
+
+    wrap.appendChild(el("div", { class: "tab-divider" }));
+    UNITS.forEach(function (unit) {
+      var m = unitMastery(unit);
+      var dot = el("span", { class: "dot" });
+      if (m.colorState !== "none") dot.setAttribute("data-state", m.colorState);
+      var btn = el("button", { class: "tab tab-unit" + (currentUnit === unit.id ? " active" : ""), type: "button" }, [
+        dot, document.createTextNode(unit.short)
+      ]);
+      btn.addEventListener("click", function (id) { return function () { openUnit(id); }; }(unit.id));
       wrap.appendChild(btn);
     });
   }
@@ -1284,8 +1300,8 @@
         var now = Date.now();
         if (now - start < MIN_RECORD_MS) return;
         if (rms > 14) { hasSpoken = true; lastLoud = now; }
-        if (hasSpoken && (now - lastLoud) > 2200) { onSilence(); return; }
-        if ((now - start) > 15000) { onSilence(); }
+        if (hasSpoken && (now - lastLoud) > 3200) { onSilence(); return; }
+        if ((now - start) > 25000) { onSilence(); }
       }, 150);
     } catch (e) {}
   }
@@ -2058,7 +2074,7 @@
       if (sendBtn) sendBtn.disabled = false;
       if (voiceModeOn) {
         setVoiceStatus("speaking");
-        speakChatTextAuto(parsed.reply);
+        speakChatTextAuto(parsed);
       } else if (!isVoiceTurn && textarea) {
         textarea.focus();
       }
@@ -2101,18 +2117,40 @@
     window.speechSynthesis.speak(u);
   }
 
-  function speakChatTextAuto(text) {
+  /* Speaks the assistant's reply and, when the turn included a correction,
+     follows it with a spoken correction (English phrase + Georgian
+     explanation if a Georgian voice is available) before resuming
+     listening — so a mistake is corrected out loud, not just shown as text. */
+  function speakChatTextAuto(parsed) {
     if (!window.speechSynthesis) {
       if (voiceModeOn) resumeListening();
       return;
     }
     window.speechSynthesis.cancel();
-    var u = new SpeechSynthesisUtterance(text);
-    u.lang = "en-US";
-    u.rate = 0.95;
-    u.onend = function () { if (voiceModeOn) resumeListening(); };
-    u.onerror = function () { if (voiceModeOn) resumeListening(); };
-    window.speechSynthesis.speak(u);
+
+    var utterances = [];
+    var mainU = new SpeechSynthesisUtterance(parsed.reply);
+    mainU.lang = "en-US";
+    mainU.rate = 0.95;
+    utterances.push(mainU);
+
+    if (parsed.has_correction && parsed.corrected) {
+      var correctionEn = new SpeechSynthesisUtterance("Quick correction — the right way to say that is: " + parsed.corrected);
+      correctionEn.lang = "en-US";
+      correctionEn.rate = 0.92;
+      utterances.push(correctionEn);
+      if (parsed.explanation && hasVoiceForLang("ka")) {
+        var correctionKa = new SpeechSynthesisUtterance(parsed.explanation);
+        correctionKa.lang = "ka-GE";
+        correctionKa.rate = 0.95;
+        utterances.push(correctionKa);
+      }
+    }
+
+    var last = utterances[utterances.length - 1];
+    last.onend = function () { if (voiceModeOn) resumeListening(); };
+    last.onerror = function () { if (voiceModeOn) resumeListening(); };
+    utterances.forEach(function (u) { window.speechSynthesis.speak(u); });
   }
 
   /* ---------- voice: continuous hands-free dialogue mode ----------
@@ -2295,8 +2333,8 @@
     if (!ensureAnalyser(stream)) return;
     var data = new Uint8Array(analyser.frequencyBinCount);
     var SPEECH_RMS_THRESHOLD = 14;
-    var SILENCE_MS = 2500;
-    var MAX_RECORD_MS = 25000;
+    var SILENCE_MS = 4000;
+    var MAX_RECORD_MS = 60000;
     var MIN_RECORD_MS = 700;
     var hasSpoken = false;
     var lastLoudTs = Date.now();
