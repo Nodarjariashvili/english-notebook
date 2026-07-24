@@ -216,11 +216,10 @@
   .accordion-title { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 0.95rem; flex: 1 1 auto; }
   .accordion-icon { font-size: 1.05rem; }
   .accordion-meta { display: flex; align-items: center; gap: 8px; flex: 0 0 auto; }
-  .mini-bar { display: inline-block; width: 56px; height: 6px; border-radius: 4px; background: var(--border); overflow: hidden; }
-  .mini-bar > span { display: block; height: 100%; background: var(--ink-faint); border-radius: 4px; }
-  .mini-bar[data-state="green"] > span { background: var(--green); }
-  .mini-bar[data-state="gold"] > span { background: var(--gold); }
-  .mini-count { font-size: 0.74rem; color: var(--ink-faint); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .ring { position: relative; display: inline-block; width: 32px; height: 32px; border-radius: 50%; flex: 0 0 auto; background: conic-gradient(var(--ring-color, var(--green)) calc(var(--pct, 0) * 1%), var(--border) 0); transition: background 0.4s ease; }
+  .ring-hole { position: absolute; inset: 3px; border-radius: 50%; background: var(--paper); display: flex; align-items: center; justify-content: center; }
+  .accordion-header:hover .ring-hole { background: var(--surface); }
+  .ring-label { font-size: 0.56rem; font-weight: 700; color: var(--ink); }
   .accordion-chevron { color: var(--ink-faint); font-size: 0.78rem; transition: transform 0.2s ease; flex: 0 0 auto; }
   .accordion.open .accordion-chevron { transform: rotate(180deg); }
   .accordion-body { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 0.25s ease; }
@@ -324,12 +323,23 @@
   .unit-head-text h2 { margin-bottom: 10px; }
   .unit-head-text .bar { max-width: 340px; }
 
-  .type-progress-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; margin: 4px 0 20px; }
-  .type-progress-tile { border: 1px solid var(--border); background: var(--paper); border-radius: 10px; padding: 10px 12px; }
+  .progress-overview { background: var(--green-soft); border-radius: 18px; padding: 16px 16px 18px; margin: 4px 0 20px; }
+  .progress-overview-title { font-weight: 700; font-size: 0.88rem; color: var(--green-ink); margin-bottom: 10px; }
+  .type-progress-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin: 0 0 14px; }
+  .type-progress-tile { border: 1px solid var(--border); background: var(--surface); border-radius: 10px; padding: 10px 12px; }
   .type-progress-label { display: flex; align-items: center; gap: 6px; font-size: 0.8rem; font-weight: 600; color: var(--ink-soft); margin-bottom: 6px; }
   .type-progress-label .icon { font-size: 0.9rem; }
   .type-progress-tile .bar { margin-bottom: 5px; }
   .type-progress-count { font-size: 0.75rem; color: var(--ink-faint); font-variant-numeric: tabular-nums; }
+
+  .activity-card { background: var(--surface); border-radius: 12px; padding: 12px 14px; }
+  .activity-title { font-weight: 700; font-size: 0.85rem; color: var(--ink); margin-bottom: 10px; }
+  .activity-row { display: flex; gap: 8px; justify-content: space-between; }
+  .activity-day { display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 0.72rem; color: var(--ink-faint); flex: 1 1 0; }
+  .activity-dot { width: 22px; height: 22px; border-radius: 50%; background: var(--border); border: 2px solid transparent; }
+  .activity-day.active .activity-dot { background: var(--green); }
+  .activity-day.today .activity-dot { border-color: var(--gold); }
+  .activity-day.today { color: var(--ink); font-weight: 700; }
 
   /* --- Vocabulary practice modes --- */
   .mode-card-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 8px; margin-bottom: 12px; max-width: 360px; }
@@ -1107,6 +1117,7 @@
     } catch (e) { s = { cards: {}, quiz: {} }; }
     if (!s.cards) s.cards = {};
     if (!s.quiz) s.quiz = {};
+    if (!s.activity) s.activity = {};
     /* migrate pre-existing flat {idx: level} per-deck records (before practice
        modes tracked separately) into the "flip" sub-record. */
     Object.keys(s.cards).forEach(function (deckId) {
@@ -1119,7 +1130,14 @@
     });
     return s;
   }
+  function dateKeyOf(d) {
+    var mm = String(d.getMonth() + 1); if (mm.length < 2) mm = "0" + mm;
+    var dd = String(d.getDate()); if (dd.length < 2) dd = "0" + dd;
+    return d.getFullYear() + "-" + mm + "-" + dd;
+  }
   function saveState() {
+    if (!state.activity) state.activity = {};
+    state.activity[dateKeyOf(new Date())] = true;
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) {}
   }
 
@@ -1420,8 +1438,10 @@
     head.appendChild(headText);
     root.appendChild(head);
 
+    var overview = el("div", { class: "progress-overview" });
     var typeRows = unitTypeProgress(unit);
     if (typeRows.length) {
+      overview.appendChild(el("div", { class: "progress-overview-title" }, [document.createTextNode("შენი პროგრესი")]));
       var grid = el("div", { class: "type-progress-grid" });
       typeRows.forEach(function (row) {
         var pct = row.total ? row.done / row.total : 0;
@@ -1436,8 +1456,36 @@
         ]);
         grid.appendChild(tile);
       });
-      root.appendChild(grid);
+      overview.appendChild(grid);
     }
+    overview.appendChild(renderActivityWidget());
+    root.appendChild(overview);
+  }
+
+  function renderActivityWidget() {
+    var dayLabels = ["ორშ", "სამ", "ოთხ", "ხუთ", "პარ", "შაბ", "კვ"];
+    var today = new Date();
+    var dow = today.getDay();
+    var mondayOffset = dow === 0 ? -6 : 1 - dow;
+    var monday = new Date(today.getFullYear(), today.getMonth(), today.getDate() + mondayOffset);
+    var todayKey = dateKeyOf(today);
+
+    var wrap = el("div", { class: "activity-card" });
+    wrap.appendChild(el("div", { class: "activity-title" }, [document.createTextNode("🔥 დღიური აქტივობა")]));
+    var row = el("div", { class: "activity-row" });
+    for (var i = 0; i < 7; i++) {
+      var d = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + i);
+      var key = dateKeyOf(d);
+      var active = !!(state.activity && state.activity[key]);
+      var isToday = key === todayKey;
+      var cell = el("div", { class: "activity-day" + (active ? " active" : "") + (isToday ? " today" : "") }, [
+        el("span", { class: "activity-dot" }),
+        document.createTextNode(dayLabels[i])
+      ]);
+      row.appendChild(cell);
+    }
+    wrap.appendChild(row);
+    return wrap;
   }
 
   /* ---------- flashcards & vocabulary practice ---------- */
@@ -1462,8 +1510,10 @@
   var accordionOpen = {};
   function miniProgressHtml(done, total) {
     var pct = total ? Math.round((done / total) * 100) : 0;
-    var state2 = total === 0 ? "" : pct >= 75 ? "green" : pct > 0 ? "gold" : "";
-    return "<span class='mini-bar'" + (state2 ? " data-state='" + state2 + "'" : "") + "><span style='width:" + pct + "%'></span></span><span class='mini-count'>" + done + " / " + total + "</span>";
+    var color = total === 0 ? "var(--border)" : pct >= 75 ? "var(--green)" : pct > 0 ? "var(--gold)" : "var(--border)";
+    return "<span class='ring' style='--pct:" + pct + ";--ring-color:" + color + "' title='" + done + " / " + total + "'>" +
+      "<span class='ring-hole'><span class='ring-label'>" + pct + "%</span></span>" +
+      "</span>";
   }
 
   function accordionSection(unitId, key, icon, title, metaHtml, buildBody) {
