@@ -300,6 +300,13 @@
   .unit-head-text h2 { margin-bottom: 10px; }
   .unit-head-text .bar { max-width: 340px; }
 
+  .type-progress-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; margin: 4px 0 20px; }
+  .type-progress-tile { border: 1px solid var(--border); background: var(--paper); border-radius: 10px; padding: 10px 12px; }
+  .type-progress-label { display: flex; align-items: center; gap: 6px; font-size: 0.8rem; font-weight: 600; color: var(--ink-soft); margin-bottom: 6px; }
+  .type-progress-label .icon { font-size: 0.9rem; }
+  .type-progress-tile .bar { margin-bottom: 5px; }
+  .type-progress-count { font-size: 0.75rem; color: var(--ink-faint); font-variant-numeric: tabular-nums; }
+
   /* --- Vocabulary practice modes --- */
   .vocab-mode-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
   .vocab-mode-btn { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--border); background: var(--paper); color: var(--ink-soft); border-radius: 999px; padding: 6px 13px; font-size: 0.82rem; font-weight: 600; cursor: pointer; transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease; }
@@ -1066,12 +1073,26 @@
   var STORAGE_KEY = "nonaEnglishNotebook.v1";
   var state = loadState();
 
+  var CARD_MODES = ["flip", "voice", "written", "mc"];
   function loadState() {
+    var s;
     try {
       var raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) return JSON.parse(raw);
-    } catch (e) {}
-    return { cards: {}, quiz: {} };
+      s = raw ? JSON.parse(raw) : { cards: {}, quiz: {} };
+    } catch (e) { s = { cards: {}, quiz: {} }; }
+    if (!s.cards) s.cards = {};
+    if (!s.quiz) s.quiz = {};
+    /* migrate pre-existing flat {idx: level} per-deck records (before practice
+       modes tracked separately) into the "flip" sub-record. */
+    Object.keys(s.cards).forEach(function (deckId) {
+      var rec = s.cards[deckId];
+      var isOldFlat = false;
+      for (var k in rec) {
+        if (CARD_MODES.indexOf(k) === -1) { isOldFlat = true; break; }
+      }
+      if (isOldFlat) s.cards[deckId] = { flip: rec };
+    });
+    return s;
   }
   function saveState() {
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) {}
@@ -1106,8 +1127,8 @@
   }
 
   /* ---------- mastery helpers ---------- */
-  function deckMastery(deck) {
-    var ratings = state.cards[deck.id] || {};
+  function deckMastery(deck, mode) {
+    var ratings = (state.cards[deck.id] || {})[mode || "flip"] || {};
     var total = deck.cards.length, rated = 0, green = 0;
     for (var i = 0; i < total; i++) {
       var lvl = ratings[i];
@@ -1116,6 +1137,17 @@
     var pct = total ? green / total : 0;
     var colorState = rated === 0 ? "none" : pct >= 0.75 ? "green" : pct >= 0.35 ? "gold" : "rust";
     return { rated: rated, total: total, green: green, pct: pct, colorState: colorState };
+  }
+  function deckAllModesMastery(deck) {
+    var sum = 0, any = false;
+    CARD_MODES.forEach(function (m) {
+      var dm = deckMastery(deck, m);
+      sum += dm.pct;
+      if (dm.rated) any = true;
+    });
+    var pct = sum / CARD_MODES.length;
+    var colorState = !any ? "none" : pct >= 0.75 ? "green" : pct >= 0.35 ? "gold" : "rust";
+    return { pct: pct, colorState: colorState, rated: any };
   }
   function topicMastery(topic) {
     var rec = state.quiz[topic.id] || { answers: {} };
@@ -1145,7 +1177,7 @@
   function unitTopicsByKind(unit, kind) { return unitGrammarTopics(unit).filter(function (g) { return g.kind === kind; }); }
 
   function unitMastery(unit) {
-    var parts = unitDecks(unit).map(deckMastery).concat(unitGrammarTopics(unit).map(topicMastery));
+    var parts = unitDecks(unit).map(deckAllModesMastery).concat(unitGrammarTopics(unit).map(topicMastery));
     var sum = 0, cnt = parts.length, any = false;
     parts.forEach(function (m) { sum += m.pct; if (m.rated || m.attempted) any = true; });
     var pct = cnt ? sum / cnt : 0;
@@ -1155,9 +1187,41 @@
 
   function unitProgressCounts(unit) {
     var done = 0, total = 0;
-    unitDecks(unit).forEach(function (d) { var m = deckMastery(d); done += m.green; total += m.total; });
+    CARD_MODES.forEach(function (mode) {
+      unitDecks(unit).forEach(function (d) { var m = deckMastery(d, mode); done += m.green; total += m.total; });
+    });
     unitGrammarTopics(unit).forEach(function (t) { var m = topicMastery(t); done += m.correct; total += m.total; });
     return { done: done, total: total };
+  }
+
+  var TYPE_META = {
+    flip: { icon: "📖", label: "ლექსიკონი" },
+    voice: { icon: "🎙", label: "ხმოვანი თარგმანი" },
+    written: { icon: "✍️", label: "წერითი თარგმანი" },
+    mc: { icon: "☑️", label: "არჩევანის ტესტი" },
+    grammar: { icon: "📐", label: "გრამატიკა" },
+    dialogue: { icon: "💬", label: "დიალოგები" },
+    reading: { icon: "📖", label: "წაკითხვის გაგება" }
+  };
+
+  function unitTypeProgress(unit) {
+    var rows = [];
+    var decks = unitDecks(unit);
+    if (decks.length) {
+      CARD_MODES.forEach(function (mode) {
+        var done = 0, total = 0;
+        decks.forEach(function (d) { var dm = deckMastery(d, mode); done += dm.green; total += dm.total; });
+        rows.push({ key: mode, icon: TYPE_META[mode].icon, label: TYPE_META[mode].label, done: done, total: total });
+      });
+    }
+    ["grammar", "dialogue", "reading"].forEach(function (kind) {
+      var topics = unitTopicsByKind(unit, kind);
+      if (!topics.length) return;
+      var done = 0, total = 0;
+      topics.forEach(function (t) { var tm = topicMastery(t); done += tm.correct; total += tm.total; });
+      rows.push({ key: kind, icon: TYPE_META[kind].icon, label: TYPE_META[kind].label, done: done, total: total });
+    });
+    return rows;
   }
 
   /* ---------- tabs ---------- */
@@ -1330,6 +1394,25 @@
     headText.appendChild(chatBtn);
     head.appendChild(headText);
     root.appendChild(head);
+
+    var typeRows = unitTypeProgress(unit);
+    if (typeRows.length) {
+      var grid = el("div", { class: "type-progress-grid" });
+      typeRows.forEach(function (row) {
+        var pct = row.total ? row.done / row.total : 0;
+        var state2 = row.total === 0 ? "none" : pct >= 0.75 ? "green" : pct > 0 ? "gold" : "none";
+        var tile = el("div", { class: "type-progress-tile" }, [
+          el("div", { class: "type-progress-label" }, [
+            el("span", { class: "icon" }, [document.createTextNode(row.icon)]),
+            document.createTextNode(row.label)
+          ]),
+          el("div", { class: "bar", "data-state": state2 === "none" ? "" : state2, html: "<span style='width:" + Math.round(pct * 100) + "%'></span>" }),
+          el("div", { class: "type-progress-count" }, [document.createTextNode(row.done + " / " + row.total)])
+        ]);
+        grid.appendChild(tile);
+      });
+      root.appendChild(grid);
+    }
   }
 
   /* ---------- flashcards & vocabulary practice ---------- */
@@ -1390,7 +1473,7 @@
 
       var exGrid = el("div", { class: "picker-grid" });
       unitDecks(unit).forEach(function (deck) {
-        var pm = deckMastery(deck);
+        var pm = deckMastery(deck, practiceMode);
         var card = el("button", { class: "picker-card", type: "button" }, [
           el("span", { class: "ka" }, [document.createTextNode(deck.ka)]),
           el("span", { class: "en" }, [document.createTextNode(deck.en)]),
@@ -1416,7 +1499,7 @@
     var idx = cardIndex[deck.id];
     var total = deck.cards.length;
     var item = deck.cards[idx];
-    var ratings = state.cards[deck.id] || {};
+    var ratings = (state.cards[deck.id] || {}).flip || {};
 
     var stage = el("div", { class: "card-stage" });
     stage.appendChild(el("h2", {}, [document.createTextNode(deck.ka)]));
@@ -1455,7 +1538,8 @@
       ]);
       b.addEventListener("click", function () {
         state.cards[deck.id] = state.cards[deck.id] || {};
-        state.cards[deck.id][idx] = level;
+        state.cards[deck.id].flip = state.cards[deck.id].flip || {};
+        state.cards[deck.id].flip[idx] = level;
         saveState();
         renderCardsView();
         renderTabs();
@@ -1491,16 +1575,17 @@
     return picked;
   }
 
-  function markPracticeResult(deck, idx, ok) {
+  function markPracticeResult(deck, idx, ok, mode) {
     state.cards[deck.id] = state.cards[deck.id] || {};
-    state.cards[deck.id][idx] = ok ? "green" : "rust";
+    state.cards[deck.id][mode] = state.cards[deck.id][mode] || {};
+    state.cards[deck.id][mode][idx] = ok ? "green" : "rust";
     saveState();
     renderTabs();
   }
 
-  function renderPracticeDone(root, deck) {
+  function renderPracticeDone(root, deck, mode) {
     stopPracticeMic();
-    var m = deckMastery(deck);
+    var m = deckMastery(deck, mode);
     var done = el("div", { class: "quiz-box quiz-done" }, [
       el("div", { class: "eyebrow" }, [document.createTextNode("დასრულებულია")]),
       el("div", { class: "score" }, [document.createTextNode(m.green + " / " + m.total)])
@@ -1634,7 +1719,7 @@
   function renderVoicePractice(root) {
     var deck = DECKS.filter(function (d) { return d.id === cardsSub; })[0];
     practiceHeader(root, deck, "ხმოვანი თარგმანი");
-    if (practicePos >= deck.cards.length) { renderPracticeDone(root, deck); return; }
+    if (practicePos >= deck.cards.length) { renderPracticeDone(root, deck, "voice"); return; }
 
     var item = deck.cards[practicePos];
     var box = el("div", { class: "practice-box" });
@@ -1686,7 +1771,7 @@
     function evaluateVoiceAnswer(deck, item, heard) {
       var accepted = [item.en].concat(item.accept || []).map(normalize);
       var ok = accepted.indexOf(normalize(heard)) !== -1;
-      markPracticeResult(deck, practicePos, ok);
+      markPracticeResult(deck, practicePos, ok, "voice");
       var fb = document.getElementById("practiceFeedback");
       if (fb) {
         fb.className = "feedback show " + (ok ? "correct" : "wrong");
@@ -1746,7 +1831,7 @@
   function renderWrittenPractice(root) {
     var deck = DECKS.filter(function (d) { return d.id === cardsSub; })[0];
     practiceHeader(root, deck, "წერითი თარგმანი");
-    if (practicePos >= deck.cards.length) { renderPracticeDone(root, deck); return; }
+    if (practicePos >= deck.cards.length) { renderPracticeDone(root, deck, "written"); return; }
 
     var item = deck.cards[practicePos];
     var box = el("div", { class: "practice-box" });
@@ -1770,7 +1855,7 @@
       if (!input.value.trim()) { input.focus(); return; }
       var accepted = [item.en].concat(item.accept || []).map(normalize);
       var ok = accepted.indexOf(normalize(input.value)) !== -1;
-      markPracticeResult(deck, practicePos, ok);
+      markPracticeResult(deck, practicePos, ok, "written");
       feedback.className = "feedback show " + (ok ? "correct" : "wrong");
       feedback.innerHTML = "<span class='mark'>" + checkMarkSvg(ok) + "</span><span class='msg'>" +
         (ok ? "<span class='hand'>ზუსტად ასეა!</span>" : "<span class='hand'>თითქმის!</span><span class='correct-answer'>სწორი პასუხია: " + item.en + "</span>") +
@@ -1792,7 +1877,7 @@
   function renderMcPractice(root) {
     var deck = DECKS.filter(function (d) { return d.id === cardsSub; })[0];
     practiceHeader(root, deck, "არჩევანის ტესტი");
-    if (practicePos >= deck.cards.length) { renderPracticeDone(root, deck); return; }
+    if (practicePos >= deck.cards.length) { renderPracticeDone(root, deck, "mc"); return; }
 
     var item = deck.cards[practicePos];
     var box = el("div", { class: "practice-box" });
@@ -1816,12 +1901,12 @@
         if (ok) {
           answered = true;
           optBtn.classList.add("correct");
-          markPracticeResult(deck, practicePos, true);
+          markPracticeResult(deck, practicePos, true, "mc");
           setPracticeStatus("speaking", "პასუხობს...");
           speakPracticeText(item.en, "en-US", function () { practicePos++; renderCardsView(); });
         } else {
           optBtn.classList.add("wrong");
-          markPracticeResult(deck, practicePos, false);
+          markPracticeResult(deck, practicePos, false, "mc");
         }
       });
       optWrap.appendChild(optBtn);
