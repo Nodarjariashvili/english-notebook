@@ -1023,23 +1023,6 @@
 
     root.appendChild(el("div", { class: "profile-row" }, [idCard, introCard]));
 
-    root.appendChild(el("div", { class: "section-heading" }, [
-      el("h2", {}, [document.createTextNode("თავები")]), el("div", { class: "rule" })
-    ]));
-    var unitGrid = el("div", { class: "picker-grid" });
-    UNITS.forEach(function (unit) {
-      var m = unitMastery(unit);
-      var counts = unitProgressCounts(unit);
-      var card = el("button", { class: "picker-card", type: "button" }, [
-        el("span", { class: "ka" }, [document.createTextNode(unit.ka)]),
-        el("span", { class: "meta" }, [document.createTextNode("დასრულებული: " + counts.done + " / " + counts.total)]),
-        el("div", { class: "bar", "data-state": m.colorState === "none" ? "" : m.colorState, html: "<span style='width:" + Math.round(m.pct * 100) + "%'></span>" })
-      ]);
-      card.addEventListener("click", function (id) { return function () { openUnit(id); }; }(unit.id));
-      unitGrid.appendChild(card);
-    });
-    root.appendChild(unitGrid);
-
     var resetWrap = el("div", { style: "margin-top:30px" });
     var resetBtn = el("button", { class: "back-link", type: "button" }, [document.createTextNode("↺ პროგრესის გასუფთავება")]);
     resetBtn.addEventListener("click", function () {
