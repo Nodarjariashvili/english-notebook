@@ -360,9 +360,19 @@
   .unit-head-text { position: relative; z-index: 1; flex: 1 1 260px; min-width: 220px; }
   .unit-head-text h2 { margin-bottom: 10px; }
   .unit-head-text .bar { max-width: 340px; }
-  .unit-stat-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
-  .unit-stat { display: inline-flex; align-items: center; gap: 6px; background: var(--surface); border: 1px solid var(--border); border-radius: 999px; padding: 5px 12px; font-size: 0.8rem; font-weight: 600; color: var(--ink-soft); }
-  .unit-stat-icon { font-size: 0.95rem; }
+  /* --- Bold colored stat card (Unit page) --- */
+  .stat-card { position: relative; z-index: 1; background: var(--surface); border-radius: 20px; padding: 16px 18px; margin: 0 0 18px; box-shadow: 0 10px 24px var(--shadow); }
+  .stat-card-header { font-weight: 700; font-size: 0.95rem; margin-bottom: 12px; color: var(--ink); }
+  .stat-tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .stat-tile { border-radius: 14px; padding: 14px 8px; display: flex; flex-direction: column; align-items: center; gap: 4px; color: #ffffff; transition: transform 0.15s ease; }
+  .stat-tile:hover { transform: translateY(-2px); }
+  .stat-tile-icon { font-size: 1.3rem; }
+  .stat-tile-value { font-family: 'Fraunces', serif; font-size: 1.25rem; font-weight: 700; }
+  .stat-tile-label { font-size: 0.68rem; opacity: 0.92; text-align: center; }
+  .tile-a { background: var(--rust); }
+  .tile-b { background: var(--info); }
+  .tile-c { background: var(--gold); }
+  @media (max-width: 420px) { .stat-tiles { grid-template-columns: 1fr; } }
   .unit-title-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
   .unit-title-row h2 { margin-bottom: 0; }
   .unit-title-icon { flex-shrink: 0; }
@@ -451,6 +461,23 @@
   .illustration { display: block; flex-shrink: 0; }
   .home-illustration { position: relative; z-index: 1; display: flex; justify-content: center; margin: 0 0 18px; }
   .home-illustration svg { width: 88px; height: 62px; }
+
+  /* --- Bold hero card (Home page) --- */
+  .hero-card {
+    position: relative; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: 20px;
+    background: linear-gradient(135deg, var(--green) 0%, var(--green-ink) 100%);
+    border-radius: 24px; padding: clamp(20px, 4vw, 30px) clamp(20px, 4vw, 32px);
+    margin-bottom: 26px; overflow: hidden; box-shadow: 0 18px 36px var(--shadow); color: #ffffff;
+  }
+  .hero-card-text { position: relative; z-index: 1; max-width: 56ch; }
+  .hero-eyebrow { font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.12em; opacity: 0.85; font-weight: 700; margin-bottom: 8px; color: #ffffff; }
+  .hero-title { font-family: 'Fraunces', serif; font-size: clamp(1.25rem, 3vw, 1.7rem); font-weight: 600; color: #ffffff; margin-bottom: 8px; }
+  .hero-sub { font-size: 0.88rem; opacity: 0.92; line-height: 1.5; }
+  .hero-illustration { position: relative; z-index: 1; flex-shrink: 0; width: clamp(110px, 18vw, 150px); height: clamp(110px, 18vw, 150px); animation: heroFloat 5s ease-in-out infinite; }
+  .hero-illustration svg { width: 100%; height: 100%; display: block; }
+  @keyframes heroFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+  @media (max-width: 560px) { .hero-card { flex-wrap: wrap; } .hero-illustration { margin: 0 auto; } }
+
   .progress-overview-title { display: flex; align-items: center; gap: 8px; }
   .progress-overview-title svg { width: 30px; height: 30px; }
 
@@ -1569,6 +1596,27 @@
   var DECOR_GLOBE = '<svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="16" fill="none" stroke="currentColor" stroke-width="1.6"/><ellipse cx="20" cy="20" rx="7" ry="16" fill="none" stroke="currentColor" stroke-width="1.4"/><line x1="4" y1="20" x2="36" y2="20" stroke="currentColor" stroke-width="1.4"/><path d="M7 12 Q20 16 33 12" fill="none" stroke="currentColor" stroke-width="1.2"/><path d="M7 28 Q20 24 33 28" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>';
   var DECOR_PENCIL = '<svg viewBox="0 0 40 12" aria-hidden="true"><path d="M2 10 L28 2 L34 4 L36 8 L30 10 L4 11 Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>';
 
+  var ILLUS_BOOK_BOLD = '<svg viewBox="0 0 160 130" aria-hidden="true">' +
+    '<path d="M14 26 Q80 8 80 26 L80 104 Q80 86 14 104 Z" fill="#ffffff" opacity="0.96"/>' +
+    '<path d="M146 26 Q80 8 80 26 L80 104 Q80 86 146 104 Z" fill="#ffffff" opacity="0.85"/>' +
+    '<path d="M27 42 Q80 30 80 42" stroke="var(--green)" stroke-width="2.2" fill="none" opacity="0.45"/>' +
+    '<path d="M27 58 Q80 46 80 58" stroke="var(--green)" stroke-width="2.2" fill="none" opacity="0.45"/>' +
+    '<path d="M27 74 Q80 62 80 74" stroke="var(--green)" stroke-width="2.2" fill="none" opacity="0.45"/>' +
+    '<path d="M133 42 Q80 30 80 42" stroke="var(--green)" stroke-width="2.2" fill="none" opacity="0.35"/>' +
+    '<path d="M133 58 Q80 46 80 58" stroke="var(--green)" stroke-width="2.2" fill="none" opacity="0.35"/>' +
+    '<path d="M80 2 L88 22 L109 22 L92 34 L99 55 L80 42 L61 55 L68 34 L51 22 L72 22 Z" fill="var(--gold)"/>' +
+    '</svg>';
+  var ILLUS_GLOBE_FLAGS = '<svg viewBox="0 0 160 160" aria-hidden="true">' +
+    '<circle cx="80" cy="80" r="58" fill="none" stroke="#ffffff" stroke-width="4" opacity="0.9"/>' +
+    '<ellipse cx="80" cy="80" rx="25" ry="58" fill="none" stroke="#ffffff" stroke-width="3" opacity="0.7"/>' +
+    '<line x1="22" y1="80" x2="138" y2="80" stroke="#ffffff" stroke-width="3" opacity="0.7"/>' +
+    '<path d="M30 55 Q80 68 130 55" fill="none" stroke="#ffffff" stroke-width="2.5" opacity="0.6"/>' +
+    '<path d="M30 105 Q80 92 130 105" fill="none" stroke="#ffffff" stroke-width="2.5" opacity="0.6"/>' +
+    '<g><line x1="26" y1="18" x2="26" y2="42" stroke="#ffffff" stroke-width="3"/><path d="M26 18 L44 24 L26 30 Z" fill="var(--gold)"/></g>' +
+    '<g><line x1="132" y1="26" x2="132" y2="48" stroke="#ffffff" stroke-width="3"/><path d="M132 26 L148 31 L132 36 Z" fill="var(--rust)"/></g>' +
+    '<g><line x1="122" y1="118" x2="122" y2="140" stroke="#ffffff" stroke-width="3"/><path d="M122 118 L136 122.5 L122 127 Z" fill="var(--info)"/></g>' +
+    '</svg>';
+
   function decorLayerHtml(items) {
     var html = "<div class='decor-layer'>";
     items.forEach(function (it) {
@@ -1811,14 +1859,15 @@
     }
 
     var hero = el("div", { class: "home-hero" });
-    hero.appendChild(el("div", { html: decorLayerHtml([
-      { svg: DECOR_GLOBE, top: 0, left: 2, size: 46, delay: 0 },
-      { svg: DECOR_CLOUD, top: 6, right: 4, size: 52, delay: 0.9 },
-      { svg: DECOR_STAR, top: 38, right: 16, size: 18, delay: 1.7 },
-      { svg: DECOR_PENCIL, top: 46, left: 6, size: 44, delay: 2.3 },
-      { svg: DECOR_STAR, top: 62, right: 30, size: 14, delay: 0.4 }
-    ]) }));
-    hero.appendChild(el("div", { class: "home-illustration", html: ILLUS_BOOK }));
+    var heroCard = el("div", { class: "hero-card" }, [
+      el("div", { class: "hero-card-text" }, [
+        el("div", { class: "hero-eyebrow" }, [document.createTextNode("კეთილი იყოს შენი მობრძანება")]),
+        el("div", { class: "hero-title" }, [document.createTextNode(PROFILE.name + "-ს ინგლისურის მოგზაურობა")]),
+        el("div", { class: "hero-sub" }, [document.createTextNode("ისწავლე, გაიმეორე, გაიზარდე — თავი თავის მიყოლებით.")])
+      ]),
+      el("div", { class: "hero-illustration", html: ILLUS_GLOBE_FLAGS })
+    ]);
+    hero.appendChild(heroCard);
     root.appendChild(hero);
 
     var initials = (PROFILE.nameEn[0] + PROFILE.surnameEn[0]).toUpperCase();
@@ -1872,12 +1921,6 @@
     var m = unitMastery(unit);
     var counts = unitProgressCounts(unit);
     var head = el("div", { class: "unit-head" });
-    head.appendChild(el("div", { html: decorLayerHtml([
-      { svg: DECOR_CLOUD, top: 4, right: 6, size: 48, delay: 0 },
-      { svg: DECOR_BOOK, top: 58, right: 2, size: 40, delay: 1.3 },
-      { svg: DECOR_STAR, top: 40, right: 22, size: 18, delay: 0.6 },
-      { svg: DECOR_STAR, top: 12, right: 30, size: 14, delay: 1.9 }
-    ]) }));
     if (unit.image) {
       var imgWrap = el("div", { class: "unit-image-wrap" }, [
         el("img", { src: unit.image, alt: unit.ka, class: "unit-image" }),
@@ -1891,14 +1934,6 @@
     if (UNIT_ICONS[unit.id]) titleRow.appendChild(el("span", { class: "unit-title-icon", html: UNIT_ICONS[unit.id] }));
     titleRow.appendChild(el("h2", {}, [document.createTextNode(unit.ka)]));
     headText.appendChild(titleRow);
-
-    var statRow = el("div", { class: "unit-stat-row" }, [
-      el("div", { class: "unit-stat" }, [el("span", { class: "unit-stat-icon" }, [document.createTextNode("🔥")]), el("span", {}, [document.createTextNode(computeStreak() + " დღე")])]),
-      el("div", { class: "unit-stat" }, [el("span", { class: "unit-stat-icon" }, [document.createTextNode("⭐")]), el("span", {}, [document.createTextNode(counts.done + " დასრულებული")])]),
-      el("div", { class: "unit-stat" }, [el("span", { class: "unit-stat-icon" }, [document.createTextNode("📚")]), el("span", {}, [document.createTextNode(Math.round(m.pct * 100) + "%")])])
-    ]);
-    headText.appendChild(statRow);
-
     headText.appendChild(el("div", { class: "bar", "data-state": m.colorState === "none" ? "" : m.colorState, html: "<span style='width:" + Math.round(m.pct * 100) + "%'></span>" }));
     headText.appendChild(el("div", { class: "practice-progress", style: "text-align:left;margin-top:6px" }, [document.createTextNode("დასრულებული: " + counts.done + " / " + counts.total)]));
     if (counts.total > 0 && counts.done === counts.total) {
@@ -1912,6 +1947,28 @@
     headText.appendChild(chatBtn);
     head.appendChild(headText);
     root.appendChild(head);
+
+    var statCard = el("div", { class: "stat-card" }, [
+      el("div", { class: "stat-card-header" }, [document.createTextNode("👋 გამარჯობა, " + PROFILE.name + "!")]),
+      el("div", { class: "stat-tiles" }, [
+        el("div", { class: "stat-tile tile-a" }, [
+          el("span", { class: "stat-tile-icon" }, [document.createTextNode("🔥")]),
+          el("span", { class: "stat-tile-value" }, [document.createTextNode(String(computeStreak()))]),
+          el("span", { class: "stat-tile-label" }, [document.createTextNode("დღის სერია")])
+        ]),
+        el("div", { class: "stat-tile tile-b" }, [
+          el("span", { class: "stat-tile-icon" }, [document.createTextNode("⭐")]),
+          el("span", { class: "stat-tile-value" }, [document.createTextNode(String(counts.done))]),
+          el("span", { class: "stat-tile-label" }, [document.createTextNode("დასრულებული")])
+        ]),
+        el("div", { class: "stat-tile tile-c" }, [
+          el("span", { class: "stat-tile-icon" }, [document.createTextNode("📚")]),
+          el("span", { class: "stat-tile-value" }, [document.createTextNode(Math.round(m.pct * 100) + "%")]),
+          el("span", { class: "stat-tile-label" }, [document.createTextNode("პროგრესი")])
+        ])
+      ])
+    ]);
+    root.appendChild(statCard);
 
     var overview = el("div", { class: "progress-overview" });
     var typeRows = unitTypeProgress(unit);
