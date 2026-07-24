@@ -171,7 +171,7 @@
   }
   .theme-toggle:hover { border-color: var(--green); }
 
-  .view { display: none; padding: 26px clamp(18px, 4vw, 34px) 40px; }
+  .view { display: none; padding: 26px clamp(18px, 4vw, 34px) 28px; }
   .view.active { display: block; }
   .page.unit-mode #view-cards, .page.unit-mode #view-grammar { padding-top: 10px; }
   @media (min-width: 760px) {
@@ -204,6 +204,30 @@
   .bar[data-state="green"] > span { background: var(--green); }
   .bar[data-state="gold"] > span { background: var(--gold); }
   .bar[data-state="rust"] > span { background: var(--rust); }
+
+  /* --- Accordion sections (unit page: ლექსიკონი/გრამატიკა/დიალოგები/სავარჯიშოები) --- */
+  .accordion { border: 1px solid var(--border); border-radius: 14px; background: var(--paper); margin: 0 0 10px; overflow: hidden; transition: border-color 0.15s ease; }
+  .accordion.open { border-color: var(--green); }
+  .accordion-header {
+    width: 100%; display: flex; align-items: center; gap: 10px; padding: 10px 14px;
+    background: none; border: none; cursor: pointer; text-align: left; font-family: inherit; color: var(--ink);
+  }
+  .accordion-header:hover { background: var(--surface); }
+  .accordion-title { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 0.95rem; flex: 1 1 auto; }
+  .accordion-icon { font-size: 1.05rem; }
+  .accordion-meta { display: flex; align-items: center; gap: 8px; flex: 0 0 auto; }
+  .mini-bar { display: inline-block; width: 56px; height: 6px; border-radius: 4px; background: var(--border); overflow: hidden; }
+  .mini-bar > span { display: block; height: 100%; background: var(--ink-faint); border-radius: 4px; }
+  .mini-bar[data-state="green"] > span { background: var(--green); }
+  .mini-bar[data-state="gold"] > span { background: var(--gold); }
+  .mini-count { font-size: 0.74rem; color: var(--ink-faint); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .accordion-chevron { color: var(--ink-faint); font-size: 0.78rem; transition: transform 0.2s ease; flex: 0 0 auto; }
+  .accordion.open .accordion-chevron { transform: rotate(180deg); }
+  .accordion-body { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 0.25s ease; }
+  .accordion-body > .accordion-body-inner { overflow: hidden; }
+  .accordion.open .accordion-body { grid-template-rows: 1fr; }
+  .accordion-body-inner { padding: 0 14px; }
+  .accordion.open .accordion-body-inner { padding: 0 14px 14px; }
 
   /* --- Deck / topic pickers --- */
   .picker-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; margin-bottom: 14px; }
@@ -308,11 +332,12 @@
   .type-progress-count { font-size: 0.75rem; color: var(--ink-faint); font-variant-numeric: tabular-nums; }
 
   /* --- Vocabulary practice modes --- */
-  .vocab-mode-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
-  .vocab-mode-btn { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--border); background: var(--paper); color: var(--ink-soft); border-radius: 999px; padding: 6px 13px; font-size: 0.82rem; font-weight: 600; cursor: pointer; transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease; }
-  .vocab-mode-btn:hover { border-color: var(--green); }
-  .vocab-mode-btn.active { background: var(--green); border-color: var(--green); color: var(--surface); }
-  .vocab-mode-btn .icon { font-size: 1rem; }
+  .mode-card-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 8px; margin-bottom: 12px; max-width: 360px; }
+  .mode-card { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; border: 1px solid var(--border); background: var(--paper); color: var(--ink-soft); border-radius: 12px; padding: 10px 6px; font-size: 0.72rem; font-weight: 600; cursor: pointer; text-align: center; aspect-ratio: 1 / 1; transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease, transform 0.1s ease; }
+  .mode-card:hover { border-color: var(--green); transform: translateY(-1px); }
+  .mode-card.active { background: var(--green); border-color: var(--green); color: var(--surface); }
+  .mode-card-icon { font-size: 1.4rem; }
+  .mode-card-label { line-height: 1.2; }
 
   .practice-box { border: 1px solid var(--border); border-radius: 12px; padding: 26px clamp(16px, 4vw, 30px); background: var(--paper); max-width: 560px; margin: 0 auto; text-align: center; }
   .practice-progress { font-size: 0.78rem; color: var(--ink-faint); margin-bottom: 8px; font-variant-numeric: tabular-nums; }
@@ -1434,55 +1459,101 @@
     return frag;
   }
 
+  var accordionOpen = {};
+  function miniProgressHtml(done, total) {
+    var pct = total ? Math.round((done / total) * 100) : 0;
+    var state2 = total === 0 ? "" : pct >= 75 ? "green" : pct > 0 ? "gold" : "";
+    return "<span class='mini-bar'" + (state2 ? " data-state='" + state2 + "'" : "") + "><span style='width:" + pct + "%'></span></span><span class='mini-count'>" + done + " / " + total + "</span>";
+  }
+
+  function accordionSection(unitId, key, icon, title, metaHtml, buildBody) {
+    var stateKey = unitId + ":" + key;
+    var isOpen = !!accordionOpen[stateKey];
+    var wrap = el("div", { class: "accordion" + (isOpen ? " open" : "") });
+    var header = el("button", { class: "accordion-header", type: "button" }, [
+      el("span", { class: "accordion-title" }, [
+        el("span", { class: "accordion-icon" }, [document.createTextNode(icon)]),
+        document.createTextNode(title)
+      ]),
+      el("span", { class: "accordion-meta", html: metaHtml }),
+      el("span", { class: "accordion-chevron" }, [document.createTextNode("▾")])
+    ]);
+    var body = el("div", { class: "accordion-body" });
+    var inner = el("div", { class: "accordion-body-inner" });
+    buildBody(inner);
+    body.appendChild(inner);
+    header.addEventListener("click", function () {
+      accordionOpen[stateKey] = !accordionOpen[stateKey];
+      wrap.classList.toggle("open");
+    });
+    wrap.appendChild(header);
+    wrap.appendChild(body);
+    return wrap;
+  }
+
   function renderCardsView() {
     var root = document.getElementById("view-cards");
     root.innerHTML = "";
     if (!cardsSub) {
       var unit = currentUnitObj();
 
-      root.appendChild(sectionHeading("📖", "ლექსიკონი", "ამ თავის სიტყვები და ფრაზები — დააჭირე კომპლექტს ბარათების სანახავად."));
-      var vocabGrid = el("div", { class: "picker-grid" });
-      unitDecks(unit).forEach(function (deck) {
-        var dm = deckMastery(deck);
-        var card = el("button", { class: "picker-card", type: "button" }, [
-          el("span", { class: "ka" }, [document.createTextNode(deck.ka)]),
-          el("span", { class: "en" }, [document.createTextNode(deck.en)]),
-          el("span", { class: "meta" }, [document.createTextNode(deck.cards.length + " ბარათი · ვიცი " + dm.green + "/" + dm.total)])
-        ]);
-        card.addEventListener("click", function (id) { return function () { openDeckFlip(id); }; }(deck.id));
-        vocabGrid.appendChild(card);
-      });
-      root.appendChild(vocabGrid);
+      var flipAgg = { done: 0, total: 0 };
+      unitDecks(unit).forEach(function (d) { var dm = deckMastery(d, "flip"); flipAgg.done += dm.green; flipAgg.total += dm.total; });
+      root.appendChild(accordionSection(unit.id, "lex", "📖", "ლექსიკონი", miniProgressHtml(flipAgg.done, flipAgg.total), function (body) {
+        body.appendChild(el("p", { style: "color:var(--ink-soft);margin:0 0 10px;max-width:60ch;font-size:0.85rem" }, [
+          document.createTextNode("ამ თავის სიტყვები და ფრაზები — დააჭირე კომპლექტს ბარათების სანახავად.")
+        ]));
+        var vocabGrid = el("div", { class: "picker-grid" });
+        unitDecks(unit).forEach(function (deck) {
+          var dm = deckMastery(deck);
+          var card = el("button", { class: "picker-card", type: "button" }, [
+            el("span", { class: "ka" }, [document.createTextNode(deck.ka)]),
+            el("span", { class: "en" }, [document.createTextNode(deck.en)]),
+            el("span", { class: "meta" }, [document.createTextNode(deck.cards.length + " ბარათი · ვიცი " + dm.green + "/" + dm.total)])
+          ]);
+          card.addEventListener("click", function (id) { return function () { openDeckFlip(id); }; }(deck.id));
+          vocabGrid.appendChild(card);
+        });
+        body.appendChild(vocabGrid);
+      }));
 
-      root.appendChild(sectionHeading("✏️", "სავარჯიშოები — ლექსიკა", "აირჩიე სავარჯიშოს ტიპი, შემდეგ — კომპლექტი."));
-      var modeRow = el("div", { class: "vocab-mode-row" });
       var practiceMode = cardsMode === "flip" ? "voice" : cardsMode;
-      [
-        ["voice", "🎙", "ხმოვანი თარგმანი"],
-        ["written", "✍️", "წერითი თარგმანი"],
-        ["mc", "☑️", "არჩევანის ტესტი"]
-      ].forEach(function (m) {
-        var btn = el("button", { class: "vocab-mode-btn" + (practiceMode === m[0] ? " active" : ""), type: "button" }, [
-          el("span", { class: "icon" }, [document.createTextNode(m[1])]),
-          document.createTextNode(m[2])
-        ]);
-        btn.addEventListener("click", function (mode) { return function () { cardsMode = mode; renderCardsView(); }; }(m[0]));
-        modeRow.appendChild(btn);
+      var exAgg = { done: 0, total: 0 };
+      ["voice", "written", "mc"].forEach(function (mode) {
+        unitDecks(unit).forEach(function (d) { var dm = deckMastery(d, mode); exAgg.done += dm.green; exAgg.total += dm.total; });
       });
-      root.appendChild(modeRow);
+      root.appendChild(accordionSection(unit.id, "lexPractice", "✏️", "სავარჯიშოები — ლექსიკა", miniProgressHtml(exAgg.done, exAgg.total), function (body) {
+        body.appendChild(el("p", { style: "color:var(--ink-soft);margin:0 0 10px;max-width:60ch;font-size:0.85rem" }, [
+          document.createTextNode("აირჩიე სავარჯიშოს ტიპი, შემდეგ — კომპლექტი.")
+        ]));
+        var modeRow = el("div", { class: "mode-card-row" });
+        [
+          ["voice", "🎙", "ხმოვანი თარგმანი"],
+          ["written", "✍️", "წერითი თარგმანი"],
+          ["mc", "☑️", "არჩევანის ტესტი"]
+        ].forEach(function (m) {
+          var btn = el("button", { class: "mode-card" + (practiceMode === m[0] ? " active" : ""), type: "button" }, [
+            el("span", { class: "mode-card-icon" }, [document.createTextNode(m[1])]),
+            el("span", { class: "mode-card-label" }, [document.createTextNode(m[2])])
+          ]);
+          btn.addEventListener("click", function (mode) { return function () { cardsMode = mode; renderCardsView(); }; }(m[0]));
+          modeRow.appendChild(btn);
+        });
+        body.appendChild(modeRow);
 
-      var exGrid = el("div", { class: "picker-grid" });
-      unitDecks(unit).forEach(function (deck) {
-        var pm = deckMastery(deck, practiceMode);
-        var card = el("button", { class: "picker-card", type: "button" }, [
-          el("span", { class: "ka" }, [document.createTextNode(deck.ka)]),
-          el("span", { class: "en" }, [document.createTextNode(deck.en)]),
-          el("span", { class: "meta" }, [document.createTextNode(deck.cards.length + " ბარათი · ვიცი " + pm.green + "/" + pm.total)])
-        ]);
-        card.addEventListener("click", function (id) { return function () { cardsMode = practiceMode; openDeck(id); }; }(deck.id));
-        exGrid.appendChild(card);
-      });
-      root.appendChild(exGrid);
+        var exGrid = el("div", { class: "picker-grid" });
+        unitDecks(unit).forEach(function (deck) {
+          var pm = deckMastery(deck, practiceMode);
+          var card = el("button", { class: "picker-card", type: "button" }, [
+            el("span", { class: "ka" }, [document.createTextNode(deck.ka)]),
+            el("span", { class: "en" }, [document.createTextNode(deck.en)]),
+            el("span", { class: "meta" }, [document.createTextNode(deck.cards.length + " ბარათი · ვიცი " + pm.green + "/" + pm.total)])
+          ]);
+          card.addEventListener("click", function (id) { return function () { cardsMode = practiceMode; openDeck(id); }; }(deck.id));
+          exGrid.appendChild(card);
+        });
+        body.appendChild(exGrid);
+      }));
       return;
     }
 
@@ -1948,17 +2019,32 @@
       var dialogueTopics = unitTopicsByKind(unit, "dialogue");
       var readingTopics = unitTopicsByKind(unit, "reading");
 
+      function topicsAgg(topics) {
+        var done = 0, total = 0;
+        topics.forEach(function (t) { var m = topicMastery(t); done += m.correct; total += m.total; });
+        return { done: done, total: total };
+      }
+
       if (grammarTopics.length) {
-        root.appendChild(sectionHeading("📐", "გრამატიკა", "გრამატიკის წესები და სავარჯიშოები ამ თავიდან."));
-        root.appendChild(topicGrid(grammarTopics));
+        var gAgg = topicsAgg(grammarTopics);
+        root.appendChild(accordionSection(unit.id, "grammar", "📐", "გრამატიკა", miniProgressHtml(gAgg.done, gAgg.total), function (body) {
+          body.appendChild(el("p", { style: "color:var(--ink-soft);margin:0 0 10px;max-width:60ch;font-size:0.85rem" }, [document.createTextNode("გრამატიკის წესები და სავარჯიშოები ამ თავიდან.")]));
+          body.appendChild(topicGrid(grammarTopics));
+        }));
       }
       if (dialogueTopics.length) {
-        root.appendChild(sectionHeading("💬", "დიალოგები", "შეავსე დიალოგის ცარიელი ადგილები წიგნის დიალოგებიდან."));
-        root.appendChild(topicGrid(dialogueTopics));
+        var dAgg = topicsAgg(dialogueTopics);
+        root.appendChild(accordionSection(unit.id, "dialogue", "💬", "დიალოგები", miniProgressHtml(dAgg.done, dAgg.total), function (body) {
+          body.appendChild(el("p", { style: "color:var(--ink-soft);margin:0 0 10px;max-width:60ch;font-size:0.85rem" }, [document.createTextNode("შეავსე დიალოგის ცარიელი ადგილები წიგნის დიალოგებიდან.")]));
+          body.appendChild(topicGrid(dialogueTopics));
+        }));
       }
       if (readingTopics.length) {
-        root.appendChild(sectionHeading("✏️", "სავარჯიშოები — წაკითხვის გაგება", "წაიკითხე ტექსტი და უპასუხე კითხვებს."));
-        root.appendChild(topicGrid(readingTopics));
+        var rAgg = topicsAgg(readingTopics);
+        root.appendChild(accordionSection(unit.id, "reading", "✏️", "სავარჯიშოები — წაკითხვის გაგება", miniProgressHtml(rAgg.done, rAgg.total), function (body) {
+          body.appendChild(el("p", { style: "color:var(--ink-soft);margin:0 0 10px;max-width:60ch;font-size:0.85rem" }, [document.createTextNode("წაიკითხე ტექსტი და უპასუხე კითხვებს.")]));
+          body.appendChild(topicGrid(readingTopics));
+        }));
       }
       return;
     }
