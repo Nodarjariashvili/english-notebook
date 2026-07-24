@@ -580,7 +580,7 @@
 
   var GRAMMAR = [
     {
-      id: "pronouns", ka: "პირის ნაცვალსახელები", en: "Subject & object pronouns",
+      id: "pronouns", kind: "grammar", ka: "პირის ნაცვალსახელები", en: "Subject & object pronouns",
       note: "ობიექტური ნაცვალსახელები (me, you, him, her, it, us, them) გამოიყენება მაშინ, როცა სახელი ზმნის შემდეგ ან წინდებულის შემდეგ დგას.",
       items: [
         { prompt: "I always help out <u>my friends</u>.", instruction: "ჩაანაცვლე ხაზგასმული ნაწილი ნაცვალსახელით.", answer: "them" },
@@ -605,7 +605,7 @@
       ]
     },
     {
-      id: "possAdj", ka: "კუთვნილებითი ნაცვალსახელები", en: "my / your / his / her / its / our / their",
+      id: "possAdj", kind: "grammar", ka: "კუთვნილებითი ნაცვალსახელები", en: "my / your / his / her / its / our / their",
       note: "კუთვნილებითი ნაცვალსახელი ყოველთვის არსებით სახელს უსწრებს წინ: my brother, her name, our friends.",
       items: [
         { prompt: "Hi, I am Sandra. What is ___ name?", instruction: "შეავსე სწორი კუთვნილებითი ნაცვალსახელით.", answer: "your" },
@@ -619,7 +619,7 @@
       ]
     },
     {
-      id: "possS", ka: "კუთვნილება 's / s'", en: "Alex's sister / the Jacksons' jobs",
+      id: "possS", kind: "grammar", ka: "კუთვნილება 's / s'", en: "Alex's sister / the Jacksons' jobs",
       note: "მხოლობითში ემატება 's (Nick's), ხოლო -s-ზე დაბოლოებულ მრავლობითს — მხოლოდ ' (the Jacksons').",
       items: [
         { prompt: "Tamar is his wife. (Nick)", instruction: "გადააკეთე კუთვნილებით ფორმაში.", answer: "Tamar is Nick's wife.", accept: ["nick's wife"] },
@@ -633,7 +633,7 @@
       ]
     },
     {
-      id: "demonstratives", ka: "This / That / These / Those", en: "ახლოს და შორს მყოფი საგნები",
+      id: "demonstratives", kind: "grammar", ka: "This / That / These / Those", en: "ახლოს და შორს მყოფი საგნები",
       note: "This/that — მხოლობითისთვის (ახლოს/შორს), these/those — მრავლობითისთვის (ახლოს/შორს).",
       items: [
         { prompt: "Is <u>these</u> a photo of your brother?", instruction: "იპოვე შეცდომა და გაასწორე.", answer: "this" },
@@ -647,7 +647,7 @@
       ]
     },
     {
-      id: "presentForms", ka: "Present Simple — do / does", en: "s / es დაბოლოებები",
+      id: "presentForms", kind: "grammar", ka: "Present Simple — do / does", en: "s / es დაბოლოებები",
       note: "He/she/it-თან ზმნას ემატება s/es. კითხვით და უარყოფით წინადადებებში he/she/it-თან გვჭირდება does, დანარჩენთან — do.",
       items: [
         { prompt: "My brother <u>like</u> music and he downloads many songs.", instruction: "იპოვე შეცდომა და გაასწორე.", answer: "likes" },
@@ -661,7 +661,7 @@
       ]
     },
     {
-      id: "presentQuestions", ka: "კითხვების აგება", en: "Do / Does + subject + verb",
+      id: "presentQuestions", kind: "grammar", ka: "კითხვების აგება", en: "Do / Does + subject + verb",
       note: "კითხვა: (კითხვითი სიტყვა) + do/does + ქვემდებარე + ზმნა (ძირითადი ფორმით).",
       items: [
         { prompt: "where / you / work?", instruction: "ააგე კითხვა სიტყვებისგან.", answer: "Where do you work?" },
@@ -675,7 +675,7 @@
       ]
     },
     {
-      id: "frequency", ka: "სიხშირის ზმნისართები", en: "never · rarely · sometimes · often · usually · always",
+      id: "frequency", kind: "grammar", ka: "სიხშირის ზმნისართები", en: "never · rarely · sometimes · often · usually · always",
       note: "სიხშირის ზმნისართი დგას to be-ს შემდეგ (He is always late), მაგრამ სხვა ზმნების წინ (He always arrives late).",
       items: [
         { prompt: "Peter ___ polite and listens to everyone's opinion. (be / always)", instruction: "შეავსე ზმნა და სიხშირის ზმნისართი სწორი რიგით.", answer: "is always" },
@@ -694,7 +694,7 @@
       ]
     },
     {
-      id: "wrapupPoss", ka: "შერეული გამეორება — კუთვნილება", en: "Language Wrap-up: possession review",
+      id: "wrapupPoss", kind: "grammar", ka: "შერეული გამეორება — კუთვნილება", en: "Language Wrap-up: possession review",
       note: "შეცდომების გასწორება — ზოგან საჭიროა კუთვნილებითი ნაცვალსახელი (my/your/his...), ზოგან — 's.",
       items: [
         { prompt: "That's <u>I</u> bag.", instruction: "იპოვე შეცდომა და გაასწორე.", answer: "my" },
@@ -710,7 +710,7 @@
       ]
     },
     {
-      id: "dialogueClub", ka: "დიალოგი: კლუბის ახალი წევრი", en: "David & Beth — new club member",
+      id: "dialogueClub", kind: "dialogue", ka: "დიალოგი: კლუბის ახალი წევრი", en: "David & Beth — new club member",
       note: "შეავსე დიალოგის ცარიელი ადგილები — David გაცნობის დიალოგი წიგნიდან.",
       items: [
         { prompt: "David: Hello, I'm David Garza. I am a new club member.\nBeth: Hi, ___ Elisabeth Silva, but please call me Beth.", instruction: "შეავსე გამოტოვებული ადგილი.", answer: "my name is", accept: ["my name's"] },
@@ -719,7 +719,7 @@
       ]
     },
     {
-      id: "dialogueFriends", ka: "დიალოგი: ახალი მეგობარი", en: "Josh & Max — meeting a new classmate",
+      id: "dialogueFriends", kind: "dialogue", ka: "დიალოგი: ახალი მეგობარი", en: "Josh & Max — meeting a new classmate",
       note: "შეავსე დიალოგის ცარიელი ადგილები — Josh და Max-ის გაცნობის დიალოგი წიგნიდან.",
       items: [
         { prompt: "Josh: Hi, I am Josh. Are you new?\nMax: Hi, Josh. Yes, I am.\nJosh: Welcome! ___?", instruction: "შეავსე გამოტოვებული ადგილი (რა გქვია?).", answer: "what's your name", accept: ["what is your name"] },
@@ -730,7 +730,7 @@
       ]
     },
     {
-      id: "dialogueFrequency", ka: "დიალოგი: სიხშირის ზმნისართებით", en: "Rick & Alicia — talking about free time",
+      id: "dialogueFrequency", kind: "dialogue", ka: "დიალოგი: სიხშირის ზმნისართებით", en: "Rick & Alicia — talking about free time",
       note: "შეავსე დიალოგის ცარიელი ადგილები სწორი სიხშირის ზმნისართით (never/rarely/sometimes/often/usually/always).",
       items: [
         { prompt: "Rick: I'm ___ so busy! (always)", instruction: "შეავსე სწორი სიხშირის ზმნისართით.", answer: "always" },
@@ -744,7 +744,7 @@
       ]
     },
     {
-      id: "readingJacob", ka: "წაკითხვის გაგება: ჯეიქობის ოჯახი", en: "Reading comprehension — Jacob's Family",
+      id: "readingJacob", kind: "reading", ka: "წაკითხვის გაგება: ჯეიქობის ოჯახი", en: "Reading comprehension — Jacob's Family",
       note: "წაკითხვის ტექსტი: \"My name is Jacob Thompson, and I am 28 years old. I am from Great Britain and live in London with my family. I have a big family — mother, father, grandparents, wife, and children — but I don't have any sisters or brothers. I am the only child. This is a photo of my family, but only 7 of us are there; my parents are not with us. My mum is a very busy person. She is a teacher and works at a school. My father is a truck driver who is always on the road. Grandma is a 78-year-old woman, and she is retired. Grandpa is 80 years old, and he is a university professor. He is so energetic. As for my wife and children, I got married at a very early stage of my life. I fell in love with my wife, Helen, when I was 17 and soon married. She is beautiful and a good mother. She loves our children so much and takes care of them every hour. We have two sons and a daughter. The boys' names are Alex and Jack, and the daughter's name is Sally. They are 6, 8, and 7 years old. We all love each other, respect and care for each other's feelings.\" — უპასუხე true ან false.",
       items: [
         { prompt: "Jacob Thompson lives alone.", instruction: "true თუ false?", answer: "false" },
@@ -760,7 +760,7 @@
       ]
     },
     {
-      id: "readingKeiraLiam", ka: "მოსმენა: კეირა და ლიამის დღე", en: "Listening — Keira & Liam's routines",
+      id: "readingKeiraLiam", kind: "reading", ka: "მოსმენა: კეირა და ლიამის დღე", en: "Listening — Keira & Liam's routines",
       note: "KEIRA: \"Keira gets up at 2 a.m. She has a shower and then gets dressed. She leaves home at 3 a.m. and gets to work at 3.30. She has a quick breakfast at work and then gets ready for the breakfast TV program. She reads the plan for the morning. The program starts at 5 a.m. when most people are asleep.\" LIAM: \"Liam loves his job, but it's hard work. He gets up at 3 p.m. and spends time with his family. He leaves for work at 8.30 p.m. because he worries about the traffic. He starts work at 10 p.m. He works in the hospital and helps the patients and doctors. He doesn't have lunch, but he has coffee and a snack. He finishes work at 6 a.m. and has dinner. He gets home at 7 a.m. and goes to bed because he's exhausted!\" — უპასუხე true ან false თითოეულ წინადადებაზე.",
       items: [
         { prompt: "Keira gets up at 2 a.m.", instruction: "true თუ false?", answer: "true" },
@@ -879,6 +879,7 @@
 
   function unitDecks(unit) { return DECKS.filter(function (d) { return unit.deckIds.indexOf(d.id) !== -1; }); }
   function unitGrammarTopics(unit) { return GRAMMAR.filter(function (g) { return unit.grammarIds.indexOf(g.id) !== -1; }); }
+  function unitTopicsByKind(unit, kind) { return unitGrammarTopics(unit).filter(function (g) { return g.kind === kind; }); }
 
   function unitMastery(unit) {
     var parts = unitDecks(unit).map(deckMastery).concat(unitGrammarTopics(unit).map(topicMastery));
@@ -1064,25 +1065,48 @@
   var practicePos = 0;
 
   function openDeck(id) { stopPracticeMic(); cardsSub = id; practicePos = 0; renderCardsView(); }
+  function openDeckFlip(id) { cardsMode = "flip"; openDeck(id); }
   function backToDecks() { stopPracticeMic(); cardsSub = null; renderCardsView(); }
+
+  function sectionHeading(icon, title, sub) {
+    var frag = document.createDocumentFragment();
+    frag.appendChild(el("div", { class: "section-heading" }, [
+      el("h2", {}, [document.createTextNode(icon + " " + title)]),
+      el("div", { class: "rule" })
+    ]));
+    if (sub) frag.appendChild(el("p", { style: "color:var(--ink-soft);margin:0 0 16px;max-width:60ch" }, [document.createTextNode(sub)]));
+    return frag;
+  }
 
   function renderCardsView() {
     var root = document.getElementById("view-cards");
     root.innerHTML = "";
     if (!cardsSub) {
-      root.appendChild(el("h2", {}, [document.createTextNode("ლექსიკური ბარათები")]));
-      root.appendChild(el("p", { style: "color:var(--ink-soft);margin:6px 0 20px;max-width:60ch" }, [
-        document.createTextNode("აირჩიე სავარჯიშოს ტიპი, შემდეგ — კომპლექტი.")
-      ]));
+      var unit = currentUnitObj();
 
+      root.appendChild(sectionHeading("📖", "ლექსიკონი", "ამ თავის სიტყვები და ფრაზები — დააჭირე კომპლექტს ბარათების სანახავად."));
+      var vocabGrid = el("div", { class: "picker-grid" });
+      unitDecks(unit).forEach(function (deck) {
+        var dm = deckMastery(deck);
+        var card = el("button", { class: "picker-card", type: "button" }, [
+          el("span", { class: "ka" }, [document.createTextNode(deck.ka)]),
+          el("span", { class: "en" }, [document.createTextNode(deck.en)]),
+          el("span", { class: "meta" }, [document.createTextNode(deck.cards.length + " ბარათი · ვიცი " + dm.green + "/" + dm.total)])
+        ]);
+        card.addEventListener("click", function (id) { return function () { openDeckFlip(id); }; }(deck.id));
+        vocabGrid.appendChild(card);
+      });
+      root.appendChild(vocabGrid);
+
+      root.appendChild(sectionHeading("✏️", "სავარჯიშოები — ლექსიკა", "აირჩიე სავარჯიშოს ტიპი, შემდეგ — კომპლექტი."));
       var modeRow = el("div", { class: "vocab-mode-row" });
+      var practiceMode = cardsMode === "flip" ? "voice" : cardsMode;
       [
-        ["flip", "🗂", "ბარათები"],
         ["voice", "🎙", "ხმოვანი თარგმანი"],
         ["written", "✍️", "წერითი თარგმანი"],
         ["mc", "☑️", "არჩევანის ტესტი"]
       ].forEach(function (m) {
-        var btn = el("button", { class: "vocab-mode-btn" + (cardsMode === m[0] ? " active" : ""), type: "button" }, [
+        var btn = el("button", { class: "vocab-mode-btn" + (practiceMode === m[0] ? " active" : ""), type: "button" }, [
           el("span", { class: "icon" }, [document.createTextNode(m[1])]),
           document.createTextNode(m[2])
         ]);
@@ -1091,18 +1115,18 @@
       });
       root.appendChild(modeRow);
 
-      var grid = el("div", { class: "picker-grid" });
-      unitDecks(currentUnitObj()).forEach(function (deck) {
-        var m = deckMastery(deck);
+      var exGrid = el("div", { class: "picker-grid" });
+      unitDecks(unit).forEach(function (deck) {
+        var pm = deckMastery(deck);
         var card = el("button", { class: "picker-card", type: "button" }, [
           el("span", { class: "ka" }, [document.createTextNode(deck.ka)]),
           el("span", { class: "en" }, [document.createTextNode(deck.en)]),
-          el("span", { class: "meta" }, [document.createTextNode(deck.cards.length + " ბარათი · ვიცი " + m.green + "/" + m.total)])
+          el("span", { class: "meta" }, [document.createTextNode(deck.cards.length + " ბარათი · ვიცი " + pm.green + "/" + pm.total)])
         ]);
-        card.addEventListener("click", function (id) { return function () { openDeck(id); }; }(deck.id));
-        grid.appendChild(card);
+        card.addEventListener("click", function (id) { return function () { cardsMode = practiceMode; openDeck(id); }; }(deck.id));
+        exGrid.appendChild(card);
       });
-      root.appendChild(grid);
+      root.appendChild(exGrid);
       return;
     }
 
@@ -1545,22 +1569,39 @@
     var root = document.getElementById("view-grammar");
     root.innerHTML = "";
     if (!grammarSub) {
-      root.appendChild(el("h2", {}, [document.createTextNode("გრამატიკის ვარჯიშები")]));
-      root.appendChild(el("p", { style: "color:var(--ink-soft);margin:6px 0 20px;max-width:60ch" }, [
-        document.createTextNode("იგივე წინადადებები, რომლებიც წიგნში ივარჯიშე — დაწერე პასუხი და მაშინვე ნახავ, სწორია თუ არა.")
-      ]));
-      var grid = el("div", { class: "picker-grid" });
-      unitGrammarTopics(currentUnitObj()).forEach(function (topic) {
-        var m = topicMastery(topic);
-        var card = el("button", { class: "picker-card", type: "button" }, [
-          el("span", { class: "ka" }, [document.createTextNode(topic.ka)]),
-          el("span", { class: "en" }, [document.createTextNode(topic.en)]),
-          el("span", { class: "meta" }, [document.createTextNode(topic.items.length + " კითხვა · " + m.correct + "/" + m.total + " სწორი")])
-        ]);
-        card.addEventListener("click", function (id) { return function () { openTopic(id); }; }(topic.id));
-        grid.appendChild(card);
-      });
-      root.appendChild(grid);
+      var unit = currentUnitObj();
+
+      function topicGrid(topics) {
+        var g = el("div", { class: "picker-grid" });
+        topics.forEach(function (topic) {
+          var m = topicMastery(topic);
+          var card = el("button", { class: "picker-card", type: "button" }, [
+            el("span", { class: "ka" }, [document.createTextNode(topic.ka)]),
+            el("span", { class: "en" }, [document.createTextNode(topic.en)]),
+            el("span", { class: "meta" }, [document.createTextNode(topic.items.length + " კითხვა · " + m.correct + "/" + m.total + " სწორი")])
+          ]);
+          card.addEventListener("click", function (id) { return function () { openTopic(id); }; }(topic.id));
+          g.appendChild(card);
+        });
+        return g;
+      }
+
+      var grammarTopics = unitTopicsByKind(unit, "grammar");
+      var dialogueTopics = unitTopicsByKind(unit, "dialogue");
+      var readingTopics = unitTopicsByKind(unit, "reading");
+
+      if (grammarTopics.length) {
+        root.appendChild(sectionHeading("📐", "გრამატიკა", "გრამატიკის წესები და სავარჯიშოები ამ თავიდან."));
+        root.appendChild(topicGrid(grammarTopics));
+      }
+      if (dialogueTopics.length) {
+        root.appendChild(sectionHeading("💬", "დიალოგები", "შეავსე დიალოგის ცარიელი ადგილები წიგნის დიალოგებიდან."));
+        root.appendChild(topicGrid(dialogueTopics));
+      }
+      if (readingTopics.length) {
+        root.appendChild(sectionHeading("✏️", "სავარჯიშოები — წაკითხვის გაგება", "წაიკითხე ტექსტი და უპასუხე კითხვებს."));
+        root.appendChild(topicGrid(readingTopics));
+      }
       return;
     }
 
