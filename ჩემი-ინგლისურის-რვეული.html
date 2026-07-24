@@ -23,6 +23,11 @@
     --rust: #dc5b4a;
     --rust-soft: #fbe1dc;
     --info: #4fa8d8;
+    --info-soft: #dcf0fa;
+    --violet: #9333ea;
+    --violet-soft: #f1e4fe;
+    --cyan: #0891b2;
+    --cyan-soft: #d3f4f8;
     --tab-bg: #e3f1e8;
     --tab-bg-active: var(--surface);
     --border: rgba(45, 52, 54, 0.14);
@@ -46,6 +51,11 @@
       --rust: #e8796b;
       --rust-soft: #3a211d;
       --info: #7cc4ea;
+      --info-soft: #17323d;
+      --violet: #c084fc;
+      --violet-soft: #34205a;
+      --cyan: #67e8f9;
+      --cyan-soft: #113c42;
       --tab-bg: #182a21;
       --tab-bg-active: var(--surface);
       --border: rgba(230, 239, 233, 0.14);
@@ -69,6 +79,11 @@
     --rust: #e8796b;
     --rust-soft: #3a211d;
     --info: #7cc4ea;
+    --info-soft: #17323d;
+    --violet: #c084fc;
+    --violet-soft: #34205a;
+    --cyan: #67e8f9;
+    --cyan-soft: #113c42;
     --tab-bg: #182a21;
     --tab-bg-active: var(--surface);
     --border: rgba(230, 239, 233, 0.14);
@@ -91,6 +106,11 @@
     --rust: #dc5b4a;
     --rust-soft: #fbe1dc;
     --info: #4fa8d8;
+    --info-soft: #dcf0fa;
+    --violet: #9333ea;
+    --violet-soft: #f1e4fe;
+    --cyan: #0891b2;
+    --cyan-soft: #d3f4f8;
     --tab-bg: #e3f1e8;
     --tab-bg-active: var(--surface);
     --border: rgba(45, 52, 54, 0.14);
@@ -215,13 +235,13 @@
   /* --- Dashboard --- */
   .home-hero { position: relative; }
   .profile-row { position: relative; z-index: 1; display: flex; gap: 22px; flex-wrap: wrap; margin-bottom: 28px; }
-  .id-card { flex: 1 1 300px; border: 1px solid var(--border); border-radius: 10px; padding: 18px 20px; background: var(--paper); display: flex; gap: 16px; align-items: center; }
+  .id-card { flex: 1 1 300px; border: 1px solid var(--border); border-top: 4px solid var(--gold); border-radius: 10px; padding: 18px 20px; background: var(--paper); display: flex; gap: 16px; align-items: center; }
   .avatar { width: 58px; height: 58px; border-radius: 50%; background: var(--green); color: var(--surface); display: flex; align-items: center; justify-content: center; font-family: 'Fraunces', serif; font-size: 1.3rem; font-weight: 600; flex-shrink: 0; }
   .id-card dl { margin: 8px 0 0; display: grid; grid-template-columns: auto 1fr; gap: 3px 10px; font-size: 0.86rem; }
   .id-card dt { color: var(--ink-faint); }
   .id-card dd { margin: 0; color: var(--ink); font-weight: 500; }
 
-  .intro-card { flex: 1 1 320px; border: 1px dashed var(--border); border-radius: 10px; padding: 16px 20px; background: var(--surface); }
+  .intro-card { flex: 1 1 320px; border: 1px dashed var(--border); border-top: 4px solid var(--rust); border-radius: 10px; padding: 16px 20px; background: var(--surface); }
   .intro-card p { margin: 5px 0; font-size: 0.92rem; }
   .intro-card .blank { color: var(--green-ink); font-weight: 600; }
 
@@ -237,15 +257,19 @@
   .bar[data-state="rust"] > span { background: var(--rust); }
 
   /* --- Accordion sections (unit page: ლექსიკონი/გრამატიკა/დიალოგები/სავარჯიშოები) --- */
-  .accordion { border: 1px solid var(--border); border-radius: 14px; background: var(--paper); margin: 0 0 10px; overflow: hidden; transition: border-color 0.15s ease; }
-  .accordion.open { border-color: var(--green); }
+  .accordion { --accent-color: var(--green); --accent-soft: var(--green-soft); border: 1px solid var(--border); border-left: 4px solid var(--accent-color); border-radius: 14px; background: var(--paper); margin: 0 0 10px; overflow: hidden; transition: border-color 0.15s ease; }
+  .accordion.open { border-color: var(--accent-color); }
   .accordion-header {
     width: 100%; display: flex; align-items: center; gap: 10px; padding: 10px 14px;
     background: none; border: none; cursor: pointer; text-align: left; font-family: inherit; color: var(--ink);
   }
   .accordion-header:hover { background: var(--surface); }
   .accordion-title { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 0.95rem; flex: 1 1 auto; }
-  .accordion-icon { font-size: 1.05rem; }
+  .accordion-icon { font-size: 1.05rem; display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; border-radius: 50%; background: var(--accent-soft); flex-shrink: 0; }
+  .accordion[data-color="info"] { --accent-color: var(--info); --accent-soft: var(--info-soft); }
+  .accordion[data-color="violet"] { --accent-color: var(--violet); --accent-soft: var(--violet-soft); }
+  .accordion[data-color="gold"] { --accent-color: var(--gold); --accent-soft: var(--gold-soft); }
+  .accordion[data-color="cyan"] { --accent-color: var(--cyan); --accent-soft: var(--cyan-soft); }
   .accordion-meta { display: flex; align-items: center; gap: 8px; flex: 0 0 auto; }
   .ring { position: relative; display: inline-block; width: 32px; height: 32px; border-radius: 50%; flex: 0 0 auto; background: conic-gradient(var(--ring-color, var(--green)) calc(var(--pct, 0) * 1%), var(--border) 0); transition: background 0.4s ease; }
   .ring-hole { position: absolute; inset: 3px; border-radius: 50%; background: var(--paper); display: flex; align-items: center; justify-content: center; }
@@ -362,7 +386,7 @@
   .unit-head-text .bar { max-width: 340px; }
   /* --- Bold colored stat card (Unit page) --- */
   .stat-card { position: relative; z-index: 1; background: var(--surface); border-radius: 20px; padding: 16px 18px; margin: 0 0 18px; box-shadow: 0 10px 24px var(--shadow); }
-  .stat-card-header { font-weight: 700; font-size: 0.95rem; margin-bottom: 12px; color: var(--ink); }
+  .stat-card-header { font-weight: 700; font-size: 0.95rem; color: var(--ink); }
   .stat-tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
   .stat-tile { border-radius: 14px; padding: 14px 8px; display: flex; flex-direction: column; align-items: center; gap: 4px; color: #ffffff; transition: transform 0.15s ease; }
   .stat-tile:hover { transform: translateY(-2px); }
@@ -477,6 +501,14 @@
   .hero-illustration svg { width: 100%; height: 100%; display: block; }
   @keyframes heroFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
   @media (max-width: 560px) { .hero-card { flex-wrap: wrap; } .hero-illustration { margin: 0 auto; } }
+
+  /* --- Friendly person illustrations --- */
+  .home-person-deco { display: flex; justify-content: center; margin: 0 0 20px; }
+  .person-illus { width: 120px; height: 128px; animation: heroFloat 5s ease-in-out infinite; }
+  .person-illus svg { width: 100%; height: 100%; display: block; }
+  .stat-card-person { flex-shrink: 0; width: 64px; height: 68px; animation: heroFloat 4.5s ease-in-out infinite; }
+  .stat-card-person svg { width: 100%; height: 100%; display: block; }
+  .stat-card-headerRow { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
 
   .progress-overview-title { display: flex; align-items: center; gap: 8px; }
   .progress-overview-title svg { width: 30px; height: 30px; }
@@ -1617,6 +1649,117 @@
     '<g><line x1="122" y1="118" x2="122" y2="140" stroke="#ffffff" stroke-width="3"/><path d="M122 118 L136 122.5 L122 127 Z" fill="var(--info)"/></g>' +
     '</svg>';
 
+  var PERSON_BOOK = '<svg viewBox="0 0 140 150" aria-hidden="true">' +
+    '<ellipse cx="70" cy="140" rx="40" ry="6" fill="var(--shadow)"/>' +
+    '<path d="M35 110 Q70 130 105 110 L100 90 Q70 105 40 90 Z" fill="var(--info)"/>' +
+    '<rect x="42" y="55" width="56" height="55" rx="20" fill="var(--green)"/>' +
+    '<circle cx="70" cy="35" r="22" fill="var(--gold-soft)"/>' +
+    '<path d="M50 24 Q70 8 90 24 Q90 16 70 14 Q50 16 50 24Z" fill="var(--ink-soft)"/>' +
+    '<circle cx="62" cy="36" r="2.2" fill="var(--ink)"/><circle cx="78" cy="36" r="2.2" fill="var(--ink)"/>' +
+    '<path d="M62 44 Q70 49 78 44" stroke="var(--ink)" stroke-width="2" fill="none" stroke-linecap="round"/>' +
+    '<rect x="50" y="75" width="40" height="28" rx="3" fill="#ffffff"/>' +
+    '<line x1="70" y1="75" x2="70" y2="103" stroke="var(--border)" stroke-width="1.5"/>' +
+    '<path d="M40 80 Q30 90 45 100" stroke="var(--green)" stroke-width="10" fill="none" stroke-linecap="round"/>' +
+    '<path d="M100 80 Q110 90 95 100" stroke="var(--green)" stroke-width="10" fill="none" stroke-linecap="round"/>' +
+    '</svg>';
+
+  var PERSON_HANDSHAKE = '<svg viewBox="0 0 160 130" aria-hidden="true">' +
+    '<ellipse cx="80" cy="122" rx="60" ry="6" fill="var(--shadow)"/>' +
+    '<rect x="18" y="55" width="42" height="55" rx="18" fill="var(--info)"/>' +
+    '<circle cx="39" cy="35" r="18" fill="var(--gold-soft)"/>' +
+    '<circle cx="33" cy="36" r="2" fill="var(--ink)"/><circle cx="45" cy="36" r="2" fill="var(--ink)"/>' +
+    '<path d="M33 43 Q39 47 45 43" stroke="var(--ink)" stroke-width="1.8" fill="none" stroke-linecap="round"/>' +
+    '<rect x="100" y="55" width="42" height="55" rx="18" fill="var(--rust)"/>' +
+    '<circle cx="121" cy="35" r="18" fill="var(--gold-soft)"/>' +
+    '<circle cx="115" cy="36" r="2" fill="var(--ink)"/><circle cx="127" cy="36" r="2" fill="var(--ink)"/>' +
+    '<path d="M115 43 Q121 47 127 43" stroke="var(--ink)" stroke-width="1.8" fill="none" stroke-linecap="round"/>' +
+    '<path d="M60 78 Q80 65 100 78" stroke="var(--gold-soft)" stroke-width="11" fill="none" stroke-linecap="round"/>' +
+    '<circle cx="80" cy="74" r="7" fill="var(--gold)"/>' +
+    '</svg>';
+
+  var PERSON_FAMILY = '<svg viewBox="0 0 160 140" aria-hidden="true">' +
+    '<ellipse cx="80" cy="132" rx="65" ry="6" fill="var(--shadow)"/>' +
+    '<rect x="20" y="55" width="36" height="60" rx="16" fill="var(--green)"/>' +
+    '<circle cx="38" cy="38" r="16" fill="var(--gold-soft)"/>' +
+    '<circle cx="33" cy="38" r="1.8" fill="var(--ink)"/><circle cx="43" cy="38" r="1.8" fill="var(--ink)"/>' +
+    '<path d="M33 44 Q38 47 43 44" stroke="var(--ink)" stroke-width="1.6" fill="none" stroke-linecap="round"/>' +
+    '<rect x="104" y="55" width="36" height="60" rx="16" fill="var(--violet)"/>' +
+    '<circle cx="122" cy="38" r="16" fill="var(--gold-soft)"/>' +
+    '<circle cx="117" cy="38" r="1.8" fill="var(--ink)"/><circle cx="127" cy="38" r="1.8" fill="var(--ink)"/>' +
+    '<path d="M117 44 Q122 47 127 44" stroke="var(--ink)" stroke-width="1.6" fill="none" stroke-linecap="round"/>' +
+    '<rect x="62" y="80" width="26" height="40" rx="12" fill="var(--rust)"/>' +
+    '<circle cx="75" cy="66" r="12" fill="var(--gold-soft)"/>' +
+    '<circle cx="71" cy="66" r="1.5" fill="var(--ink)"/><circle cx="79" cy="66" r="1.5" fill="var(--ink)"/>' +
+    '<path d="M71 71 Q75 74 79 71" stroke="var(--ink)" stroke-width="1.4" fill="none" stroke-linecap="round"/>' +
+    '</svg>';
+
+  var PERSON_HEART = '<svg viewBox="0 0 120 140" aria-hidden="true">' +
+    '<ellipse cx="60" cy="132" rx="42" ry="6" fill="var(--shadow)"/>' +
+    '<rect x="28" y="60" width="64" height="60" rx="24" fill="var(--rust)"/>' +
+    '<circle cx="60" cy="38" r="20" fill="var(--gold-soft)"/>' +
+    '<circle cx="53" cy="39" r="2.2" fill="var(--ink)"/><circle cx="67" cy="39" r="2.2" fill="var(--ink)"/>' +
+    '<path d="M52 47 Q60 52 68 47" stroke="var(--ink)" stroke-width="2" fill="none" stroke-linecap="round"/>' +
+    '<path d="M60 92 C48 82 48 68 58 68 C60 68 60 70 60 70 C60 70 60 68 62 68 C72 68 72 82 60 92 Z" fill="#ffffff"/>' +
+    '</svg>';
+
+  var PERSON_CLOCK = '<svg viewBox="0 0 140 140" aria-hidden="true">' +
+    '<ellipse cx="70" cy="132" rx="45" ry="6" fill="var(--shadow)"/>' +
+    '<rect x="34" y="60" width="52" height="58" rx="20" fill="var(--info)"/>' +
+    '<circle cx="60" cy="38" r="19" fill="var(--gold-soft)"/>' +
+    '<circle cx="53" cy="39" r="2" fill="var(--ink)"/><circle cx="67" cy="39" r="2" fill="var(--ink)"/>' +
+    '<path d="M53 46 Q60 50 67 46" stroke="var(--ink)" stroke-width="1.8" fill="none" stroke-linecap="round"/>' +
+    '<circle cx="108" cy="55" r="22" fill="#ffffff" stroke="var(--gold)" stroke-width="3"/>' +
+    '<line x1="108" y1="55" x2="108" y2="42" stroke="var(--gold)" stroke-width="2.5" stroke-linecap="round"/>' +
+    '<line x1="108" y1="55" x2="117" y2="58" stroke="var(--gold)" stroke-width="2.5" stroke-linecap="round"/>' +
+    '<path d="M86 82 Q95 65 100 58" stroke="var(--gold-soft)" stroke-width="9" fill="none" stroke-linecap="round"/>' +
+    '</svg>';
+
+  var PERSON_LAPTOP = '<svg viewBox="0 0 140 140" aria-hidden="true">' +
+    '<ellipse cx="70" cy="132" rx="45" ry="6" fill="var(--shadow)"/>' +
+    '<rect x="34" y="58" width="52" height="58" rx="20" fill="var(--violet)"/>' +
+    '<circle cx="60" cy="36" r="19" fill="var(--gold-soft)"/>' +
+    '<circle cx="53" cy="37" r="2" fill="var(--ink)"/><circle cx="67" cy="37" r="2" fill="var(--ink)"/>' +
+    '<path d="M53 44 Q60 48 67 44" stroke="var(--ink)" stroke-width="1.8" fill="none" stroke-linecap="round"/>' +
+    '<path d="M40 98 L36 116 L84 116 L80 98 Z" fill="#ffffff" stroke="var(--border)" stroke-width="1"/>' +
+    '<rect x="42" y="82" width="36" height="20" rx="2" fill="var(--ink-soft)"/>' +
+    '</svg>';
+
+  var PERSON_SHOPPING = '<svg viewBox="0 0 140 140" aria-hidden="true">' +
+    '<ellipse cx="70" cy="132" rx="45" ry="6" fill="var(--shadow)"/>' +
+    '<rect x="38" y="58" width="48" height="58" rx="20" fill="var(--green)"/>' +
+    '<circle cx="62" cy="36" r="19" fill="var(--gold-soft)"/>' +
+    '<circle cx="55" cy="37" r="2" fill="var(--ink)"/><circle cx="69" cy="37" r="2" fill="var(--ink)"/>' +
+    '<path d="M55 44 Q62 48 69 44" stroke="var(--ink)" stroke-width="1.8" fill="none" stroke-linecap="round"/>' +
+    '<path d="M92 80 h28 l-4 34 a4 4 0 0 1 -4 4 h-16 a4 4 0 0 1 -4 -4 Z" fill="var(--gold)"/>' +
+    '<path d="M98 80 v-8 a8 8 0 0 1 16 0 v8" stroke="var(--gold)" stroke-width="3" fill="none" stroke-linecap="round"/>' +
+    '<path d="M86 85 Q92 90 96 88" stroke="var(--gold-soft)" stroke-width="9" fill="none" stroke-linecap="round"/>' +
+    '</svg>';
+
+  var PERSON_STUDY = '<svg viewBox="0 0 130 140" aria-hidden="true">' +
+    '<ellipse cx="65" cy="132" rx="42" ry="6" fill="var(--shadow)"/>' +
+    '<rect x="31" y="58" width="50" height="58" rx="20" fill="var(--gold)"/>' +
+    '<circle cx="56" cy="36" r="19" fill="var(--gold-soft)"/>' +
+    '<circle cx="49" cy="37" r="2" fill="var(--ink)"/><circle cx="63" cy="37" r="2" fill="var(--ink)"/>' +
+    '<path d="M49 44 Q56 48 63 44" stroke="var(--ink)" stroke-width="1.8" fill="none" stroke-linecap="round"/>' +
+    '<rect x="70" y="88" width="34" height="24" rx="2" fill="#ffffff"/>' +
+    '<line x1="76" y1="94" x2="98" y2="94" stroke="var(--border)" stroke-width="1.4"/>' +
+    '<line x1="76" y1="100" x2="98" y2="100" stroke="var(--border)" stroke-width="1.4"/>' +
+    '<line x1="76" y1="106" x2="90" y2="106" stroke="var(--border)" stroke-width="1.4"/>' +
+    '<path d="M64 82 Q80 78 86 84" stroke="var(--gold-soft)" stroke-width="9" fill="none" stroke-linecap="round"/>' +
+    '</svg>';
+
+  var UNIT_PERSON = {
+    u1: PERSON_HANDSHAKE,
+    u2: PERSON_STUDY,
+    u3: PERSON_FAMILY,
+    u4: PERSON_STUDY,
+    u5: PERSON_CLOCK,
+    u6: PERSON_HEART,
+    u7: PERSON_CLOCK,
+    u8: PERSON_LAPTOP,
+    u9: PERSON_SHOPPING
+  };
+
   function decorLayerHtml(items) {
     var html = "<div class='decor-layer'>";
     items.forEach(function (it) {
@@ -1868,6 +2011,9 @@
       el("div", { class: "hero-illustration", html: ILLUS_GLOBE_FLAGS })
     ]);
     hero.appendChild(heroCard);
+    hero.appendChild(el("div", { class: "home-person-deco" }, [
+      el("div", { class: "person-illus", html: PERSON_BOOK })
+    ]));
     root.appendChild(hero);
 
     var initials = (PROFILE.nameEn[0] + PROFILE.surnameEn[0]).toUpperCase();
@@ -1949,7 +2095,10 @@
     root.appendChild(head);
 
     var statCard = el("div", { class: "stat-card" }, [
-      el("div", { class: "stat-card-header" }, [document.createTextNode("👋 გამარჯობა, " + PROFILE.name + "!")]),
+      el("div", { class: "stat-card-headerRow" }, [
+        el("div", { class: "stat-card-header" }, [document.createTextNode("👋 გამარჯობა, " + PROFILE.name + "!")]),
+        el("div", { class: "stat-card-person", html: UNIT_PERSON[unit.id] || PERSON_STUDY })
+      ]),
       el("div", { class: "stat-tiles" }, [
         el("div", { class: "stat-tile tile-a" }, [
           el("span", { class: "stat-tile-icon" }, [document.createTextNode("🔥")]),
@@ -2051,10 +2200,10 @@
       "</span>";
   }
 
-  function accordionSection(unitId, key, icon, title, metaHtml, buildBody) {
+  function accordionSection(unitId, key, icon, title, metaHtml, buildBody, color) {
     var stateKey = unitId + ":" + key;
     var isOpen = !!accordionOpen[stateKey];
-    var wrap = el("div", { class: "accordion" + (isOpen ? " open" : "") });
+    var wrap = el("div", { class: "accordion" + (isOpen ? " open" : ""), "data-color": color || "" });
     var header = el("button", { class: "accordion-header", type: "button" }, [
       el("span", { class: "accordion-title" }, [
         el("span", { class: "accordion-icon" }, [document.createTextNode(icon)]),
@@ -2100,7 +2249,7 @@
           vocabGrid.appendChild(card);
         });
         body.appendChild(vocabGrid);
-      }));
+      }, "info"));
 
       var practiceMode = cardsMode === "flip" ? "voice" : cardsMode;
       var exAgg = { done: 0, total: 0 };
@@ -2138,7 +2287,7 @@
           exGrid.appendChild(card);
         });
         body.appendChild(exGrid);
-      }));
+      }, "cyan"));
       return;
     }
 
@@ -2618,21 +2767,21 @@
         root.appendChild(accordionSection(unit.id, "grammar", "📐", "გრამატიკა", miniProgressHtml(gAgg.done, gAgg.total), function (body) {
           body.appendChild(el("p", { style: "color:var(--ink-soft);margin:0 0 10px;max-width:60ch;font-size:0.85rem" }, [document.createTextNode("გრამატიკის წესები და სავარჯიშოები ამ თავიდან.")]));
           body.appendChild(topicGrid(grammarTopics));
-        }));
+        }, "violet"));
       }
       if (dialogueTopics.length) {
         var dAgg = topicsAgg(dialogueTopics);
         root.appendChild(accordionSection(unit.id, "dialogue", "💬", "დიალოგები", miniProgressHtml(dAgg.done, dAgg.total), function (body) {
           body.appendChild(el("p", { style: "color:var(--ink-soft);margin:0 0 10px;max-width:60ch;font-size:0.85rem" }, [document.createTextNode("შეავსე დიალოგის ცარიელი ადგილები წიგნის დიალოგებიდან.")]));
           body.appendChild(topicGrid(dialogueTopics));
-        }));
+        }, "gold"));
       }
       if (readingTopics.length) {
         var rAgg = topicsAgg(readingTopics);
         root.appendChild(accordionSection(unit.id, "reading", "✏️", "სავარჯიშოები — წაკითხვის გაგება", miniProgressHtml(rAgg.done, rAgg.total), function (body) {
           body.appendChild(el("p", { style: "color:var(--ink-soft);margin:0 0 10px;max-width:60ch;font-size:0.85rem" }, [document.createTextNode("წაიკითხე ტექსტი და უპასუხე კითხვებს.")]));
           body.appendChild(topicGrid(readingTopics));
-        }));
+        }, "cyan"));
       }
       return;
     }
