@@ -357,6 +357,10 @@
   .chat-chip { border: 1px solid var(--border); background: var(--paper); color: var(--ink-soft); border-radius: 999px; padding: 7px 14px; font-size: 0.85rem; cursor: pointer; font-family: inherit; transition: border-color 0.15s ease, color 0.15s ease; }
   .chat-chip:hover { border-color: var(--green); color: var(--green-ink); }
 
+  .chat-mode-row { border: 1px dashed var(--border); border-radius: 12px; padding: 12px 14px; margin-bottom: 16px; background: var(--green-soft); }
+  .chat-mode-label { display: block; font-size: 0.82rem; font-weight: 600; color: var(--green-ink); margin-bottom: 8px; }
+  .chat-unit-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+
   .chat-messages { display: flex; flex-direction: column; gap: 14px; margin-bottom: 18px; }
   .chat-msg { display: flex; animation: msgIn 0.25s ease; }
   .chat-msg.user { justify-content: flex-end; }
@@ -1248,6 +1252,13 @@
     switchView("chat");
   }
 
+  function pickChatUnit(id) {
+    chatScopeUnit = id;
+    chatHistory = [];
+    chatStarted = false;
+    renderChatView();
+  }
+
   /* ---------- home / dashboard ---------- */
   function renderHome() {
     var root = document.getElementById("view-home");
@@ -2037,6 +2048,9 @@
     var relevantIds = relevantGrammar.map(function (g) { return g.id; });
     var deckTopics = relevantDecks.map(function (d) { return d.ka + " (" + d.en + ")"; }).join(", ") || "(none for this unit — focus on the grammar below)";
     var grammarTopics = relevantGrammar.map(function (g) { return g.ka + " — " + g.en; }).join("; ") || "(none for this unit — focus on the vocabulary above)";
+    var wordList = relevantDecks.length
+      ? relevantDecks.map(function (d) { return d.cards.map(function (c) { return c.en; }).join(", "); }).join(", ")
+      : "";
 
     var passages = [];
     if (relevantIds.indexOf("readingJacob") !== -1) {
@@ -2054,8 +2068,14 @@
       ""
     ];
     if (scopedUnit) {
-      lines.push("This conversation is focused specifically on " + scopedUnit.ka + " — keep it centered on this unit's material only, don't wander into other units' vocabulary or grammar.");
+      lines.push("This conversation is a THEMED PRACTICE SESSION focused specifically on " + scopedUnit.ka + " — keep it centered on this unit's material only, don't wander into other units' vocabulary or grammar.");
       lines.push("");
+      if (wordList) {
+        lines.push("The exact vocabulary she knows for this unit is: " + wordList + ".");
+        lines.push("STRICT RULE: use ONLY words from this list (plus basic A1 function words: a, the, is, am, are, was, were, in, on, at, and, but, or, I, you, he, she, it, we, they, this, that, do, does, don't, doesn't, have, has, my, your, his, her, its, our, their, yes, no, please, thank you). Do NOT introduce new content vocabulary beyond this unit's list, even if it would be natural in a normal conversation.");
+        lines.push("A small drift in topic is fine (e.g. a related follow-up question), but never let the vocabulary or grammar get harder than this unit's level — if you need a concept outside the list, rephrase it using only the words above.");
+        lines.push("");
+      }
     }
     lines.push("Vocabulary topics she has studied — steer the conversation toward these: " + deckTopics + ".");
     lines.push("Grammar she has studied — stay within this level: " + grammarTopics + ".");
@@ -2183,6 +2203,19 @@
     });
     topbar.appendChild(settingsBtn);
     root.appendChild(topbar);
+
+    if (!scopedUnit) {
+      var modeBox = el("div", { class: "chat-mode-row" });
+      modeBox.appendChild(el("span", { class: "chat-mode-label" }, [document.createTextNode("📘 თემატური საუბარი კონკრეტულ თავზე:")]));
+      var unitChips = el("div", { class: "chat-unit-chips" });
+      UNITS.forEach(function (u) {
+        var chip = el("button", { class: "chat-chip", type: "button" }, [document.createTextNode(u.short)]);
+        chip.addEventListener("click", function (id) { return function () { pickChatUnit(id); }; }(u.id));
+        unitChips.appendChild(chip);
+      });
+      modeBox.appendChild(unitChips);
+      root.appendChild(modeBox);
+    }
 
     var errorBanner = el("div", { class: "chat-error", id: "chatErrorBanner", style: "display:none" });
     root.appendChild(errorBanner);
