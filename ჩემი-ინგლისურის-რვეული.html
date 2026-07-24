@@ -173,6 +173,14 @@
 
   .view { display: none; padding: 26px clamp(18px, 4vw, 34px) 40px; }
   .view.active { display: block; }
+  .page.unit-mode #view-cards, .page.unit-mode #view-grammar { padding-top: 10px; }
+  @media (min-width: 760px) {
+    .page.unit-mode { display: grid; grid-template-columns: 1fr 1fr; align-items: start; column-gap: 6px; }
+    .page.unit-mode #view-home { grid-column: 1 / -1; }
+    .page.unit-mode:has(#view-cards.active):not(:has(#view-grammar.active)) #view-cards { grid-column: 1 / -1; }
+    .page.unit-mode:has(#view-grammar.active):not(:has(#view-cards.active)) #view-grammar { grid-column: 1 / -1; }
+    .page.unit-mode:has(#view-cards.active):has(#view-grammar.active) #view-grammar { border-left: 1px solid var(--border); }
+  }
 
   /* --- Dashboard --- */
   .profile-row { display: flex; gap: 22px; flex-wrap: wrap; margin-bottom: 28px; }
@@ -186,8 +194,9 @@
   .intro-card p { margin: 5px 0; font-size: 0.92rem; }
   .intro-card .blank { color: var(--green-ink); font-weight: 600; }
 
-  .section-heading { display: flex; align-items: baseline; gap: 10px; margin: 30px 0 14px; }
-  .section-heading h2 { font-size: 1.15rem; }
+  .section-heading { display: flex; align-items: baseline; gap: 10px; margin: 20px 0 8px; }
+  .view .section-heading:first-of-type { margin-top: 0; }
+  .section-heading h2 { font-size: 1.05rem; }
   .section-heading .rule { flex: 1; height: 1px; background: var(--border); }
 
   .bar { height: 6px; border-radius: 4px; background: var(--border); overflow: hidden; }
@@ -197,8 +206,8 @@
   .bar[data-state="rust"] > span { background: var(--rust); }
 
   /* --- Deck / topic pickers --- */
-  .picker-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 14px; margin-bottom: 22px; }
-  .picker-card { border: 1px solid var(--border); background: var(--paper); border-radius: 10px; padding: 16px 18px; cursor: pointer; text-align: left; display: flex; flex-direction: column; gap: 6px; transition: border-color 0.15s ease, transform 0.12s ease; }
+  .picker-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; margin-bottom: 14px; }
+  .picker-card { border: 1px solid var(--border); background: var(--paper); border-radius: 10px; padding: 11px 14px; cursor: pointer; text-align: left; display: flex; flex-direction: column; gap: 4px; transition: border-color 0.15s ease, transform 0.12s ease; }
   .picker-card:hover { border-color: var(--green); transform: translateY(-2px); }
   .picker-card .ka { font-weight: 600; font-size: 1rem; }
   .picker-card .en { font-size: 0.8rem; color: var(--ink-faint); }
@@ -285,15 +294,15 @@
   .note { font-family: 'Caveat', cursive; font-size: 1.15rem; color: var(--gold); background: var(--gold-soft); border-radius: 10px; padding: 10px 16px; display: inline-block; margin: 14px 0 0; transform: rotate(-1deg); }
 
   /* --- Unit header --- */
-  .unit-head { display: flex; gap: 20px; align-items: center; margin: 14px 0 26px; flex-wrap: wrap; }
-  .unit-image { width: 160px; height: 160px; object-fit: cover; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 8px 20px var(--shadow); flex-shrink: 0; }
+  .unit-head { display: flex; gap: 18px; align-items: center; margin: 8px 0 10px; flex-wrap: wrap; }
+  .unit-image { width: 110px; height: 110px; object-fit: cover; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 8px 20px var(--shadow); flex-shrink: 0; }
   .unit-head-text { flex: 1 1 260px; min-width: 220px; }
   .unit-head-text h2 { margin-bottom: 10px; }
   .unit-head-text .bar { max-width: 340px; }
 
   /* --- Vocabulary practice modes --- */
-  .vocab-mode-row { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 22px; }
-  .vocab-mode-btn { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--border); background: var(--paper); color: var(--ink-soft); border-radius: 999px; padding: 9px 16px; font-size: 0.88rem; font-weight: 600; cursor: pointer; transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease; }
+  .vocab-mode-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+  .vocab-mode-btn { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--border); background: var(--paper); color: var(--ink-soft); border-radius: 999px; padding: 6px 13px; font-size: 0.82rem; font-weight: 600; cursor: pointer; transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease; }
   .vocab-mode-btn:hover { border-color: var(--green); }
   .vocab-mode-btn.active { background: var(--green); border-color: var(--green); color: var(--surface); }
   .vocab-mode-btn .icon { font-size: 1rem; }
@@ -943,6 +952,7 @@
     stopPracticeMic();
     currentView = id;
     if (id === "home") currentUnit = null;
+    document.querySelector(".page").classList.remove("unit-mode");
     document.querySelectorAll(".view").forEach(function (v) { v.classList.remove("active"); });
     document.getElementById("view-" + id).classList.add("active");
     renderTabs();
@@ -960,6 +970,7 @@
     currentUnit = id;
     cardsSub = null; grammarSub = null; practicePos = 0; cardsMode = "flip";
     currentView = "home";
+    document.querySelector(".page").classList.add("unit-mode");
     document.querySelectorAll(".view").forEach(function (v) { v.classList.remove("active"); });
     document.getElementById("view-home").classList.add("active");
     if (unit.deckIds.length) document.getElementById("view-cards").classList.add("active");
@@ -973,6 +984,7 @@
   function backToUnits() {
     stopPracticeMic();
     currentUnit = null;
+    document.querySelector(".page").classList.remove("unit-mode");
     document.querySelectorAll(".view").forEach(function (v) { v.classList.remove("active"); });
     document.getElementById("view-home").classList.add("active");
     renderTabs();
@@ -1074,7 +1086,7 @@
       el("h2", {}, [document.createTextNode(icon + " " + title)]),
       el("div", { class: "rule" })
     ]));
-    if (sub) frag.appendChild(el("p", { style: "color:var(--ink-soft);margin:0 0 16px;max-width:60ch" }, [document.createTextNode(sub)]));
+    if (sub) frag.appendChild(el("p", { style: "color:var(--ink-soft);margin:0 0 10px;max-width:60ch;font-size:0.85rem" }, [document.createTextNode(sub)]));
     return frag;
   }
 
