@@ -859,6 +859,48 @@
         { en: "Sausage", ipa: "/ˈsɔsədʒ/", ka: "სოსისი/ძეხვი" },
         { en: "Seafood", ipa: "/ˈsiˌfud/", ka: "ზღვის პროდუქტები" }
       ]
+    },
+    {
+      id: "belongings", ka: "პირადი ნივთები", en: "Personal belongings",
+      cards: [
+        { en: "Wallet", ipa: "/ˈwɔlət/", ka: "საფულე" },
+        { en: "Keys", ipa: "/kiz/", ka: "გასაღები" },
+        { en: "Backpack", ipa: "/ˈbækpæk/", ka: "ზურგჩანთა" },
+        { en: "Phone", ipa: "/foʊn/", ka: "ტელეფონი" },
+        { en: "Glasses", ipa: "/ˈɡlæsəz/", ka: "სათვალე" },
+        { en: "Umbrella", ipa: "/ʌmˈbrɛlə/", ka: "ქოლგა" },
+        { en: "Jacket", ipa: "/ˈdʒækət/", ka: "ქურთუკი" },
+        { en: "Watch", ipa: "/wɑtʃ/", ka: "საათი (მაჯის)" },
+        { en: "Ring", ipa: "/rɪŋ/", ka: "ბეჭედი" },
+        { en: "Handbag", ipa: "/ˈhændbæg/", ka: "ხელჩანთა" },
+        { en: "Notebook", ipa: "/ˈnoʊtbʊk/", ka: "რვეული" },
+        { en: "Headphones", ipa: "/ˈhɛdfoʊnz/", ka: "ყურსასმენი" },
+        { en: "Whose is this?", ipa: "", ka: "ვისია ეს?" },
+        { en: "It's mine", ipa: "", ka: "ჩემია" },
+        { en: "Is this yours?", ipa: "", ka: "ეს შენია?" },
+        { en: "This belongs to me", ipa: "", ka: "ეს მე მეკუთვნის" },
+        { en: "I found this", ipa: "", ka: "მე ვიპოვე ეს" }
+      ]
+    },
+    {
+      id: "dailyHabits", ka: "ყოველდღიური ჩვევები", en: "Daily habits",
+      cards: [
+        { en: "Brush teeth", ipa: "/brʌʃ tiθ/", ka: "კბილების გახეხვა" },
+        { en: "Wash the dishes", ipa: "/wɑʃ ðə ˈdɪʃəz/", ka: "ჭურჭლის დაბანა" },
+        { en: "Walk the dog", ipa: "/wɔk ðə dɔɡ/", ka: "ძაღლთან სეირნობა" },
+        { en: "Make coffee", ipa: "/meɪk ˈkɔfi/", ka: "ყავის მომზადება" },
+        { en: "Check the phone", ipa: "/tʃɛk ðə foʊn/", ka: "ტელეფონის შემოწმება" },
+        { en: "Listen to music", ipa: "/ˈlɪsən tu ˈmjuzɪk/", ka: "მუსიკის მოსმენა" },
+        { en: "Do homework", ipa: "/du ˈhoʊmwɜrk/", ka: "საშინაო დავალების შესრულება" },
+        { en: "Water the plants", ipa: "/ˈwɔtər ðə plænts/", ka: "ყვავილების მორწყვა" },
+        { en: "Pay bills", ipa: "/peɪ bɪlz/", ka: "გადასახადების გადახდა" },
+        { en: "Take out the trash", ipa: "/teɪk aʊt ðə træʃ/", ka: "ნაგვის გატანა" },
+        { en: "Charge the phone", ipa: "/tʃɑrdʒ ðə foʊn/", ka: "ტელეფონის დატენვა" },
+        { en: "Answer emails", ipa: "/ˈænsər ˈimeɪlz/", ka: "იმეილებზე პასუხის გაცემა" },
+        { en: "Attend a meeting", ipa: "/əˈtɛnd ə ˈmitɪŋ/", ka: "შეხვედრაზე დასწრება" },
+        { en: "Text a friend", ipa: "/tɛkst ə frɛnd/", ka: "მეგობრისთვის მესიჯის გაგზავნა" },
+        { en: "Make the bed", ipa: "/meɪk ðə bɛd/", ka: "საწოლის მოწესრიგება" }
+      ]
     }
   ];
 
@@ -1173,6 +1215,165 @@
         { prompt: "Is there ___ sugar in this tea?", instruction: "შეავსე is/are/some/any.", answer: "any" },
         { prompt: "I don't put ___ salt in my food. It's not good for you.", instruction: "შეავსე is/are/some/any.", answer: "any" }
       ]
+    },
+    {
+      id: "dialogueLostFound", kind: "dialogue", ka: "დიალოგი: ნაპოვნი ნივთები", en: "David & Anna — lost and found",
+      note: "შეავსე დიალოგის ცარიელი ადგილები კუთვნილებითი ნაცვალსახელებით.",
+      items: [
+        { prompt: "David: Excuse me, is this your bag?\nAnna: No, it's not ___. My bag is black.", instruction: "შეავსე კუთვნილებითი ნაცვალსახელით.", answer: "mine" },
+        { prompt: "David: Whose is it then?\nAnna: Maybe it's ___ bag. Sarah was here earlier.", instruction: "შეავსე Sarah-ს კუთვნილებით ფორმაში.", answer: "Sarah's" },
+        { prompt: "David: That's her jacket too, over there.\nAnna: Yes, that's ___ jacket.", instruction: "შეავსე კუთვნილებითი ნაცვალსახელით (she).", answer: "her" },
+        { prompt: "David: These keys aren't mine. Whose are they?\nAnna: They aren't ___ either. Maybe they're his.", instruction: "შეავსე კუთვნილებითი ნაცვალსახელით (we).", answer: "ours" },
+        { prompt: "David: I think they're ___. He was looking for them.", instruction: "შეავსე კუთვნილებითი ნაცვალსახელით (he).", answer: "his" }
+      ]
+    },
+    {
+      id: "readingBelongings", kind: "reading", ka: "წაკითხვის გაგება: ლუსის ნივთები", en: "Reading comprehension — Lucy's belongings",
+      note: "\"My name is Lucy. I am very organized, and I always know where my things are. My wallet is in my bag, and my keys are in my pocket. My phone is on the table, and my glasses are next to it. My brother is not like me — his things are everywhere! His shoes are in the kitchen, and his backpack is in the bathroom. Our mother always says, 'This is not your room, it's our house!' She likes when everything is in its place.\" — უპასუხე true ან false.",
+      items: [
+        { prompt: "Lucy is organized.", instruction: "true თუ false?", answer: "true" },
+        { prompt: "Lucy's phone is in her bag.", instruction: "true თუ false?", answer: "false" },
+        { prompt: "Lucy's brother is very organized too.", instruction: "true თუ false?", answer: "false" },
+        { prompt: "His shoes are in the kitchen.", instruction: "true თუ false?", answer: "true" },
+        { prompt: "His backpack is in the bathroom.", instruction: "true თუ false?", answer: "true" },
+        { prompt: "Their mother likes when things are in their place.", instruction: "true თუ false?", answer: "true" },
+        { prompt: "Lucy doesn't know where her wallet is.", instruction: "true თუ false?", answer: "false" }
+      ]
+    },
+    {
+      id: "dialogueHabits", kind: "dialogue", ka: "დიალოგი: ყოველდღიური ჩვევები", en: "Rick & Maya — daily habits",
+      note: "შეავსე დიალოგის ცარიელი ადგილები Present Simple-ის სწორი ფორმით.",
+      items: [
+        { prompt: "Rick: What time ___ you usually get up? (do/does)", instruction: "აირჩიე სწორი ფორმა.", answer: "do" },
+        { prompt: "Maya: I ___ up at 7. Then I brush my teeth. (get)", instruction: "შეავსე ზმნის სწორი ფორმით.", answer: "get" },
+        { prompt: "Rick: ___ you check your phone in the morning? (Do/Does)", instruction: "აირჩიე სწორი ფორმა.", answer: "Do" },
+        { prompt: "Maya: Yes, I ___ check my phone. (always)", instruction: "შეავსე სიხშირის ზმნისართით.", answer: "always" },
+        { prompt: "Rick: I ___ check my phone in the morning. I walk my dog first. (don't/doesn't)", instruction: "აირჩიე სწორი ფორმა.", answer: "don't" }
+      ]
+    },
+    {
+      id: "readingHabits", kind: "reading", ka: "წაკითხვის გაგება: პიტერის დღე", en: "Reading comprehension — Peter's habits",
+      note: "\"My name is Peter. I have a very simple daily routine. I get up at 6:30 and brush my teeth. Then I make coffee and check my emails. I don't eat breakfast — I don't have time. I walk my dog before work. In the evening, I water the plants and text my friends. I don't watch TV, but I listen to music. My wife is different. She doesn't check emails in the morning, and she always eats breakfast. She waters the plants too, but she does it in the morning, not in the evening.\" — უპასუხე true ან false.",
+      items: [
+        { prompt: "Peter gets up at 6:30.", instruction: "true თუ false?", answer: "true" },
+        { prompt: "Peter eats breakfast every morning.", instruction: "true თუ false?", answer: "false" },
+        { prompt: "Peter walks his dog before work.", instruction: "true თუ false?", answer: "true" },
+        { prompt: "Peter watches TV in the evening.", instruction: "true თუ false?", answer: "false" },
+        { prompt: "Peter's wife checks emails in the morning.", instruction: "true თუ false?", answer: "false" },
+        { prompt: "Peter's wife never eats breakfast.", instruction: "true თუ false?", answer: "false" },
+        { prompt: "Peter's wife waters the plants in the evening.", instruction: "true თუ false?", answer: "false" },
+        { prompt: "Peter waters the plants in the evening.", instruction: "true თუ false?", answer: "true" }
+      ]
+    },
+    {
+      id: "readingFrequency", kind: "reading", ka: "წაკითხვის გაგება: დაიანა და მაქსი", en: "Reading comprehension — Diana & Max's habits",
+      note: "\"My name is Diana. I always exercise in the morning — I never skip it. I usually eat a healthy breakfast, but I sometimes have just coffee if I'm late. I rarely eat fast food, maybe once a month. I often walk to work instead of driving. My brother, Max, is very different. He never exercises, and he always eats fast food. He rarely walks anywhere — he always takes the car, even for short trips. He sometimes says he wants to change his habits, but he never does.\" — უპასუხე true ან false.",
+      items: [
+        { prompt: "Diana always exercises in the morning.", instruction: "true თუ false?", answer: "true" },
+        { prompt: "Diana often eats fast food.", instruction: "true თუ false?", answer: "false" },
+        { prompt: "Diana rarely walks to work.", instruction: "true თუ false?", answer: "false" },
+        { prompt: "Max never exercises.", instruction: "true თუ false?", answer: "true" },
+        { prompt: "Max always eats fast food.", instruction: "true თუ false?", answer: "true" },
+        { prompt: "Max often walks places.", instruction: "true თუ false?", answer: "false" },
+        { prompt: "Max always changes his habits.", instruction: "true თუ false?", answer: "false" }
+      ]
+    },
+    {
+      id: "likeGerund", kind: "grammar", ka: "Like / Love / Hate + -ing", en: "Verb + gerund after like/love/hate/enjoy",
+      note: "Like, love, hate, enjoy, can't stand ზმნების შემდეგ მეორე ზმნას ემატება -ing დაბოლოება (gerund): I like swimming. She loves reading. They hate waiting.",
+      items: [
+        { prompt: "I like ___ in the sea. (swim)", instruction: "შეავსე ზმნის -ing ფორმით.", answer: "swimming" },
+        { prompt: "She loves ___ books. (read)", instruction: "შეავსე ზმნის -ing ფორმით.", answer: "reading" },
+        { prompt: "They hate ___ in line. (wait)", instruction: "შეავსე ზმნის -ing ფორმით.", answer: "waiting" },
+        { prompt: "He enjoys ___ dinner. (cook)", instruction: "შეავსე ზმნის -ing ფორმით.", answer: "cooking" },
+        { prompt: "We don't like ___ at night. (drive)", instruction: "შეავსე ზმნის -ing ფორმით.", answer: "driving" },
+        { prompt: "Do you enjoy ___? (dance)", instruction: "შეავსე ზმნის -ing ფორმით.", answer: "dancing" },
+        { prompt: "I can't stand ___ the bathroom. (clean)", instruction: "შეავსე ზმნის -ing ფორმით.", answer: "cleaning" },
+        { prompt: "She is not keen on ___ alone. (shop)", instruction: "შეავსე ზმნის -ing ფორმით.", answer: "shopping" }
+      ]
+    },
+    {
+      id: "dialogueLikes", kind: "dialogue", ka: "დიალოგი: მოწონება და არმოწონება", en: "Emma & Noah — likes and dislikes",
+      note: "შეავსე დიალოგის ცარიელი ადგილები.",
+      items: [
+        { prompt: "Emma: Do you ___ cooking? (like)", instruction: "შეავსე შესაბამისი ზმნით.", answer: "like" },
+        { prompt: "Noah: Yes, I ___ cooking! (love)", instruction: "შეავსე შესაბამისი ზმნით.", answer: "love" },
+        { prompt: "Noah: I ___ cleaning up after, though. (hate)", instruction: "შეავსე შესაბამისი ზმნით.", answer: "hate" },
+        { prompt: "Emma: I don't mind cleaning. I ___ cooking. (can't stand)", instruction: "შეავსე გამოთქმით.", answer: "can't stand" },
+        { prompt: "Noah: That's funny — we're ___! (opposite)", instruction: "შეავსე შესაბამისი სიტყვით.", answer: "opposite" }
+      ]
+    },
+    {
+      id: "prepTime", kind: "grammar", ka: "დროის წინდებულები at/on/in", en: "Prepositions of time: at, on, in",
+      note: "At გამოიყენება კონკრეტულ დროსთან (at 8 o'clock, at night). On გამოიყენება დღეებთან (on Monday). In გამოიყენება თვეებთან/დღის მონაკვეთებთან (in July, in the morning).",
+      items: [
+        { prompt: "I wake up ___ 7 o'clock. (at/on/in)", instruction: "აირჩიე სწორი წინდებული.", answer: "at" },
+        { prompt: "We go to the gym ___ Mondays. (at/on/in)", instruction: "აირჩიე სწორი წინდებული.", answer: "on" },
+        { prompt: "She works ___ the morning. (at/on/in)", instruction: "აირჩიე სწორი წინდებული.", answer: "in" },
+        { prompt: "The meeting is ___ 3 p.m. (at/on/in)", instruction: "აირჩიე სწორი წინდებული.", answer: "at" },
+        { prompt: "My birthday is ___ September. (at/on/in)", instruction: "აირჩიე სწორი წინდებული.", answer: "in" },
+        { prompt: "I don't work ___ the weekend. (at/on/in)", instruction: "აირჩიე სწორი წინდებული.", answer: "on" },
+        { prompt: "I always relax ___ night. (at/on/in)", instruction: "აირჩიე სწორი წინდებული.", answer: "at" },
+        { prompt: "We have a test ___ Friday. (at/on/in)", instruction: "აირჩიე სწორი წინდებული.", answer: "on" }
+      ]
+    },
+    {
+      id: "dialogueSchedule", kind: "dialogue", ka: "დიალოგი: დღის განრიგი", en: "Josh & Mia — daily schedule",
+      note: "შეავსე დიალოგის ცარიელი ადგილები.",
+      items: [
+        { prompt: "Josh: What do you do ___ the evening? (in/on/at)", instruction: "აირჩიე სწორი წინდებული.", answer: "in" },
+        { prompt: "Mia: I usually cook dinner ___ 7. (at/on/in)", instruction: "აირჩიე სწორი წინდებული.", answer: "at" },
+        { prompt: "Josh: Do you work ___ weekends? (on/at/in)", instruction: "აირჩიე სწორი წინდებული.", answer: "on" },
+        { prompt: "Mia: No, I ___ work on weekends. (never)", instruction: "შეავსე სიხშირის ზმნისართით.", answer: "never" },
+        { prompt: "Mia: No, I never work on weekends. I ___ instead. (rest)", instruction: "შეავსე ზმნის სწორი ფორმით.", answer: "rest" }
+      ]
+    },
+    {
+      id: "dialogueInterview", kind: "dialogue", ka: "დიალოგი: სამუშაო გასაუბრება", en: "Job interview dialogue",
+      note: "შეავსე დიალოგის ცარიელი ადგილები.",
+      items: [
+        { prompt: "Interviewer: What ___ you do? (do/does)", instruction: "აირჩიე სწორი ფორმა.", answer: "do" },
+        { prompt: "Candidate: I ___ a journalist. (am)", instruction: "შეავსე to be ზმნით.", answer: "am" },
+        { prompt: "Interviewer: Are you a ___ person? (hard-working)", instruction: "შეავსე ხასიათის თვისებით.", answer: "hard-working" },
+        { prompt: "Candidate: Yes, I am very hard-working and ___. (organized)", instruction: "შეავსე ხასიათის თვისებით.", answer: "organized" },
+        { prompt: "Interviewer: What is your biggest ___? (weakness)", instruction: "შეავსე შესაბამისი სიტყვით.", answer: "weakness" }
+      ]
+    },
+    {
+      id: "readingJobPersonality", kind: "reading", ka: "წაკითხვის გაგება: ლაურა და მარკი", en: "Reading comprehension — Laura & Mark's jobs",
+      note: "\"My name is Laura. I am a doctor, and I love my job. I am very patient and considerate — this helps me with my patients. I am also organized, so I never forget appointments. My colleague, Mark, is a firefighter. He is confident and ambitious. He is not shy at all! He is also very reliable — his team always trusts him. Mark and I are both hard-working, but we are very different in other ways. I am quiet, but he is sociable and loves meeting new people.\" — უპასუხე true ან false.",
+      items: [
+        { prompt: "Laura is a doctor.", instruction: "true თუ false?", answer: "true" },
+        { prompt: "Laura is impatient.", instruction: "true თუ false?", answer: "false" },
+        { prompt: "Mark is a firefighter.", instruction: "true თუ false?", answer: "true" },
+        { prompt: "Mark is shy.", instruction: "true თუ false?", answer: "false" },
+        { prompt: "Mark is not reliable.", instruction: "true თუ false?", answer: "false" },
+        { prompt: "Laura and Mark are both hard-working.", instruction: "true თუ false?", answer: "true" },
+        { prompt: "Laura is more sociable than Mark.", instruction: "true თუ false?", answer: "false" }
+      ]
+    },
+    {
+      id: "dialogueShopping", kind: "dialogue", ka: "დიალოგი: მაღაზიაში", en: "Shopping dialogue",
+      note: "შეავსე დიალოგის ცარიელი ადგილები some/any/a little-ით.",
+      items: [
+        { prompt: "Clerk: Can I help you?\nCustomer: Yes, please. Do you have ___ apples? (any/some)", instruction: "აირჩიე სწორი სიტყვა.", answer: "any" },
+        { prompt: "Clerk: Yes, we have ___ apples. (some/any)", instruction: "აირჩიე სწორი სიტყვა.", answer: "some" },
+        { prompt: "Customer: I need some apples and ___ sugar. (a little/a few)", instruction: "აირჩიე სწორი გამოთქმა.", answer: "a little" },
+        { prompt: "Clerk: Sure. ___ else? (Anything)", instruction: "შეავსე შესაბამისი სიტყვით.", answer: "Anything" },
+        { prompt: "Customer: No thanks, that's ___. (all)", instruction: "შეავსე შესაბამისი სიტყვით.", answer: "all" }
+      ]
+    },
+    {
+      id: "readingShopping", kind: "reading", ka: "წაკითხვის გაგება: ტომი და კეიტი", en: "Reading comprehension — Tom & Kate's shopping habits",
+      note: "\"My name is Tom. I go shopping every Saturday. I always buy some fruit and vegetables — apples, bananas, and cucumbers are my favorites. I don't buy much meat because I don't eat it often. I usually buy a little cheese and some milk. I never buy sweets because I don't like sugar. My sister, Kate, shops differently. She buys a lot of sweets and chocolate! She doesn't buy many vegetables. She says she doesn't have time to cook, so she buys ready meals instead.\" — უპასუხე true ან false.",
+      items: [
+        { prompt: "Tom goes shopping every Saturday.", instruction: "true თუ false?", answer: "true" },
+        { prompt: "Tom buys a lot of meat.", instruction: "true თუ false?", answer: "false" },
+        { prompt: "Tom never buys sweets.", instruction: "true თუ false?", answer: "true" },
+        { prompt: "Kate buys a lot of sweets.", instruction: "true თუ false?", answer: "true" },
+        { prompt: "Kate buys many vegetables.", instruction: "true თუ false?", answer: "false" },
+        { prompt: "Kate cooks every day.", instruction: "true თუ false?", answer: "false" }
+      ]
     }
   ];
 
@@ -1185,14 +1386,14 @@
 
   var UNITS = [
     { id: "u1", short: "Unit 1", ka: "Unit 1 — მისალმება და გაცნობა", deckIds: ["greetings"], grammarIds: ["pronouns", "dialogueClub", "readingIntro"], image: "unit1-greetings.jpg" },
-    { id: "u2", short: "Unit 2", ka: "Unit 2 — კუთვნილება", deckIds: [], grammarIds: ["possAdj", "possS", "wrapupPoss"], image: null },
+    { id: "u2", short: "Unit 2", ka: "Unit 2 — კუთვნილება", deckIds: ["belongings"], grammarIds: ["possAdj", "possS", "wrapupPoss", "dialogueLostFound", "readingBelongings"], image: null },
     { id: "u3", short: "Unit 3", ka: "Unit 3 — ოჯახი", deckIds: ["family", "relationships"], grammarIds: ["toBe", "demonstratives", "readingJacob", "dialogueFriends"], image: "unit3-family.jpg" },
-    { id: "u4", short: "Unit 4", ka: "Unit 4 — აწმყო განუსაზღვრელი დრო", deckIds: [], grammarIds: ["presentForms", "presentQuestions"], image: null },
-    { id: "u5", short: "Unit 5", ka: "Unit 5 — სიხშირის ზმნისართები", deckIds: ["freqAdverbs"], grammarIds: ["frequency", "dialogueFrequency"], image: null },
-    { id: "u6", short: "Unit 6", ka: "Unit 6 — მოწონება და არმოწონება", deckIds: ["likes"], grammarIds: ["readingTom"], image: "unit6-likes.jpg" },
-    { id: "u7", short: "Unit 7", ka: "Unit 7 — დღის რეჟიმი და დრო", deckIds: ["routine", "calendar"], grammarIds: ["readingKeiraLiam"], image: "unit7-routine.jpg" },
-    { id: "u8", short: "Unit 8", ka: "Unit 8 — პროფესია და ხასიათი", deckIds: ["jobs", "personality"], grammarIds: ["articles", "conjunctions"], image: null },
-    { id: "u9", short: "Unit 9", ka: "Unit 9 — საყიდლები და საკვები", deckIds: ["food", "kitchen"], grammarIds: ["quantifiers"], image: null }
+    { id: "u4", short: "Unit 4", ka: "Unit 4 — აწმყო განუსაზღვრელი დრო", deckIds: ["dailyHabits"], grammarIds: ["presentForms", "presentQuestions", "dialogueHabits", "readingHabits"], image: null },
+    { id: "u5", short: "Unit 5", ka: "Unit 5 — სიხშირის ზმნისართები", deckIds: ["freqAdverbs"], grammarIds: ["frequency", "dialogueFrequency", "readingFrequency"], image: null },
+    { id: "u6", short: "Unit 6", ka: "Unit 6 — მოწონება და არმოწონება", deckIds: ["likes"], grammarIds: ["likeGerund", "dialogueLikes", "readingTom"], image: "unit6-likes.jpg" },
+    { id: "u7", short: "Unit 7", ka: "Unit 7 — დღის რეჟიმი და დრო", deckIds: ["routine", "calendar"], grammarIds: ["prepTime", "dialogueSchedule", "readingKeiraLiam"], image: "unit7-routine.jpg" },
+    { id: "u8", short: "Unit 8", ka: "Unit 8 — პროფესია და ხასიათი", deckIds: ["jobs", "personality"], grammarIds: ["articles", "conjunctions", "dialogueInterview", "readingJobPersonality"], image: null },
+    { id: "u9", short: "Unit 9", ka: "Unit 9 — საყიდლები და საკვები", deckIds: ["food", "kitchen"], grammarIds: ["quantifiers", "dialogueShopping", "readingShopping"], image: null }
   ];
 
   var STORAGE_KEY = "nonaEnglishNotebook.v1";
