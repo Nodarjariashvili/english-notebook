@@ -1473,7 +1473,7 @@
     var picked = pool.slice(0, count);
     if (picked.length < count) {
       var extra = [];
-      DECKS.forEach(function (d) { if (d.id !== deck.id) d.cards.forEach(function (c) { if (c.ka) extra.push(c); }); });
+      unitDecks(currentUnitObj()).forEach(function (d) { if (d.id !== deck.id) d.cards.forEach(function (c) { if (c.ka) extra.push(c); }); });
       extra = shuffleArr(extra);
       while (picked.length < count && extra.length) picked.push(extra.pop());
     }
