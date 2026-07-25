@@ -534,6 +534,12 @@
   .ref-search:focus { border-color: var(--brand); }
   .ref-group { margin-bottom: 24px; }
   .ref-group h3 { font-size: 1rem; color: var(--brand-ink); margin-bottom: 10px; }
+  .topic-heading-accent { color: var(--brand-ink); margin-bottom: 6px; }
+  .commenters-wrap { margin: 6px 0 4px; display: flex; flex-direction: column; gap: 10px; }
+  .commenter-block { background: var(--cyan-soft); border-left: 3px solid var(--cyan); border-radius: 14px; padding: 12px 16px; }
+  .commenter-name { font-weight: 700; color: var(--cyan); font-family: 'Baloo 2', 'Noto Sans Georgian', sans-serif; font-size: 1rem; margin-bottom: 4px; }
+  .commenter-text { margin: 0; color: var(--ink); font-size: 0.92rem; line-height: 1.6; max-width: 64ch; }
+  .commenters-instruction { color: var(--ink-soft); font-style: italic; font-size: 0.85rem; margin: 10px 0 18px; }
   .ref-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
   .ref-table tr { border-bottom: 1px solid var(--border); transition: background 0.15s ease; }
   .ref-table tr:nth-child(even) { background: var(--paper); }
@@ -1463,6 +1469,12 @@
     {
       id: "readingIntro", kind: "reading", ka: "წაკითხვის გაგება: სამი გაცნობა", en: "Reading comprehension — Alex, Tamar & Ana",
       note: "Commenter 1 (Alex): \"I am Alex. My surname is Jackson. I am 35 years old, and I am a doctor. I am from London, but I don't live in London. I live in Brooklyn, New York.\" Commenter 2 (Tamar): \"My name is Tamar Kurdadze, and I am 26 years old. I am a dancer, and I love my profession. I am from Georgia, and I live in Kharagauli.\" Commenter 3 (Ana): \"I am Ana. My full name is Ana Maria Solomonidze. My age is 20. I am a student. I am from Georgia and I live in Sighnagi.\" — უპასუხე კითხვებს.",
+      commenters: [
+        { name: "Alex", text: "I am Alex. My surname is Jackson. I am 35 years old, and I am a doctor. I am from London, but I don't live in London. I live in Brooklyn, New York." },
+        { name: "Tamar", text: "My name is Tamar Kurdadze, and I am 26 years old. I am a dancer, and I love my profession. I am from Georgia, and I live in Kharagauli." },
+        { name: "Ana", text: "I am Ana. My full name is Ana Maria Solomonidze. My age is 20. I am a student. I am from Georgia and I live in Sighnagi." }
+      ],
+      instruction: "— უპასუხე კითხვებს.",
       items: [
         { prompt: "Who is a student?", instruction: "უპასუხე ტექსტის მიხედვით.", answer: "Ana" },
         { prompt: "Who is from London?", instruction: "უპასუხე ტექსტის მიხედვით.", answer: "Alex" },
@@ -3207,8 +3219,20 @@
     var back = el("button", { class: "back-link", type: "button" }, [document.createTextNode("← თემებთან დაბრუნება")]);
     back.addEventListener("click", function () { grammarSub = null; renderGrammarView(); });
     root.appendChild(back);
-    root.appendChild(el("h2", {}, [document.createTextNode(topic.ka)]));
-    if (topic.note) root.appendChild(el("p", { style: "color:var(--ink-soft);max-width:64ch;margin:6px 0 18px;font-size:0.92rem" }, [document.createTextNode(topic.note)]));
+    root.appendChild(el("h2", { class: topic.commenters ? "topic-heading-accent" : "" }, [document.createTextNode(topic.ka)]));
+    if (topic.commenters) {
+      var commentersWrap = el("div", { class: "commenters-wrap" });
+      topic.commenters.forEach(function (c) {
+        commentersWrap.appendChild(el("div", { class: "commenter-block" }, [
+          el("div", { class: "commenter-name" }, [document.createTextNode(c.name)]),
+          el("p", { class: "commenter-text" }, [document.createTextNode(c.text)])
+        ]));
+      });
+      root.appendChild(commentersWrap);
+      if (topic.instruction) root.appendChild(el("p", { class: "commenters-instruction" }, [document.createTextNode(topic.instruction)]));
+    } else if (topic.note) {
+      root.appendChild(el("p", { style: "color:var(--ink-soft);max-width:64ch;margin:6px 0 18px;font-size:0.92rem" }, [document.createTextNode(topic.note)]));
+    }
 
     if (!quizItemOpen[topic.id]) {
       root.appendChild(el("p", { style: "color:var(--ink-soft);margin:0 0 12px;font-size:0.85rem" }, [document.createTextNode("აირჩიე სავარჯიშო სიიდან:")]));
