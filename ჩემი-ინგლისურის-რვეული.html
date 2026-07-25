@@ -589,6 +589,16 @@
   .activity-day.active .activity-dot { background: var(--brand); }
   .activity-day.today .activity-dot { border-color: var(--gold); }
   .activity-day.today { color: var(--ink); font-weight: 700; }
+
+  /* --- Unit material preview (learning material only, no exercises) --- */
+  .material-preview { margin: 0 0 20px; }
+  .material-preview-title { font-weight: 700; font-size: 0.88rem; color: var(--brand-ink); margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+  .material-preview-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+  .material-card { border: 1px solid var(--border); background: var(--surface); border-radius: 14px; padding: 12px 14px; }
+  .material-card-head { display: flex; align-items: center; gap: 6px; font-weight: 700; font-size: 0.85rem; color: var(--ink); margin-bottom: 4px; }
+  .material-card-head .icon { font-size: 0.95rem; }
+  .material-card-body { font-size: 0.82rem; color: var(--ink-soft); margin-bottom: 6px; }
+  .material-card-sample { font-size: 0.76rem; color: var(--ink-faint); line-height: 1.4; }
   .dash-chat-btn { display: flex; align-items: center; justify-content: center; text-align: center; padding: 2px 8px; font-size: 0.72rem; margin: 0; }
 
   /* --- Vocabulary practice modes --- */
@@ -2334,6 +2344,58 @@
     }
     overview.appendChild(renderActivityWidget());
     root.appendChild(overview);
+
+    var materialPreview = renderUnitMaterialPreview(unit);
+    if (materialPreview) root.appendChild(materialPreview);
+  }
+
+  function unitMaterialCategories(unit) {
+    var cats = [];
+    var decks = unitDecks(unit);
+    if (decks.length) {
+      var sample = [];
+      decks.forEach(function (d) { d.cards.forEach(function (c) { if (sample.length < 6) sample.push(c.en); }); });
+      cats.push({
+        icon: "📖", label: "ლექსიკონი",
+        title: decks.map(function (d) { return d.ka; }).join(", "),
+        sample: sample.join(", ") + (sample.length ? "…" : "")
+      });
+    }
+    [
+      ["grammar", "📐", "გრამატიკა"],
+      ["dialogue", "💬", "დიალოგები"],
+      ["reading", "✏️", "ტექსტები"]
+    ].forEach(function (k) {
+      var topics = unitTopicsByKind(unit, k[0]);
+      if (!topics.length) return;
+      var note = topics[0].note || "";
+      cats.push({
+        icon: k[1], label: k[2],
+        title: topics.map(function (t) { return t.ka; }).join(", "),
+        sample: note.slice(0, 110) + (note.length > 110 ? "…" : "")
+      });
+    });
+    return cats;
+  }
+
+  function renderUnitMaterialPreview(unit) {
+    var cats = unitMaterialCategories(unit);
+    if (!cats.length) return null;
+    var wrap = el("div", { class: "material-preview" });
+    wrap.appendChild(el("div", { class: "material-preview-title" }, [document.createTextNode("📚 ამ თავის სასწავლი მასალა")]));
+    var grid = el("div", { class: "material-preview-grid" });
+    cats.forEach(function (c) {
+      grid.appendChild(el("div", { class: "material-card" }, [
+        el("div", { class: "material-card-head" }, [
+          el("span", { class: "icon" }, [document.createTextNode(c.icon)]),
+          document.createTextNode(c.label)
+        ]),
+        el("div", { class: "material-card-body" }, [document.createTextNode(c.title)]),
+        el("div", { class: "material-card-sample" }, [document.createTextNode(c.sample)])
+      ]));
+    });
+    wrap.appendChild(grid);
+    return wrap;
   }
 
   function renderActivityWidget() {
