@@ -311,6 +311,7 @@
   .page.unit-mode #view-cards, .page.unit-mode #view-grammar { padding-top: 10px; }
   @media (min-width: 760px) {
     .page.unit-mode { display: grid; grid-template-columns: 1fr 1fr; align-items: start; column-gap: 6px; }
+    .page.unit-mode .masthead { grid-column: 1 / -1; }
     .page.unit-mode #view-home { grid-column: 1 / -1; }
     .page.unit-mode:has(#view-cards.active):not(:has(#view-grammar.active)) #view-cards { grid-column: 1 / -1; }
     .page.unit-mode:has(#view-grammar.active):not(:has(#view-cards.active)) #view-grammar { grid-column: 1 / -1; }
