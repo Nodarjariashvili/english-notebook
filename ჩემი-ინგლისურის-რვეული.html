@@ -2435,7 +2435,6 @@
           document.createTextNode(c.label)
         ])
       ]);
-      card.addEventListener("click", function (key) { return function () { materialDetailOpen = key; renderHome(); }; }(c.key));
       grid.appendChild(card);
     });
     wrap.appendChild(grid);
