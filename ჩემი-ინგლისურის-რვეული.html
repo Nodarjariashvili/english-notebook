@@ -411,6 +411,16 @@
   .item-picker-card.status-partial .item-picker-status { background: var(--gold); color: #fff; border-color: var(--gold); }
   .item-picker-wide-section { width: 100%; }
 
+  /* --- Unit section tabs (navigate between lex/lexPractice/grammar/dialogue/reading while inside any one of them) --- */
+  .unit-section-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+  .unit-section-tab {
+    border: 1.5px solid var(--border); background: var(--surface); color: var(--ink-soft);
+    border-radius: 999px; padding: 7px 14px; font-size: 0.82rem; font-weight: 600; cursor: pointer;
+    display: inline-flex; align-items: center; gap: 6px; transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+  }
+  .unit-section-tab:hover { border-color: var(--brand); }
+  .unit-section-tab.active { background: var(--brand); border-color: var(--brand); color: #fff; }
+
   .back-link {
     background: var(--surface); border: 1.5px solid var(--border); color: var(--ink);
     font-size: 0.85rem; font-weight: 600; cursor: pointer; border-radius: 999px;
@@ -2385,9 +2395,55 @@
     return wrap;
   }
 
+  /* ---------- unit section tabs (shown at top of any section-detail view) ---------- */
+  var UNIT_SECTION_DEFS = [
+    { key: "lex", icon: "📖", label: "ლექსიკონი" },
+    { key: "lexPractice", icon: "✏️", label: "სავარჯიშოები — ლექსიკა" },
+    { key: "grammar", icon: "📐", label: "გრამატიკა" },
+    { key: "dialogue", icon: "💬", label: "დიალოგები" },
+    { key: "reading", icon: "✏️", label: "სავარჯიშოები — წაკითხვის გაგება" }
+  ];
+
+  function unitSectionAvailable(unit, key) {
+    if (key === "lex" || key === "lexPractice") return unitDecks(unit).length > 0;
+    return unitTopicsByKind(unit, key).length > 0;
+  }
+
+  function gotoUnitSection(unit, key) {
+    cardsSub = null;
+    grammarSub = null;
+    UNIT_SECTION_DEFS.forEach(function (s) { accordionOpen[unit.id + ":" + s.key] = (s.key === key); });
+    if (key === "lex") {
+      var decks = unitDecks(unit);
+      if (decks.length === 1) { openDeckFlip(decks[0].id); return; }
+    } else if (key === "grammar" || key === "dialogue" || key === "reading") {
+      var topics = unitTopicsByKind(unit, key);
+      if (topics.length === 1) { openTopic(topics[0].id); return; }
+    }
+    renderCardsView();
+    renderGrammarView();
+  }
+
+  function renderUnitSectionTabs(unit, activeKey) {
+    var wrap = el("div", { class: "unit-section-tabs" });
+    UNIT_SECTION_DEFS.forEach(function (s) {
+      if (!unitSectionAvailable(unit, s.key)) return;
+      var btn = el("button", { class: "unit-section-tab" + (s.key === activeKey ? " active" : ""), type: "button" }, [
+        el("span", {}, [document.createTextNode(s.icon)]),
+        document.createTextNode(s.label)
+      ]);
+      btn.addEventListener("click", function (key) { return function () { gotoUnitSection(unit, key); }; }(s.key));
+      wrap.appendChild(btn);
+    });
+    return wrap;
+  }
+
   function renderCardsView() {
     var root = document.getElementById("view-cards");
     root.innerHTML = "";
+    if (cardsSub) {
+      root.appendChild(renderUnitSectionTabs(currentUnitObj(), cardsMode === "flip" ? "lex" : "lexPractice"));
+    }
     if (!cardsSub) {
       var unit = currentUnitObj();
 
@@ -2954,6 +3010,10 @@
   function renderGrammarView() {
     var root = document.getElementById("view-grammar");
     root.innerHTML = "";
+    if (grammarSub) {
+      var topicForTabs = GRAMMAR.filter(function (t) { return t.id === grammarSub; })[0];
+      if (topicForTabs) { root.appendChild(renderUnitSectionTabs(currentUnitObj(), topicForTabs.kind)); }
+    }
     if (!grammarSub) {
       var unit = currentUnitObj();
 
