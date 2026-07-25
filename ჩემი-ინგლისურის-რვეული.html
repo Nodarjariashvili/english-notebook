@@ -594,9 +594,18 @@
   .material-preview { margin: 0 0 20px; }
   .material-preview-title { font-weight: 700; font-size: 0.88rem; color: var(--brand-ink); margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
   .material-preview-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
-  .material-card { border: 1px solid var(--border); background: var(--surface); border-radius: 14px; padding: 12px 14px; }
-  .material-card-head { display: flex; align-items: center; gap: 6px; font-weight: 700; font-size: 0.85rem; color: var(--ink); margin-bottom: 4px; }
-  .material-card-head .icon { font-size: 0.95rem; }
+  .material-card {
+    --accent-color: var(--brand); --accent-soft: var(--brand-soft);
+    border: 1px solid var(--border); border-left: 3px solid var(--accent-color);
+    background: var(--surface); border-radius: 20px; padding: 12px 14px;
+    box-shadow: 0 2px 8px var(--shadow);
+  }
+  .material-card[data-color="info"] { --accent-color: var(--info); --accent-soft: var(--info-soft); }
+  .material-card[data-color="cyan"] { --accent-color: var(--cyan); --accent-soft: var(--cyan-soft); }
+  .material-card[data-color="violet"] { --accent-color: var(--violet); --accent-soft: var(--violet-soft); }
+  .material-card[data-color="gold"] { --accent-color: var(--gold); --accent-soft: var(--gold-soft); }
+  .material-card-head { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 0.85rem; color: var(--ink); margin-bottom: 6px; }
+  .material-card-head .icon { font-size: 1.05rem; display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; border-radius: 10px; background: var(--accent-soft); flex-shrink: 0; }
   .material-card-body { font-size: 0.82rem; color: var(--ink-soft); margin-bottom: 6px; }
   .material-card-sample { font-size: 0.76rem; color: var(--ink-faint); line-height: 1.4; }
   .dash-chat-btn { display: flex; align-items: center; justify-content: center; text-align: center; padding: 2px 8px; font-size: 0.72rem; margin: 0; }
@@ -2356,21 +2365,21 @@
       var sample = [];
       decks.forEach(function (d) { d.cards.forEach(function (c) { if (sample.length < 6) sample.push(c.en); }); });
       cats.push({
-        icon: "📖", label: "ლექსიკონი",
+        icon: "📖", label: "ლექსიკონი", color: "info",
         title: decks.map(function (d) { return d.ka; }).join(", "),
         sample: sample.join(", ") + (sample.length ? "…" : "")
       });
     }
     [
-      ["grammar", "📐", "გრამატიკა"],
-      ["dialogue", "💬", "დიალოგები"],
-      ["reading", "✏️", "ტექსტები"]
+      ["grammar", "📐", "გრამატიკა", "violet"],
+      ["dialogue", "💬", "დიალოგები", "gold"],
+      ["reading", "✏️", "ტექსტები", "cyan"]
     ].forEach(function (k) {
       var topics = unitTopicsByKind(unit, k[0]);
       if (!topics.length) return;
       var note = topics[0].note || "";
       cats.push({
-        icon: k[1], label: k[2],
+        icon: k[1], label: k[2], color: k[3],
         title: topics.map(function (t) { return t.ka; }).join(", "),
         sample: note.slice(0, 110) + (note.length > 110 ? "…" : "")
       });
@@ -2385,7 +2394,7 @@
     wrap.appendChild(el("div", { class: "material-preview-title" }, [document.createTextNode("📚 ამ თავის სასწავლი მასალა")]));
     var grid = el("div", { class: "material-preview-grid" });
     cats.forEach(function (c) {
-      grid.appendChild(el("div", { class: "material-card" }, [
+      grid.appendChild(el("div", { class: "material-card", "data-color": c.color || "" }, [
         el("div", { class: "material-card-head" }, [
           el("span", { class: "icon" }, [document.createTextNode(c.icon)]),
           document.createTextNode(c.label)
