@@ -533,12 +533,15 @@
 
   .progress-overview { background: var(--brand-soft); border-radius: 18px; padding: 9px 9px 10px; margin: 4px 0 12px; }
   .progress-overview-title { font-weight: 700; font-size: 0.76rem; color: var(--brand-ink); margin-bottom: 6px; }
-  .type-progress-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; margin: 0 0 8px; }
-  .type-progress-tile { border: 1px solid var(--border); background: var(--surface); border-radius: 10px; padding: 6px 8px; }
-  .type-progress-label { display: flex; align-items: center; gap: 4px; font-size: 0.72rem; font-weight: 600; color: var(--ink-soft); margin-bottom: 4px; }
-  .type-progress-label .icon { font-size: 0.8rem; }
+  .type-progress-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; margin: 0 0 8px; }
+  .type-progress-tile { border: 1px solid var(--border); background: var(--surface); border-radius: 10px; padding: 5px 5px; min-width: 0; }
+  .type-progress-label { display: flex; align-items: center; gap: 3px; font-size: 0.62rem; font-weight: 600; color: var(--ink-soft); margin-bottom: 4px; }
+  .type-progress-label .icon { font-size: 0.7rem; }
   .type-progress-tile .bar { margin-bottom: 3px; height: 3px; }
-  .type-progress-count { font-size: 0.68rem; color: var(--ink-faint); font-variant-numeric: tabular-nums; }
+  .type-progress-count { font-size: 0.6rem; color: var(--ink-faint); font-variant-numeric: tabular-nums; }
+  @media (max-width: 640px) {
+    .type-progress-grid { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 6px; }
+  }
 
   .activity-card { background: var(--surface); border-radius: 12px; padding: 7px 8px; }
   .activity-title { font-weight: 700; font-size: 0.76rem; color: var(--ink); margin-bottom: 6px; }
