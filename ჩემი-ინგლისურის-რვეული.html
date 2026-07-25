@@ -540,6 +540,15 @@
   .commenter-name { font-weight: 700; color: var(--cyan); font-family: 'Baloo 2', 'Noto Sans Georgian', sans-serif; font-size: 1rem; margin-bottom: 4px; }
   .commenter-text { margin: 0; color: var(--ink); font-size: 0.92rem; line-height: 1.6; max-width: 64ch; }
   .commenters-instruction { color: var(--ink-soft); font-style: italic; font-size: 0.85rem; margin: 10px 0 18px; }
+  .topic-heading-warm { color: var(--accent-orange); margin-bottom: 6px; }
+  .grammar-sections-wrap { margin: 6px 0 18px; display: flex; flex-direction: column; gap: 12px; }
+  .grammar-intro-text { margin: 0; color: var(--ink); font-size: 0.92rem; line-height: 1.6; max-width: 64ch; }
+  .grammar-block { background: var(--gold-soft); border-left: 3px solid var(--gold); border-radius: 14px; padding: 12px 16px; }
+  .grammar-block-label { font-weight: 700; color: var(--ink); font-family: 'Baloo 2', 'Noto Sans Georgian', sans-serif; font-size: 0.95rem; margin-bottom: 4px; }
+  .grammar-block p { margin: 0; color: var(--ink); font-size: 0.92rem; line-height: 1.6; max-width: 64ch; }
+  .grammar-note-block { border: 1px solid var(--border); border-radius: 14px; padding: 12px 16px; background: var(--paper); }
+  .grammar-note-block p { margin: 0; color: var(--ink-soft); font-size: 0.88rem; line-height: 1.6; max-width: 64ch; }
+  .pronoun-word { font-weight: 700; color: var(--accent-pink); }
   .ref-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
   .ref-table tr { border-bottom: 1px solid var(--border); transition: background 0.15s ease; }
   .ref-table tr:nth-child(even) { background: var(--paper); }
@@ -1193,6 +1202,12 @@
     {
       id: "pronouns", kind: "grammar", ka: "პირის ნაცვალსახელები", en: "Subject & object pronouns",
       note: "ინგლისურ ენაში პირის ნაცვალსახელები გამოიყენება არსებითი სახელების ჩასანაცვლებლად, რათა თავიდან იქნას აცილებული მათი გამეორება. არსებობს ორი სახის პირის ნაცვალსახელი: სუბიექტური (სუბიექტის აღმნიშვნელი) და ობიექტური (ობიექტის აღმნიშვნელი). სუბიექტური ნაცვალსახელებია: I, you, he, she, it, we და they — მხოლობითში: I (მე), you (შენ), he/she/it (ის); მრავლობითში: you (თქვენ), we (ჩვენ), they (ისინი). შენიშვნა: he გამოიყენება მამრობითი სქესის აღსანიშნავად, she — მდედრობითი სქესის, it კი ცხოველებისა და უსულო საგნების აღსანიშნავად (მათ შორის აბსტრაქტული ცნებებისთვისაც, მაგალითად სილამაზე, სიყვარული, ბუნება და ა.შ.). ობიექტური ნაცვალსახელები (me, you, him, her, it, us, them) გამოიყენება მაშინ, როცა სახელი ზმნის შემდეგ ან წინდებულის შემდეგ დგას.",
+      sections: [
+        { type: "intro", html: "ინგლისურ ენაში პირის ნაცვალსახელები გამოიყენება არსებითი სახელების ჩასანაცვლებლად, რათა თავიდან იქნას აცილებული მათი გამეორება. არსებობს ორი სახის პირის ნაცვალსახელი: სუბიექტური (სუბიექტის აღმნიშვნელი) და ობიექტური (ობიექტის აღმნიშვნელი)." },
+        { type: "block", label: "სუბიექტური ნაცვალსახელები", html: "სუბიექტური ნაცვალსახელებია: <span class='pronoun-word'>I</span>, <span class='pronoun-word'>you</span>, <span class='pronoun-word'>he</span>, <span class='pronoun-word'>she</span>, <span class='pronoun-word'>it</span>, <span class='pronoun-word'>we</span> და <span class='pronoun-word'>they</span> — მხოლობითში: <span class='pronoun-word'>I</span> (მე), <span class='pronoun-word'>you</span> (შენ), <span class='pronoun-word'>he</span>/<span class='pronoun-word'>she</span>/<span class='pronoun-word'>it</span> (ის); მრავლობითში: <span class='pronoun-word'>you</span> (თქვენ), <span class='pronoun-word'>we</span> (ჩვენ), <span class='pronoun-word'>they</span> (ისინი)." },
+        { type: "block", label: "ობიექტური ნაცვალსახელები", html: "ობიექტური ნაცვალსახელები (<span class='pronoun-word'>me</span>, <span class='pronoun-word'>you</span>, <span class='pronoun-word'>him</span>, <span class='pronoun-word'>her</span>, <span class='pronoun-word'>it</span>, <span class='pronoun-word'>us</span>, <span class='pronoun-word'>them</span>) გამოიყენება მაშინ, როცა სახელი ზმნის შემდეგ ან წინდებულის შემდეგ დგას." },
+        { type: "note", html: "შენიშვნა: <span class='pronoun-word'>he</span> გამოიყენება მამრობითი სქესის აღსანიშნავად, <span class='pronoun-word'>she</span> — მდედრობითი სქესის, <span class='pronoun-word'>it</span> კი ცხოველებისა და უსულო საგნების აღსანიშნავად (მათ შორის აბსტრაქტული ცნებებისთვისაც, მაგალითად სილამაზე, სიყვარული, ბუნება და ა.შ.)." }
+      ],
       items: [
         { prompt: "My name is Alex. ___ am a manager.", instruction: "შეავსე სწორი სუბიექტური ნაცვალსახელით.", answer: "I" },
         { prompt: "This is Lucy. ___ are friends.", instruction: "შეავსე სწორი სუბიექტური ნაცვალსახელით.", answer: "We" },
@@ -3219,7 +3234,7 @@
     var back = el("button", { class: "back-link", type: "button" }, [document.createTextNode("← თემებთან დაბრუნება")]);
     back.addEventListener("click", function () { grammarSub = null; renderGrammarView(); });
     root.appendChild(back);
-    root.appendChild(el("h2", { class: topic.commenters ? "topic-heading-accent" : "" }, [document.createTextNode(topic.ka)]));
+    root.appendChild(el("h2", { class: topic.commenters ? "topic-heading-accent" : topic.sections ? "topic-heading-warm" : "" }, [document.createTextNode(topic.ka)]));
     if (topic.commenters) {
       var commentersWrap = el("div", { class: "commenters-wrap" });
       topic.commenters.forEach(function (c) {
@@ -3230,6 +3245,23 @@
       });
       root.appendChild(commentersWrap);
       if (topic.instruction) root.appendChild(el("p", { class: "commenters-instruction" }, [document.createTextNode(topic.instruction)]));
+    } else if (topic.sections) {
+      var sectionsWrap = el("div", { class: "grammar-sections-wrap" });
+      topic.sections.forEach(function (s) {
+        if (s.type === "intro") {
+          sectionsWrap.appendChild(el("p", { class: "grammar-intro-text", html: s.html }));
+        } else if (s.type === "block") {
+          sectionsWrap.appendChild(el("div", { class: "grammar-block" }, [
+            el("div", { class: "grammar-block-label" }, [document.createTextNode(s.label)]),
+            el("p", { html: s.html })
+          ]));
+        } else if (s.type === "note") {
+          sectionsWrap.appendChild(el("div", { class: "grammar-note-block" }, [
+            el("p", { html: s.html })
+          ]));
+        }
+      });
+      root.appendChild(sectionsWrap);
     } else if (topic.note) {
       root.appendChild(el("p", { style: "color:var(--ink-soft);max-width:64ch;margin:6px 0 18px;font-size:0.92rem" }, [document.createTextNode(topic.note)]));
     }
