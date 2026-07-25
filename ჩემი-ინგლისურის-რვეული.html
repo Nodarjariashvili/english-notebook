@@ -9,12 +9,13 @@
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@400;600;700;800&family=Caveat:wght@600&display=swap" rel="stylesheet">
 <style>
   :root {
-    --paper: oklch(97% 0.02 75);
-    --paper-rule: rgba(60, 45, 30, 0.08);
+    --paper: oklch(96% 0.02 340);
+    --paper-2: oklch(95% 0.025 30);
+    --paper-rule: rgba(90, 40, 60, 0.08);
     --surface: #ffffff;
-    --ink: #3a332c;
-    --ink-soft: #6b6058;
-    --ink-faint: #a89b8e;
+    --ink: oklch(28% 0.02 340);
+    --ink-soft: oklch(49% 0.02 340);
+    --ink-faint: oklch(65% 0.02 340);
     --green: oklch(62% 0.125 145);
     --green-ink: oklch(35% 0.06 145);
     --green-soft: oklch(89% 0.03 145);
@@ -28,24 +29,30 @@
     --violet-soft: #f1e4fe;
     --cyan: #0891b2;
     --cyan-soft: #d3f4f8;
-    --brand: oklch(72% 0.15 40);
-    --brand-ink: oklch(48% 0.14 35);
-    --brand-soft: oklch(93% 0.045 50);
-    --tab-bg: #fbe9d9;
+    --accent-yellow: oklch(82% 0.15 80);
+    --accent-orange: oklch(68% 0.19 40);
+    --accent-pink: oklch(60% 0.22 350);
+    --accent-purple: oklch(45% 0.2 305);
+    --brand-gradient: linear-gradient(135deg, var(--accent-yellow), var(--accent-orange), var(--accent-pink), var(--accent-purple));
+    --brand: var(--accent-pink);
+    --brand-ink: var(--accent-purple);
+    --brand-soft: oklch(95% 0.025 340);
+    --tab-bg: oklch(93% 0.03 345);
     --tab-bg-active: var(--surface);
-    --border: rgba(60, 45, 30, 0.14);
-    --shadow: rgba(120, 65, 30, 0.14);
+    --border: rgba(90, 40, 60, 0.14);
+    --shadow: oklch(40% 0.1 340 / 0.18);
     --focus: #2fa366;
     color-scheme: light;
   }
   @media (prefers-color-scheme: dark) {
     :root {
-      --paper: oklch(16% 0.02 50);
-      --paper-rule: rgba(240, 230, 220, 0.07);
-      --surface: #241b15;
-      --ink: #efe8e1;
-      --ink-soft: #bdada0;
-      --ink-faint: #8f8074;
+      --paper: oklch(15% 0.03 340);
+      --paper-2: oklch(13% 0.03 20);
+      --paper-rule: rgba(245, 225, 235, 0.07);
+      --surface: #221726;
+      --ink: oklch(92% 0.02 340);
+      --ink-soft: oklch(75% 0.02 340);
+      --ink-faint: oklch(60% 0.02 340);
       --green: oklch(70% 0.13 145);
       --green-ink: oklch(85% 0.06 145);
       --green-soft: oklch(30% 0.04 145);
@@ -59,24 +66,30 @@
       --violet-soft: #34205a;
       --cyan: #67e8f9;
       --cyan-soft: #113c42;
-      --brand: oklch(74% 0.14 40);
-      --brand-ink: oklch(85% 0.08 40);
-      --brand-soft: oklch(28% 0.05 40);
-      --tab-bg: #2b2019;
+      --accent-yellow: oklch(85% 0.14 80);
+      --accent-orange: oklch(72% 0.18 40);
+      --accent-pink: oklch(68% 0.2 350);
+      --accent-purple: oklch(62% 0.18 305);
+      --brand-gradient: linear-gradient(135deg, var(--accent-yellow), var(--accent-orange), var(--accent-pink), var(--accent-purple));
+      --brand: var(--accent-pink);
+      --brand-ink: oklch(85% 0.12 340);
+      --brand-soft: oklch(26% 0.06 340);
+      --tab-bg: #2a1a24;
       --tab-bg-active: var(--surface);
-      --border: rgba(240, 230, 220, 0.14);
+      --border: rgba(245, 225, 235, 0.14);
       --shadow: rgba(0, 0, 0, 0.45);
       --focus: #4fc786;
       color-scheme: dark;
     }
   }
   :root[data-theme="dark"] {
-    --paper: oklch(16% 0.02 50);
-    --paper-rule: rgba(240, 230, 220, 0.07);
-    --surface: #241b15;
-    --ink: #efe8e1;
-    --ink-soft: #bdada0;
-    --ink-faint: #8f8074;
+    --paper: oklch(15% 0.03 340);
+    --paper-2: oklch(13% 0.03 20);
+    --paper-rule: rgba(245, 225, 235, 0.07);
+    --surface: #221726;
+    --ink: oklch(92% 0.02 340);
+    --ink-soft: oklch(75% 0.02 340);
+    --ink-faint: oklch(60% 0.02 340);
     --green: oklch(70% 0.13 145);
     --green-ink: oklch(85% 0.06 145);
     --green-soft: oklch(30% 0.04 145);
@@ -90,23 +103,29 @@
     --violet-soft: #34205a;
     --cyan: #67e8f9;
     --cyan-soft: #113c42;
-    --brand: oklch(74% 0.14 40);
-    --brand-ink: oklch(85% 0.08 40);
-    --brand-soft: oklch(28% 0.05 40);
-    --tab-bg: #2b2019;
+    --accent-yellow: oklch(85% 0.14 80);
+    --accent-orange: oklch(72% 0.18 40);
+    --accent-pink: oklch(68% 0.2 350);
+    --accent-purple: oklch(62% 0.18 305);
+    --brand-gradient: linear-gradient(135deg, var(--accent-yellow), var(--accent-orange), var(--accent-pink), var(--accent-purple));
+    --brand: var(--accent-pink);
+    --brand-ink: oklch(85% 0.12 340);
+    --brand-soft: oklch(26% 0.06 340);
+    --tab-bg: #2a1a24;
     --tab-bg-active: var(--surface);
-    --border: rgba(240, 230, 220, 0.14);
+    --border: rgba(245, 225, 235, 0.14);
     --shadow: rgba(0, 0, 0, 0.45);
     --focus: #4fc786;
     color-scheme: dark;
   }
   :root[data-theme="light"] {
-    --paper: oklch(97% 0.02 75);
-    --paper-rule: rgba(60, 45, 30, 0.08);
+    --paper: oklch(96% 0.02 340);
+    --paper-2: oklch(95% 0.025 30);
+    --paper-rule: rgba(90, 40, 60, 0.08);
     --surface: #ffffff;
-    --ink: #3a332c;
-    --ink-soft: #6b6058;
-    --ink-faint: #a89b8e;
+    --ink: oklch(28% 0.02 340);
+    --ink-soft: oklch(49% 0.02 340);
+    --ink-faint: oklch(65% 0.02 340);
     --green: oklch(62% 0.125 145);
     --green-ink: oklch(35% 0.06 145);
     --green-soft: oklch(89% 0.03 145);
@@ -120,13 +139,18 @@
     --violet-soft: #f1e4fe;
     --cyan: #0891b2;
     --cyan-soft: #d3f4f8;
-    --brand: oklch(72% 0.15 40);
-    --brand-ink: oklch(48% 0.14 35);
-    --brand-soft: oklch(93% 0.045 50);
-    --tab-bg: #fbe9d9;
+    --accent-yellow: oklch(82% 0.15 80);
+    --accent-orange: oklch(68% 0.19 40);
+    --accent-pink: oklch(60% 0.22 350);
+    --accent-purple: oklch(45% 0.2 305);
+    --brand-gradient: linear-gradient(135deg, var(--accent-yellow), var(--accent-orange), var(--accent-pink), var(--accent-purple));
+    --brand: var(--accent-pink);
+    --brand-ink: var(--accent-purple);
+    --brand-soft: oklch(95% 0.025 340);
+    --tab-bg: oklch(93% 0.03 345);
     --tab-bg-active: var(--surface);
-    --border: rgba(60, 45, 30, 0.14);
-    --shadow: rgba(120, 65, 30, 0.14);
+    --border: rgba(90, 40, 60, 0.14);
+    --shadow: oklch(40% 0.1 340 / 0.18);
     --focus: #2fa366;
     color-scheme: light;
   }
@@ -134,7 +158,7 @@
   * { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; }
   body {
-    background: var(--paper);
+    background: linear-gradient(180deg, var(--paper), var(--paper-2));
     color: var(--ink);
     font-family: 'Nunito', 'Noto Sans Georgian', system-ui, sans-serif;
     min-height: 100vh;
@@ -221,7 +245,7 @@
   .masthead .subtitle { color: var(--ink-soft); font-size: 0.88rem; }
   .masthead-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
   .theme-toggle, .settings-toggle {
-    border: none; background: var(--brand); color: #fff;
+    border: none; background: var(--brand-gradient); color: #fff;
     border-radius: 999px; padding: 7px 14px; font-size: 0.76rem; font-weight: 700; cursor: pointer;
     display: inline-flex; align-items: center; gap: 6px;
     box-shadow: 0 3px 0 var(--brand-ink), 0 4px 10px var(--shadow);
@@ -336,7 +360,7 @@
   .home-hero { position: relative; }
   .profile-row { position: relative; z-index: 1; display: flex; gap: 22px; flex-wrap: wrap; margin-bottom: 28px; }
   .id-card { flex: 1 1 300px; border: 1px solid var(--border); border-top: 4px solid var(--gold); border-radius: 20px; padding: 18px 20px; background: var(--paper); display: flex; gap: 16px; align-items: center; }
-  .avatar { width: 58px; height: 58px; border-radius: 50%; background: var(--brand); color: #fff; display: flex; align-items: center; justify-content: center; font-family: 'Baloo 2', 'Noto Sans Georgian', sans-serif; font-size: 1.3rem; font-weight: 700; flex-shrink: 0; }
+  .avatar { width: 58px; height: 58px; border-radius: 50%; background: var(--brand-gradient); color: #fff; display: flex; align-items: center; justify-content: center; font-family: 'Baloo 2', 'Noto Sans Georgian', sans-serif; font-size: 1.3rem; font-weight: 700; flex-shrink: 0; }
   .id-card dl { margin: 8px 0 0; display: grid; grid-template-columns: auto 1fr; gap: 3px 10px; font-size: 0.86rem; }
   .id-card dt { color: var(--ink-faint); }
   .id-card dd { margin: 0; color: var(--ink); font-weight: 500; }
@@ -469,7 +493,7 @@
   .answer-input { flex: 1 1 220px; padding: 11px 14px; border-radius: 12px; border: 1.5px solid var(--border); background: var(--surface); color: var(--ink); font-size: 1rem; font-family: inherit; }
   .answer-input:focus { border-color: var(--brand); }
   .check-btn {
-    border: none; background: var(--brand); color: #fff; padding: 12px 22px; border-radius: 14px;
+    border: none; background: var(--brand-gradient); color: #fff; padding: 12px 22px; border-radius: 14px;
     font-weight: 700; cursor: pointer; font-size: 0.92rem; box-shadow: 0 4px 0 var(--brand-ink);
     transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.15s ease;
   }
@@ -584,7 +608,7 @@
   .practice-prompt-en { margin-bottom: 6px; }
   .practice-ipa { color: var(--ink-faint); font-size: 0.92rem; margin-bottom: 16px; }
 
-  .practice-mic-btn { width: 76px; height: 76px; border-radius: 50%; border: none; background: var(--brand); color: #fff; font-size: 1.8rem; cursor: pointer; box-shadow: 0 10px 26px var(--shadow); transition: background 0.15s ease, transform 0.1s ease; margin-bottom: 14px; }
+  .practice-mic-btn { width: 76px; height: 76px; border-radius: 50%; border: none; background: var(--brand-gradient); color: #fff; font-size: 1.8rem; cursor: pointer; box-shadow: 0 10px 26px var(--shadow); transition: background 0.15s ease, transform 0.1s ease; margin-bottom: 14px; }
   .practice-mic-btn:hover { background: var(--brand-ink); transform: scale(1.04); }
 
   .practice-status { font-size: 0.86rem; font-weight: 600; color: var(--ink-faint); min-height: 1.2em; margin: 8px 0; display: none; align-items: center; justify-content: center; }
@@ -636,7 +660,7 @@
   /* --- Bold hero card (Home page) --- */
   .hero-card {
     position: relative; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: 20px;
-    background: linear-gradient(135deg, var(--brand) 0%, var(--brand-ink) 100%);
+    background: var(--brand-gradient);
     border-radius: 28px; padding: clamp(20px, 4vw, 30px) clamp(20px, 4vw, 32px);
     margin-bottom: 26px; overflow: hidden; box-shadow: 0 18px 36px var(--shadow); color: #ffffff;
   }
@@ -739,7 +763,7 @@
   .chat-input-bar { display: flex; gap: 8px; align-items: flex-end; }
   .chat-input-bar textarea { flex: 1; resize: none; padding: 12px 16px; border-radius: 18px; border: 1.5px solid var(--border); background: var(--surface); color: var(--ink); font-family: 'Nunito', 'Noto Sans Georgian', sans-serif; font-size: 0.95rem; max-height: 120px; box-shadow: 0 2px 8px var(--shadow); }
   .chat-input-bar textarea:focus { border-color: var(--brand); }
-  .chat-send-btn { background: var(--brand); color: #fff; border: none; border-radius: 50%; width: 44px; height: 44px; font-size: 1.1rem; cursor: pointer; flex: none; box-shadow: 0 2px 8px var(--shadow); transition: background 0.15s ease, transform 0.1s ease; }
+  .chat-send-btn { background: var(--brand-gradient); color: #fff; border: none; border-radius: 50%; width: 44px; height: 44px; font-size: 1.1rem; cursor: pointer; flex: none; box-shadow: 0 2px 8px var(--shadow); transition: background 0.15s ease, transform 0.1s ease; }
   .chat-send-btn:hover { background: var(--brand-ink); transform: translateY(-1px); }
   .chat-send-btn:disabled { opacity: 0.5; cursor: default; transform: none; }
   .chat-mic-btn { background: var(--surface); color: var(--ink-soft); border: 1px solid var(--border); border-radius: 50%; width: 44px; height: 44px; font-size: 1.05rem; cursor: pointer; flex: none; box-shadow: 0 2px 8px var(--shadow); transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease; }
