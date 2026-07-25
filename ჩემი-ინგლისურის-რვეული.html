@@ -546,8 +546,6 @@
   .grammar-block { background: var(--gold-soft); border-left: 3px solid var(--gold); border-radius: 14px; padding: 12px 16px; }
   .grammar-block-label { font-weight: 700; color: var(--ink); font-family: 'Baloo 2', 'Noto Sans Georgian', sans-serif; font-size: 0.95rem; margin-bottom: 4px; }
   .grammar-block p { margin: 0; color: var(--ink); font-size: 0.92rem; line-height: 1.6; max-width: 64ch; }
-  .grammar-note-block { border: 1px solid var(--border); border-radius: 14px; padding: 12px 16px; background: var(--paper); }
-  .grammar-note-block p { margin: 0; color: var(--ink-soft); font-size: 0.88rem; line-height: 1.6; max-width: 64ch; }
   .pronoun-word { font-weight: 700; color: var(--accent-pink); }
   .ref-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
   .ref-table tr { border-bottom: 1px solid var(--border); transition: background 0.15s ease; }
@@ -1206,7 +1204,7 @@
         { type: "intro", html: "ინგლისურ ენაში პირის ნაცვალსახელები გამოიყენება არსებითი სახელების ჩასანაცვლებლად, რათა თავიდან იქნას აცილებული მათი გამეორება. არსებობს ორი სახის პირის ნაცვალსახელი: სუბიექტური (სუბიექტის აღმნიშვნელი) და ობიექტური (ობიექტის აღმნიშვნელი)." },
         { type: "block", label: "სუბიექტური ნაცვალსახელები", html: "სუბიექტური ნაცვალსახელებია: <span class='pronoun-word'>I</span>, <span class='pronoun-word'>you</span>, <span class='pronoun-word'>he</span>, <span class='pronoun-word'>she</span>, <span class='pronoun-word'>it</span>, <span class='pronoun-word'>we</span> და <span class='pronoun-word'>they</span> — მხოლობითში: <span class='pronoun-word'>I</span> (მე), <span class='pronoun-word'>you</span> (შენ), <span class='pronoun-word'>he</span>/<span class='pronoun-word'>she</span>/<span class='pronoun-word'>it</span> (ის); მრავლობითში: <span class='pronoun-word'>you</span> (თქვენ), <span class='pronoun-word'>we</span> (ჩვენ), <span class='pronoun-word'>they</span> (ისინი)." },
         { type: "block", label: "ობიექტური ნაცვალსახელები", html: "ობიექტური ნაცვალსახელები (<span class='pronoun-word'>me</span>, <span class='pronoun-word'>you</span>, <span class='pronoun-word'>him</span>, <span class='pronoun-word'>her</span>, <span class='pronoun-word'>it</span>, <span class='pronoun-word'>us</span>, <span class='pronoun-word'>them</span>) გამოიყენება მაშინ, როცა სახელი ზმნის შემდეგ ან წინდებულის შემდეგ დგას." },
-        { type: "note", html: "შენიშვნა: <span class='pronoun-word'>he</span> გამოიყენება მამრობითი სქესის აღსანიშნავად, <span class='pronoun-word'>she</span> — მდედრობითი სქესის, <span class='pronoun-word'>it</span> კი ცხოველებისა და უსულო საგნების აღსანიშნავად (მათ შორის აბსტრაქტული ცნებებისთვისაც, მაგალითად სილამაზე, სიყვარული, ბუნება და ა.შ.)." }
+        { type: "block", label: "შენიშვნა", html: "<span class='pronoun-word'>he</span> გამოიყენება მამრობითი სქესის აღსანიშნავად, <span class='pronoun-word'>she</span> — მდედრობითი სქესის, <span class='pronoun-word'>it</span> კი ცხოველებისა და უსულო საგნების აღსანიშნავად (მათ შორის აბსტრაქტული ცნებებისთვისაც, მაგალითად სილამაზე, სიყვარული, ბუნება და ა.შ.)." }
       ],
       items: [
         { prompt: "My name is Alex. ___ am a manager.", instruction: "შეავსე სწორი სუბიექტური ნაცვალსახელით.", answer: "I" },
@@ -3253,10 +3251,6 @@
         } else if (s.type === "block") {
           sectionsWrap.appendChild(el("div", { class: "grammar-block" }, [
             el("div", { class: "grammar-block-label" }, [document.createTextNode(s.label)]),
-            el("p", { html: s.html })
-          ]));
-        } else if (s.type === "note") {
-          sectionsWrap.appendChild(el("div", { class: "grammar-note-block" }, [
             el("p", { html: s.html })
           ]));
         }
