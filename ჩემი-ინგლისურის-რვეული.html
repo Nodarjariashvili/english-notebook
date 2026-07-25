@@ -440,10 +440,14 @@
   .unit-section-tab {
     border: 1.5px solid var(--border); background: var(--surface); color: var(--ink-soft);
     border-radius: 999px; padding: 7px 14px; font-size: 0.82rem; font-weight: 600; cursor: pointer;
-    display: inline-flex; align-items: center; gap: 6px; transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+    display: inline-flex; align-items: center; gap: 6px; transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease, padding 0.15s ease, font-size 0.15s ease;
   }
   .unit-section-tab:hover { border-color: var(--brand); }
-  .unit-section-tab.active { background: var(--brand); border-color: var(--brand); color: #fff; }
+  .unit-section-tab.active {
+    background: var(--brand-gradient); border-color: transparent; color: #fff;
+    font-size: 0.9rem; padding: 8px 16px; font-weight: 800;
+    box-shadow: 0 4px 12px var(--shadow);
+  }
 
   .back-link {
     background: var(--surface); border: 1.5px solid var(--border); color: var(--ink);
