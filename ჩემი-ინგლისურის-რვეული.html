@@ -9,20 +9,20 @@
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Work+Sans:wght@400;500;600&family=Caveat:wght@600&display=swap" rel="stylesheet">
 <style>
   :root {
-    --paper: #f1f9f4;
+    --paper: oklch(97.5% 0.015 140);
     --paper-rule: rgba(45, 52, 54, 0.09);
     --surface: #ffffff;
     --ink: #33393b;
     --ink-soft: #5f6b6d;
     --ink-faint: #8ea09d;
-    --green: #2fa366;
-    --green-ink: #1f7a4d;
-    --green-soft: #ddf1e4;
+    --green: oklch(62% 0.125 145);
+    --green-ink: oklch(35% 0.06 145);
+    --green-soft: oklch(89% 0.03 145);
     --gold: #ea7c1f;
     --gold-soft: #fdead4;
     --rust: #dc5b4a;
     --rust-soft: #fbe1dc;
-    --info: #4fa8d8;
+    --info: oklch(70% 0.1 200);
     --info-soft: #dcf0fa;
     --violet: #9333ea;
     --violet-soft: #f1e4fe;
@@ -37,20 +37,20 @@
   }
   @media (prefers-color-scheme: dark) {
     :root {
-      --paper: #10201a;
+      --paper: oklch(18% 0.02 145);
       --paper-rule: rgba(230, 239, 233, 0.07);
       --surface: #16261f;
       --ink: #e6efe9;
       --ink-soft: #a9bdb4;
       --ink-faint: #7c9089;
-      --green: #4fc786;
-      --green-ink: #7fdda8;
-      --green-soft: #1d3b2a;
+      --green: oklch(70% 0.13 145);
+      --green-ink: oklch(85% 0.06 145);
+      --green-soft: oklch(30% 0.04 145);
       --gold: #f2954b;
       --gold-soft: #3a2515;
       --rust: #e8796b;
       --rust-soft: #3a211d;
-      --info: #7cc4ea;
+      --info: oklch(75% 0.09 200);
       --info-soft: #17323d;
       --violet: #c084fc;
       --violet-soft: #34205a;
@@ -65,20 +65,20 @@
     }
   }
   :root[data-theme="dark"] {
-    --paper: #10201a;
+    --paper: oklch(18% 0.02 145);
     --paper-rule: rgba(230, 239, 233, 0.07);
     --surface: #16261f;
     --ink: #e6efe9;
     --ink-soft: #a9bdb4;
     --ink-faint: #7c9089;
-    --green: #4fc786;
-    --green-ink: #7fdda8;
-    --green-soft: #1d3b2a;
+    --green: oklch(70% 0.13 145);
+    --green-ink: oklch(85% 0.06 145);
+    --green-soft: oklch(30% 0.04 145);
     --gold: #f2954b;
     --gold-soft: #3a2515;
     --rust: #e8796b;
     --rust-soft: #3a211d;
-    --info: #7cc4ea;
+    --info: oklch(75% 0.09 200);
     --info-soft: #17323d;
     --violet: #c084fc;
     --violet-soft: #34205a;
@@ -92,20 +92,20 @@
     color-scheme: dark;
   }
   :root[data-theme="light"] {
-    --paper: #f1f9f4;
+    --paper: oklch(97.5% 0.015 140);
     --paper-rule: rgba(45, 52, 54, 0.09);
     --surface: #ffffff;
     --ink: #33393b;
     --ink-soft: #5f6b6d;
     --ink-faint: #8ea09d;
-    --green: #2fa366;
-    --green-ink: #1f7a4d;
-    --green-soft: #ddf1e4;
+    --green: oklch(62% 0.125 145);
+    --green-ink: oklch(35% 0.06 145);
+    --green-soft: oklch(89% 0.03 145);
     --gold: #ea7c1f;
     --gold-soft: #fdead4;
     --rust: #dc5b4a;
     --rust-soft: #fbe1dc;
-    --info: #4fa8d8;
+    --info: oklch(70% 0.1 200);
     --info-soft: #dcf0fa;
     --violet: #9333ea;
     --violet-soft: #f1e4fe;
@@ -257,19 +257,16 @@
   .bar[data-state="rust"] > span { background: var(--rust); }
 
   /* --- Accordion sections (unit page: ლექსიკონი/გრამატიკა/დიალოგები/სავარჯიშოები) --- */
-  .accordion { --accent-color: var(--green); --accent-soft: var(--green-soft); border: 1px solid var(--border); border-left: 4px solid var(--accent-color); border-radius: 14px; background: var(--paper); margin: 0 0 10px; overflow: hidden; transition: border-color 0.15s ease; }
+  .accordion { --accent-color: var(--green); --accent-soft: var(--green-soft); border: 1px solid var(--border); border-left: 3px solid var(--accent-color); border-radius: 14px; background: var(--surface); margin: 0 0 10px; overflow: hidden; transition: border-color 0.15s ease, box-shadow 0.15s ease; box-shadow: 0 2px 8px var(--shadow); }
   .accordion.open { border-color: var(--accent-color); }
   .accordion-header {
     width: 100%; display: flex; align-items: center; gap: 10px; padding: 10px 14px;
     background: none; border: none; cursor: pointer; text-align: left; font-family: inherit; color: var(--ink);
   }
-  .accordion-header:hover { background: var(--surface); }
+  .accordion-header:hover { background: var(--paper); }
   .accordion-title { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 0.95rem; flex: 1 1 auto; }
-  .accordion-icon { font-size: 1.05rem; display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; border-radius: 50%; background: var(--accent-soft); flex-shrink: 0; }
-  .accordion[data-color="info"] { --accent-color: var(--info); --accent-soft: var(--info-soft); }
-  .accordion[data-color="violet"] { --accent-color: var(--violet); --accent-soft: var(--violet-soft); }
-  .accordion[data-color="gold"] { --accent-color: var(--gold); --accent-soft: var(--gold-soft); }
-  .accordion[data-color="cyan"] { --accent-color: var(--cyan); --accent-soft: var(--cyan-soft); }
+  .accordion-icon { font-size: 1.05rem; display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; border-radius: 6px; background: var(--accent-soft); flex-shrink: 0; transition: background 0.2s ease, color 0.2s ease; }
+  .accordion.open .accordion-icon { background: var(--accent-color); color: #ffffff; }
   .accordion-meta { display: flex; align-items: center; gap: 8px; flex: 0 0 auto; }
   .ring { position: relative; display: inline-block; width: 32px; height: 32px; border-radius: 50%; flex: 0 0 auto; background: conic-gradient(var(--ring-color, var(--green)) calc(var(--pct, 0) * 1%), var(--border) 0); transition: background 0.4s ease; }
   .ring-hole { position: absolute; inset: 3px; border-radius: 50%; background: var(--paper); display: flex; align-items: center; justify-content: center; }
@@ -398,34 +395,31 @@
 
   .note { font-family: 'Caveat', cursive; font-size: 1.15rem; color: var(--gold); background: var(--gold-soft); border-radius: 10px; padding: 10px 16px; display: inline-block; margin: 14px 0 0; transform: rotate(-1deg); }
 
-  /* --- Unit header --- */
-  .unit-head { position: relative; display: flex; gap: 18px; align-items: center; margin: 8px 0 10px; flex-wrap: wrap; }
-  .unit-image { width: 110px; height: 110px; object-fit: cover; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 8px 20px var(--shadow); flex-shrink: 0; display: block; }
-  .unit-image-wrap { position: relative; z-index: 1; flex-shrink: 0; }
-  .float-deco { position: absolute; pointer-events: none; color: var(--gold); font-size: 1.1rem; animation: floatDeco 3.2s ease-in-out infinite; }
-  .deco-star { top: -8px; right: -8px; animation-delay: 0s; }
-  .deco-leaf { bottom: -6px; left: -10px; color: var(--green); font-size: 0.95rem; animation-delay: 1.1s; }
-  @keyframes floatDeco { 0%, 100% { transform: translateY(0) rotate(0deg); opacity: 0.85; } 50% { transform: translateY(-6px) rotate(12deg); opacity: 1; } }
-  .unit-head-text { position: relative; z-index: 1; flex: 1 1 260px; min-width: 220px; }
-  .unit-head-text h2 { margin-bottom: 10px; }
-  .unit-head-text .bar { max-width: 340px; }
-  /* --- Bold colored stat card (Unit page) --- */
-  .stat-card { position: relative; z-index: 1; background: var(--surface); border-radius: 20px; padding: 16px 18px; margin: 0 0 18px; box-shadow: 0 10px 24px var(--shadow); }
-  .stat-card-header { font-weight: 700; font-size: 0.95rem; color: var(--ink); }
-  .stat-tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-  .stat-tile { border-radius: 14px; padding: 14px 8px; display: flex; flex-direction: column; align-items: center; gap: 4px; color: #ffffff; transition: transform 0.15s ease; }
-  .stat-tile:hover { transform: translateY(-2px); }
-  .stat-tile-icon { font-size: 1.3rem; }
-  .stat-tile-value { font-family: 'Fraunces', serif; font-size: 1.25rem; font-weight: 700; }
-  .stat-tile-label { font-size: 0.68rem; opacity: 0.92; text-align: center; }
-  .tile-a { background: var(--rust); }
-  .tile-b { background: var(--info); }
-  .tile-c { background: var(--gold); }
-  @media (max-width: 420px) { .stat-tiles { grid-template-columns: 1fr; } }
-  .unit-title-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-  .unit-title-row h2 { margin-bottom: 0; }
-  .unit-title-icon { flex-shrink: 0; }
-  .unit-title-icon svg { width: 40px; height: 40px; display: block; }
+  /* --- Unit dashboard header ("Calm Focus" design) --- */
+  @keyframes fadeSlide { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes pulseSoft { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.08); } }
+  @keyframes fillA { from { stroke-dashoffset: 63; } to { stroke-dashoffset: var(--off); } }
+
+  .dash-card { position: relative; z-index: 1; margin: 8px 0 0; }
+  .dash-header { display: flex; align-items: center; gap: 14px; margin-bottom: 22px; animation: fadeSlide 0.5s ease-out; }
+  .dash-avatar { width: 46px; height: 46px; border-radius: 50%; flex-shrink: 0; overflow: hidden; box-shadow: 0 4px 10px var(--shadow); }
+  .dash-avatar svg { width: 100%; height: 100%; display: block; }
+  .dash-avatar-img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .dash-welcome { margin: 0; font-family: 'Fraunces', serif; font-size: 19px; color: var(--green-ink); }
+  .dash-subtitle { margin: 2px 0 0; font-size: 12.5px; color: var(--ink-soft); }
+
+  .dash-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 22px; }
+  .dash-stat { background: var(--surface); border-radius: 14px; padding: 16px; text-align: center; animation: fadeSlide 0.5s ease-out both; box-shadow: 0 2px 8px var(--shadow); }
+  .dash-stats .dash-stat:nth-child(1) { animation-delay: 0.05s; }
+  .dash-stats .dash-stat:nth-child(2) { animation-delay: 0.1s; }
+  .dash-stats .dash-stat:nth-child(3) { animation-delay: 0.15s; }
+  .dash-stat-icon { margin: 0 auto 8px; }
+  .dash-streak-icon { width: 26px; height: 32px; background: var(--green); clip-path: polygon(50% 0%, 100% 60%, 80% 100%, 20% 100%, 0% 60%); animation: pulseSoft 2.6s ease-in-out infinite; }
+  .dash-star-icon { width: 22px; height: 22px; background: var(--info); transform: rotate(45deg); border-radius: 4px; }
+  .dash-ring-wrap { display: flex; justify-content: center; margin-bottom: 6px; }
+  .dash-stat-value { margin: 0; font-weight: 800; font-size: 20px; color: var(--ink); }
+  .dash-stat-label { margin: 0; font-size: 11px; color: var(--ink-soft); }
+  @media (max-width: 420px) { .dash-stats { grid-template-columns: 1fr; } }
 
   .progress-overview { background: var(--green-soft); border-radius: 18px; padding: 16px 16px 18px; margin: 4px 0 20px; }
   .progress-overview-title { font-weight: 700; font-size: 0.88rem; color: var(--green-ink); margin-bottom: 10px; }
@@ -531,9 +525,6 @@
   .home-person-deco { display: flex; justify-content: center; margin: 0 0 20px; }
   .person-illus { width: 120px; height: 128px; animation: heroFloat 5s ease-in-out infinite; }
   .person-illus svg { width: 100%; height: 100%; display: block; }
-  .stat-card-person { flex-shrink: 0; width: 64px; height: 68px; animation: heroFloat 4.5s ease-in-out infinite; }
-  .stat-card-person svg { width: 100%; height: 100%; display: block; }
-  .stat-card-headerRow { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
 
   .progress-overview-title { display: flex; align-items: center; gap: 8px; }
   .progress-overview-title svg { width: 30px; height: 30px; }
@@ -2091,58 +2082,56 @@
 
     var m = unitMastery(unit);
     var counts = unitProgressCounts(unit);
-    var head = el("div", { class: "unit-head" });
-    if (unit.image) {
-      var imgWrap = el("div", { class: "unit-image-wrap" }, [
-        el("img", { src: unit.image, alt: unit.ka, class: "unit-image" }),
-        el("span", { class: "float-deco deco-star" }, [document.createTextNode("✦")]),
-        el("span", { class: "float-deco deco-leaf" }, [document.createTextNode("✧")])
-      ]);
-      head.appendChild(imgWrap);
-    }
-    var headText = el("div", { class: "unit-head-text" });
-    var titleRow = el("div", { class: "unit-title-row" });
-    if (UNIT_ICONS[unit.id]) titleRow.appendChild(el("span", { class: "unit-title-icon", html: UNIT_ICONS[unit.id] }));
-    titleRow.appendChild(el("h2", {}, [document.createTextNode(unit.ka)]));
-    headText.appendChild(titleRow);
-    headText.appendChild(el("div", { class: "bar", "data-state": m.colorState === "none" ? "" : m.colorState, html: "<span style='width:" + Math.round(m.pct * 100) + "%'></span>" }));
-    headText.appendChild(el("div", { class: "practice-progress", style: "text-align:left;margin-top:6px" }, [document.createTextNode("დასრულებული: " + counts.done + " / " + counts.total)]));
+    var streak = computeStreak();
+    var pct = Math.round(m.pct * 100);
+    var ringOff = Math.round(63 * (1 - pct / 100));
+
+    var avatarHtml = unit.image
+      ? "<img src='" + unit.image + "' alt='" + unit.ka + "' class='dash-avatar-img'>"
+      : (UNIT_ICONS[unit.id] || ILLUS_STAR_BADGE);
+
+    var dashCard = el("div", { class: "dash-card" }, [
+      el("div", { class: "dash-header" }, [
+        el("div", { class: "dash-avatar", html: avatarHtml }),
+        el("div", {}, [
+          el("p", { class: "dash-welcome" }, [document.createTextNode("გამარჯობა, " + PROFILE.name)]),
+          el("p", { class: "dash-subtitle" }, [document.createTextNode(unit.ka)])
+        ])
+      ]),
+      el("div", { class: "dash-stats" }, [
+        el("div", { class: "dash-stat" }, [
+          el("div", { class: "dash-stat-icon dash-streak-icon" }),
+          el("p", { class: "dash-stat-value" }, [document.createTextNode(String(streak))]),
+          el("p", { class: "dash-stat-label" }, [document.createTextNode("დღის სერია")])
+        ]),
+        el("div", { class: "dash-stat" }, [
+          el("div", { class: "dash-stat-icon dash-star-icon" }),
+          el("p", { class: "dash-stat-value" }, [document.createTextNode(String(counts.done))]),
+          el("p", { class: "dash-stat-label" }, [document.createTextNode("ვარსკვლავი")])
+        ]),
+        el("div", { class: "dash-stat" }, [
+          el("div", { class: "dash-ring-wrap", html:
+            "<svg width='26' height='26' viewBox='0 0 26 26'>" +
+            "<circle cx='13' cy='13' r='10' fill='none' stroke='var(--green-soft)' stroke-width='3'/>" +
+            "<circle cx='13' cy='13' r='10' fill='none' stroke='var(--green)' stroke-width='3' stroke-linecap='round' stroke-dasharray='63' style='--off:" + ringOff + ";animation:fillA 1.2s ease-out forwards' transform='rotate(-90 13 13)'/>" +
+            "</svg>"
+          }),
+          el("p", { class: "dash-stat-value" }, [document.createTextNode(pct + "%")]),
+          el("p", { class: "dash-stat-label" }, [document.createTextNode("პროგრესი")])
+        ])
+      ])
+    ]);
+    root.appendChild(dashCard);
+
     if (counts.total > 0 && counts.done === counts.total) {
-      headText.appendChild(el("div", { class: "complete-badge" }, [
+      root.appendChild(el("div", { class: "complete-badge" }, [
         el("span", { html: ILLUS_STAR_BADGE }),
         document.createTextNode("🎉 თავი დასრულებულია!")
       ]));
     }
-    var chatBtn = el("button", { class: "check-btn", type: "button", style: "margin-top:12px" }, [document.createTextNode("💬 ამ თავზე საუბარი")]);
+    var chatBtn = el("button", { class: "check-btn", type: "button", style: "margin:14px 0 22px" }, [document.createTextNode("💬 ამ თავზე საუბარი")]);
     chatBtn.addEventListener("click", function () { openUnitChat(unit); });
-    headText.appendChild(chatBtn);
-    head.appendChild(headText);
-    root.appendChild(head);
-
-    var statCard = el("div", { class: "stat-card" }, [
-      el("div", { class: "stat-card-headerRow" }, [
-        el("div", { class: "stat-card-header" }, [document.createTextNode("👋 გამარჯობა, " + PROFILE.name + "!")]),
-        el("div", { class: "stat-card-person", html: UNIT_PERSON[unit.id] || PERSON_STUDY })
-      ]),
-      el("div", { class: "stat-tiles" }, [
-        el("div", { class: "stat-tile tile-a" }, [
-          el("span", { class: "stat-tile-icon" }, [document.createTextNode("🔥")]),
-          el("span", { class: "stat-tile-value" }, [document.createTextNode(String(computeStreak()))]),
-          el("span", { class: "stat-tile-label" }, [document.createTextNode("დღის სერია")])
-        ]),
-        el("div", { class: "stat-tile tile-b" }, [
-          el("span", { class: "stat-tile-icon" }, [document.createTextNode("⭐")]),
-          el("span", { class: "stat-tile-value" }, [document.createTextNode(String(counts.done))]),
-          el("span", { class: "stat-tile-label" }, [document.createTextNode("დასრულებული")])
-        ]),
-        el("div", { class: "stat-tile tile-c" }, [
-          el("span", { class: "stat-tile-icon" }, [document.createTextNode("📚")]),
-          el("span", { class: "stat-tile-value" }, [document.createTextNode(Math.round(m.pct * 100) + "%")]),
-          el("span", { class: "stat-tile-label" }, [document.createTextNode("პროგრესი")])
-        ])
-      ])
-    ]);
-    root.appendChild(statCard);
+    root.appendChild(chatBtn);
 
     var overview = el("div", { class: "progress-overview" });
     var typeRows = unitTypeProgress(unit);
