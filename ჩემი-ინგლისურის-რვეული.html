@@ -225,7 +225,7 @@
     border-radius: 999px; padding: 6px 12px; font-size: 0.76rem; cursor: pointer;
     display: inline-flex; align-items: center; gap: 6px; transition: border-color 0.15s ease;
   }
-  .theme-toggle:hover, .settings-toggle:hover { border-color: var(--brand); }
+  .theme-toggle:hover, .settings-toggle:hover { border-color: var(--info); }
 
   .view { display: none; padding: 26px clamp(18px, 4vw, 34px) 28px; }
 
@@ -243,7 +243,7 @@
     border-radius: 999px; width: 28px; height: 28px; display: inline-flex; align-items: center;
     justify-content: center; cursor: pointer; font-size: 0.82rem; flex-shrink: 0; transition: border-color 0.15s ease;
   }
-  .settings-edit-btn:hover { border-color: var(--brand); color: var(--brand-ink); }
+  .settings-edit-btn:hover { border-color: var(--info); color: var(--info); }
   .settings-edit-form { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 12px; margin-top: 10px; }
   .settings-edit-form label { font-size: 0.76rem; color: var(--ink-faint); font-weight: 600; display: block; margin-bottom: 3px; }
   .settings-edit-form input {
@@ -319,7 +319,7 @@
 
   /* --- Decorative background scatter (fills empty whitespace, non-interactive) --- */
   .decor-layer { position: absolute; inset: 0; pointer-events: none; overflow: hidden; z-index: 0; }
-  .decor-item { position: absolute; color: var(--brand); opacity: 0.22; animation: decorFloat 4s ease-in-out infinite; }
+  .decor-item { position: absolute; color: var(--gold); opacity: 0.22; animation: decorFloat 4s ease-in-out infinite; }
   .decor-item svg { width: 100%; height: 100%; display: block; }
   @keyframes decorFloat { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-8px) rotate(6deg); } }
   @media (max-width: 700px) { .decor-layer { display: none; } }
@@ -350,6 +350,10 @@
 
   /* --- Accordion sections (unit page: ლექსიკონი/გრამატიკა/დიალოგები/სავარჯიშოები) --- */
   .accordion { --accent-color: var(--brand); --accent-soft: var(--brand-soft); border: 1px solid var(--border); border-left: 3px solid var(--accent-color); border-radius: 20px; background: var(--surface); margin: 0 0 10px; overflow: hidden; transition: border-color 0.15s ease, box-shadow 0.15s ease; box-shadow: 0 2px 8px var(--shadow); }
+  .accordion[data-color="info"] { --accent-color: var(--info); --accent-soft: var(--info-soft); }
+  .accordion[data-color="cyan"] { --accent-color: var(--cyan); --accent-soft: var(--cyan-soft); }
+  .accordion[data-color="violet"] { --accent-color: var(--violet); --accent-soft: var(--violet-soft); }
+  .accordion[data-color="gold"] { --accent-color: var(--gold); --accent-soft: var(--gold-soft); }
   .accordion.open { border-color: var(--accent-color); }
   .accordion-header {
     width: 100%; display: flex; align-items: center; gap: 10px; padding: 10px 14px;
@@ -405,7 +409,7 @@
     padding: 8px 16px; margin-bottom: 16px; display: inline-flex; align-items: center; gap: 6px;
     transition: border-color 0.15s ease, background 0.15s ease, transform 0.1s ease; box-shadow: 0 2px 6px var(--shadow);
   }
-  .back-link:hover { border-color: var(--brand); color: var(--brand-ink); transform: translateX(-2px); }
+  .back-link:hover { border-color: var(--info); color: var(--info); transform: translateX(-2px); }
   .back-link:active { transform: scale(0.96); }
 
   /* --- Flashcards --- */
@@ -435,7 +439,7 @@
 
   .deck-nav { display: flex; align-items: center; gap: 14px; }
   .nav-btn { border: 1px solid var(--border); background: var(--surface); color: var(--ink); width: 36px; height: 36px; border-radius: 50%; cursor: pointer; font-size: 1rem; transition: border-color 0.15s ease, transform 0.1s ease; }
-  .nav-btn:hover { border-color: var(--brand); transform: scale(1.06); }
+  .nav-btn:hover { border-color: var(--info); transform: scale(1.06); }
   .deck-count { font-size: 0.85rem; color: var(--ink-faint); font-variant-numeric: tabular-nums; }
 
   /* --- Quiz --- */
@@ -466,14 +470,14 @@
   .quiz-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 22px; }
   .skip-btn { background: none; border: none; color: var(--ink-faint); font-size: 0.82rem; cursor: pointer; text-decoration: underline; }
   .next-btn { border: 1px solid var(--border); background: var(--surface); color: var(--ink); padding: 9px 18px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.88rem; display: none; transition: border-color 0.15s ease; }
-  .next-btn:hover { border-color: var(--brand); }
+  .next-btn:hover { border-color: var(--info); }
   .next-btn.show { display: inline-block; }
 
   .quiz-done { text-align: center; padding: 30px 10px; position: relative; }
   .quiz-done .big-confetti { position: absolute; top: 30%; left: 50%; }
   .quiz-done .score { font-family: 'Baloo 2', 'Noto Sans Georgian', sans-serif; font-size: 2.4rem; color: var(--brand-ink); }
   .redo-btn { margin-top: 16px; border: 1px solid var(--border); background: var(--surface); padding: 9px 18px; border-radius: 12px; cursor: pointer; font-weight: 600; transition: border-color 0.15s ease; }
-  .redo-btn:hover { border-color: var(--brand); }
+  .redo-btn:hover { border-color: var(--info); }
 
   /* --- Reference --- */
   .ref-search { width: 100%; padding: 12px 16px; border-radius: 14px; border: 1.5px solid var(--border); background: var(--paper); color: var(--ink); font-size: 0.98rem; margin-bottom: 20px; }
@@ -679,7 +683,7 @@
   .chat-scope-badge { display: inline-flex; align-items: center; gap: 8px; background: var(--brand-soft); color: var(--brand-ink); border-radius: 999px; padding: 5px 12px 5px 14px; font-size: 0.82rem; font-weight: 600; }
   .chat-scope-badge button { background: none; border: none; color: var(--brand-ink); cursor: pointer; font-size: 0.95rem; line-height: 1; padding: 0; }
   .chat-icon-btn { background: none; border: 1px solid var(--border); border-radius: 50%; width: 34px; height: 34px; cursor: pointer; color: var(--ink-soft); transition: border-color 0.15s ease; }
-  .chat-icon-btn:hover { border-color: var(--brand); }
+  .chat-icon-btn:hover { border-color: var(--info); }
 
   .chat-error { background: var(--rust-soft); border: 1px solid var(--rust); color: var(--rust); border-radius: 10px; padding: 10px 14px; font-size: 0.88rem; margin-bottom: 14px; }
 
@@ -702,7 +706,7 @@
   .chat-correction { max-width: 82%; margin-top: 6px; padding: 10px 14px; background: var(--gold-soft); border: 1px solid var(--gold); border-radius: 14px; font-size: 0.86rem; color: var(--ink); animation: popIn 0.3s ease; }
   .chat-correction .label { font-family: 'Caveat', cursive; font-weight: 600; color: var(--gold); font-size: 1.1rem; margin-right: 4px; }
   .chat-speak-btn { background: none; border: 1px solid var(--border); border-radius: 50%; width: 30px; height: 30px; font-size: 0.85rem; cursor: pointer; color: var(--ink-soft); flex: none; transition: border-color 0.15s ease; }
-  .chat-speak-btn:hover { border-color: var(--brand); }
+  .chat-speak-btn:hover { border-color: var(--info); }
 
   .chat-typing { display: flex; gap: 4px; padding: 14px 16px; }
   .chat-typing span { width: 7px; height: 7px; border-radius: 50%; background: var(--ink-faint); animation: typingBounce 1.2s infinite ease-in-out; }
@@ -717,8 +721,8 @@
   .chat-send-btn:hover { background: var(--brand-ink); transform: translateY(-1px); }
   .chat-send-btn:disabled { opacity: 0.5; cursor: default; transform: none; }
   .chat-mic-btn { background: var(--surface); color: var(--ink-soft); border: 1px solid var(--border); border-radius: 50%; width: 44px; height: 44px; font-size: 1.05rem; cursor: pointer; flex: none; box-shadow: 0 2px 8px var(--shadow); transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease; }
-  .chat-mic-btn:hover { border-color: var(--brand); }
-  .chat-mic-btn.voice-active { background: var(--brand-soft); border-color: var(--brand); color: var(--brand-ink); }
+  .chat-mic-btn:hover { border-color: var(--info); }
+  .chat-mic-btn.voice-active { background: var(--info-soft); border-color: var(--info); color: var(--info); }
   .chat-mic-btn.recording { background: var(--rust-soft); border-color: var(--rust); color: var(--rust); animation: micPulse 1.2s infinite; }
   @keyframes micPulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(168, 67, 43, 0.35); } 50% { box-shadow: 0 0 0 8px rgba(168, 67, 43, 0); } }
 
@@ -2237,8 +2241,8 @@
         el("div", { class: "dash-stat" }, [
           el("div", { class: "dash-ring-wrap", html:
             "<svg width='26' height='26' viewBox='0 0 26 26'>" +
-            "<circle cx='13' cy='13' r='10' fill='none' stroke='var(--brand-soft)' stroke-width='3'/>" +
-            "<circle cx='13' cy='13' r='10' fill='none' stroke='var(--brand)' stroke-width='3' stroke-linecap='round' stroke-dasharray='63' style='--off:" + ringOff + ";animation:fillA 1.2s ease-out forwards' transform='rotate(-90 13 13)'/>" +
+            "<circle cx='13' cy='13' r='10' fill='none' stroke='var(--gold-soft)' stroke-width='3'/>" +
+            "<circle cx='13' cy='13' r='10' fill='none' stroke='var(--gold)' stroke-width='3' stroke-linecap='round' stroke-dasharray='63' style='--off:" + ringOff + ";animation:fillA 1.2s ease-out forwards' transform='rotate(-90 13 13)'/>" +
             "</svg>"
           }),
           el("p", { class: "dash-stat-value" }, [document.createTextNode(pct + "%")]),
