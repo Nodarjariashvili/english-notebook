@@ -291,8 +291,33 @@
   .picker-card .en { font-size: 0.8rem; color: var(--ink-faint); }
   .picker-card .meta { font-size: 0.78rem; color: var(--ink-soft); margin-top: 4px; }
 
-  .back-link { background: none; border: none; color: var(--ink-soft); font-size: 0.85rem; cursor: pointer; padding: 4px 0 14px; display: inline-flex; align-items: center; gap: 6px; }
-  .back-link:hover { color: var(--green-ink); }
+  /* --- Item picker (full list of exercises/cards, click to jump directly) --- */
+  .item-picker-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 8px; margin-bottom: 10px; width: 100%; }
+  .item-picker-card {
+    position: relative; border: 1.5px solid var(--border); background: var(--surface); border-radius: 12px;
+    padding: 12px 8px 10px; text-align: center; cursor: pointer; font-weight: 600; font-size: 0.82rem;
+    color: var(--ink-soft); transition: border-color 0.15s ease, transform 0.1s ease, background 0.15s ease;
+  }
+  .item-picker-card:hover { border-color: var(--green); transform: translateY(-2px); }
+  .item-picker-card:active { transform: scale(0.95); }
+  .item-picker-num { display: block; font-family: 'Fraunces', serif; font-size: 1.1rem; color: var(--ink); }
+  .item-picker-card.status-correct { border-color: var(--green); background: var(--green-soft); }
+  .item-picker-card.status-wrong { border-color: var(--rust); background: var(--rust-soft); }
+  .item-picker-card.status-partial { border-color: var(--gold); background: var(--gold-soft); }
+  .item-picker-status { position: absolute; top: -6px; right: -6px; width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.65rem; background: var(--surface); border: 1px solid var(--border); color: var(--ink-faint); }
+  .item-picker-card.status-correct .item-picker-status { background: var(--green); color: #fff; border-color: var(--green); }
+  .item-picker-card.status-wrong .item-picker-status { background: var(--rust); color: #fff; border-color: var(--rust); }
+  .item-picker-card.status-partial .item-picker-status { background: var(--gold); color: #fff; border-color: var(--gold); }
+  .item-picker-wide-section { width: 100%; }
+
+  .back-link {
+    background: var(--surface); border: 1.5px solid var(--border); color: var(--ink);
+    font-size: 0.85rem; font-weight: 600; cursor: pointer; border-radius: 999px;
+    padding: 8px 16px; margin-bottom: 16px; display: inline-flex; align-items: center; gap: 6px;
+    transition: border-color 0.15s ease, background 0.15s ease, transform 0.1s ease; box-shadow: 0 2px 6px var(--shadow);
+  }
+  .back-link:hover { border-color: var(--green); color: var(--green-ink); transform: translateX(-2px); }
+  .back-link:active { transform: scale(0.96); }
 
   /* --- Flashcards --- */
   .card-stage { display: flex; flex-direction: column; align-items: center; gap: 18px; }
@@ -2176,10 +2201,13 @@
   var cardIndex = {};
   var cardsMode = "flip";
   var practicePos = 0;
+  var practiceListOpen = true;
 
-  function openDeck(id) { stopPracticeMic(); cardsSub = id; practicePos = 0; renderCardsView(); }
+  function openDeck(id) { stopPracticeMic(); cardsSub = id; practicePos = 0; practiceListOpen = true; renderCardsView(); }
   function openDeckFlip(id) { cardsMode = "flip"; openDeck(id); }
   function backToDecks() { stopPracticeMic(); cardsSub = null; renderCardsView(); }
+  function openPracticeItem(idx) { practicePos = idx; practiceListOpen = false; if (cardsMode === "flip") { cardIndex[cardsSub] = idx; } renderCardsView(); }
+  function backToPracticeList() { practiceListOpen = true; renderCardsView(); }
 
   function sectionHeading(icon, title, sub) {
     var frag = document.createDocumentFragment();
@@ -2300,6 +2328,23 @@
     back.addEventListener("click", backToDecks);
     root.appendChild(back);
 
+    if (practiceListOpen) {
+      root.appendChild(el("h2", {}, [document.createTextNode(deck.ka)]));
+      root.appendChild(el("p", { style: "color:var(--ink-soft);margin:0 0 12px;font-size:0.85rem" }, [document.createTextNode("აირჩიე სიტყვა სიიდან:")]));
+      root.appendChild(renderItemPickerGrid(deck.cards.length, function (i) {
+        var ratings = (state.cards[deck.id] || {}).flip || {};
+        var lvl = ratings[i];
+        if (!lvl) return "none";
+        if (lvl === "green") return "correct";
+        if (lvl === "gold") return "partial";
+        return "wrong";
+      }, function (idx) { openPracticeItem(idx); }));
+      return;
+    }
+    var backToList0 = el("button", { class: "back-link", type: "button" }, [document.createTextNode("← სიტყვების სიაში დაბრუნება")]);
+    backToList0.addEventListener("click", backToPracticeList);
+    root.appendChild(backToList0);
+
     if (cardIndex[deck.id] === undefined) cardIndex[deck.id] = 0;
     var idx = cardIndex[deck.id];
     var total = deck.cards.length;
@@ -2400,6 +2445,9 @@
     var redo = el("button", { class: "redo-btn", type: "button" }, [document.createTextNode("თავიდან დაწყება")]);
     redo.addEventListener("click", function () { practicePos = 0; renderCardsView(); });
     done.appendChild(redo);
+    var toList = el("button", { class: "redo-btn", type: "button", style: "margin-left:8px" }, [document.createTextNode("სიაში დაბრუნება")]);
+    toList.addEventListener("click", backToPracticeList);
+    done.appendChild(toList);
     root.appendChild(done);
   }
 
@@ -2408,6 +2456,22 @@
     back.addEventListener("click", backToDecks);
     root.appendChild(back);
     root.appendChild(el("h2", {}, [document.createTextNode(deck.ka + " — " + modeLabel)]));
+  }
+
+  function renderPracticeList(root, deck, mode) {
+    root.appendChild(el("p", { style: "color:var(--ink-soft);margin:0 0 12px;font-size:0.85rem" }, [document.createTextNode("აირჩიე სავარჯიშო სიიდან:")]));
+    root.appendChild(renderItemPickerGrid(deck.cards.length, function (i) {
+      var ratings = (state.cards[deck.id] || {})[mode] || {};
+      var lvl = ratings[i];
+      if (!lvl) return "none";
+      return lvl === "green" ? "correct" : "wrong";
+    }, function (idx) { openPracticeItem(idx); }));
+  }
+
+  function renderBackToPracticeList() {
+    var b = el("button", { class: "back-link", type: "button" }, [document.createTextNode("← სავარჯიშოების სიაში დაბრუნება")]);
+    b.addEventListener("click", backToPracticeList);
+    return b;
   }
 
   /* ---------- vocabulary practice: text-to-speech ---------- */
@@ -2526,6 +2590,8 @@
   function renderVoicePractice(root) {
     var deck = DECKS.filter(function (d) { return d.id === cardsSub; })[0];
     practiceHeader(root, deck, "ხმოვანი თარგმანი");
+    if (practiceListOpen) { renderPracticeList(root, deck, "voice"); return; }
+    root.appendChild(renderBackToPracticeList());
     if (practicePos >= deck.cards.length) { renderPracticeDone(root, deck, "voice"); return; }
 
     var item = deck.cards[practicePos];
@@ -2638,6 +2704,8 @@
   function renderWrittenPractice(root) {
     var deck = DECKS.filter(function (d) { return d.id === cardsSub; })[0];
     practiceHeader(root, deck, "წერითი თარგმანი");
+    if (practiceListOpen) { renderPracticeList(root, deck, "written"); return; }
+    root.appendChild(renderBackToPracticeList());
     if (practicePos >= deck.cards.length) { renderPracticeDone(root, deck, "written"); return; }
 
     var item = deck.cards[practicePos];
@@ -2684,6 +2752,8 @@
   function renderMcPractice(root) {
     var deck = DECKS.filter(function (d) { return d.id === cardsSub; })[0];
     practiceHeader(root, deck, "არჩევანის ტესტი");
+    if (practiceListOpen) { renderPracticeList(root, deck, "mc"); return; }
+    root.appendChild(renderBackToPracticeList());
     if (practicePos >= deck.cards.length) { renderPracticeDone(root, deck, "mc"); return; }
 
     var item = deck.cards[practicePos];
@@ -2728,8 +2798,26 @@
 
   /* ---------- grammar quiz ---------- */
   var quizPos = {};
+  var quizItemOpen = {};
 
-  function openTopic(id) { grammarSub = id; renderGrammarView(); }
+  function openTopic(id) { grammarSub = id; quizItemOpen[id] = false; renderGrammarView(); }
+  function openQuizItem(topicId, idx) { quizPos[topicId] = idx; quizItemOpen[topicId] = true; renderGrammarView(); }
+  function backToQuizList(topicId) { quizItemOpen[topicId] = false; renderGrammarView(); }
+
+  function renderItemPickerGrid(count, statusFn, onSelect) {
+    var grid = el("div", { class: "item-picker-grid" });
+    for (var i = 0; i < count; i++) {
+      var status = statusFn(i);
+      var statusChar = status === "correct" ? "✓" : status === "wrong" ? "✕" : status === "partial" ? "~" : "";
+      var card = el("button", { class: "item-picker-card status-" + status, type: "button" }, [
+        el("span", { class: "item-picker-num" }, [document.createTextNode(String(i + 1))]),
+        el("span", { class: "item-picker-status" }, [document.createTextNode(statusChar)])
+      ]);
+      card.addEventListener("click", function (idx) { return function () { onSelect(idx); }; }(i));
+      grid.appendChild(card);
+    }
+    return grid;
+  }
 
   function renderGrammarView() {
     var root = document.getElementById("view-grammar");
@@ -2792,6 +2880,20 @@
     root.appendChild(back);
     root.appendChild(el("h2", {}, [document.createTextNode(topic.ka)]));
     if (topic.note) root.appendChild(el("p", { style: "color:var(--ink-soft);max-width:64ch;margin:6px 0 18px;font-size:0.92rem" }, [document.createTextNode(topic.note)]));
+
+    if (!quizItemOpen[topic.id]) {
+      root.appendChild(el("p", { style: "color:var(--ink-soft);margin:0 0 12px;font-size:0.85rem" }, [document.createTextNode("აირჩიე სავარჯიშო სიიდან:")]));
+      root.appendChild(renderItemPickerGrid(topic.items.length, function (i) {
+        var rec = state.quiz[topic.id];
+        if (!rec || rec.answers[i] === undefined) return "none";
+        return rec.answers[i] ? "correct" : "wrong";
+      }, function (idx) { openQuizItem(topic.id, idx); }));
+      return;
+    }
+
+    var backToList = el("button", { class: "back-link", type: "button" }, [document.createTextNode("← სავარჯიშოების სიაში დაბრუნება")]);
+    backToList.addEventListener("click", function () { backToQuizList(topic.id); });
+    root.appendChild(backToList);
 
     if (quizPos[topic.id] === undefined) quizPos[topic.id] = 0;
     var pos = quizPos[topic.id];
