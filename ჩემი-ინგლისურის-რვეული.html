@@ -506,7 +506,7 @@
   /* --- Unit dashboard header ("Calm Focus" design) --- */
   @keyframes fadeSlide { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
   @keyframes pulseSoft { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.08); } }
-  @keyframes fillA { from { stroke-dashoffset: 22; } to { stroke-dashoffset: var(--off); } }
+  @keyframes fillA { from { stroke-dashoffset: 35; } to { stroke-dashoffset: var(--off); } }
   @keyframes pulseRing { 0% { transform: scale(0.9); opacity: 0.55; } 100% { transform: scale(1.5); opacity: 0; } }
   @keyframes popIn2 { 0% { transform: scale(0.7); opacity: 0; } 70% { transform: scale(1.08); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
 
@@ -519,20 +519,20 @@
   .dash-subtitle { margin: 2px 0 0; font-size: 12.5px; color: var(--ink-soft); }
 
   .dash-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 22px; }
-  .dash-stat { background: var(--info-soft); border-radius: 18px; padding: 2px 10px; text-align: center; animation: fadeSlide 0.5s ease-out both; box-shadow: 0 2px 8px var(--shadow); }
+  .dash-stat { background: var(--info-soft); border-radius: 18px; padding: 4px 10px; text-align: center; animation: fadeSlide 0.5s ease-out both; box-shadow: 0 2px 8px var(--shadow); }
   .dash-stats .dash-stat:nth-child(1) { animation-delay: 0.05s; }
   .dash-stats .dash-stat:nth-child(2) { animation-delay: 0.1s; }
   .dash-stats .dash-stat:nth-child(3) { animation-delay: 0.15s; }
-  .dash-stat-icon { margin: 0 auto 1px; position: relative; height: 9px; display: flex; align-items: center; justify-content: center; }
-  .dash-streak-icon { width: 7px; height: 9px; background: var(--brand); clip-path: polygon(50% 0%, 100% 60%, 80% 100%, 20% 100%, 0% 60%); animation: pulseSoft 2.6s ease-in-out infinite; position: relative; z-index: 1; }
+  .dash-stat-icon { margin: 0 auto 2px; position: relative; height: 14px; display: flex; align-items: center; justify-content: center; }
+  .dash-streak-icon { width: 11px; height: 14px; background: var(--brand); clip-path: polygon(50% 0%, 100% 60%, 80% 100%, 20% 100%, 0% 60%); animation: pulseSoft 2.6s ease-in-out infinite; position: relative; z-index: 1; }
   .dash-streak-icon::after {
-    content: ""; position: absolute; inset: -2px; border-radius: 50%; background: var(--brand-soft);
+    content: ""; position: absolute; inset: -3px; border-radius: 50%; background: var(--brand-soft);
     z-index: -1; animation: pulseRing 2.6s ease-out infinite;
   }
-  .dash-star-icon { width: 6px; height: 6px; background: var(--info); transform: rotate(45deg); border-radius: 2px; }
+  .dash-star-icon { width: 10px; height: 10px; background: var(--info); transform: rotate(45deg); border-radius: 2px; }
   .dash-ring-wrap { display: flex; align-items: center; justify-content: center; }
-  .dash-stat-value { margin: 0; font-weight: 800; font-size: 12px; line-height: 1; color: var(--ink); }
-  .dash-stat-label { margin: 0; font-size: 8px; line-height: 1; color: var(--ink-soft); }
+  .dash-stat-value { margin: 0; font-weight: 800; font-size: 18px; line-height: 1; color: var(--ink); }
+  .dash-stat-label { margin: 0; font-size: 10px; line-height: 1.1; color: var(--ink-soft); }
   @media (max-width: 420px) { .dash-stats { grid-template-columns: 1fr; } }
 
   .progress-overview { background: var(--brand-soft); border-radius: 18px; padding: 9px 9px 10px; margin: 4px 0 12px; }
@@ -2225,7 +2225,7 @@
     var counts = unitProgressCounts(unit);
     var streak = computeStreak();
     var pct = Math.round(m.pct * 100);
-    var ringOff = Math.round(22 * (1 - pct / 100));
+    var ringOff = Math.round(35 * (1 - pct / 100));
 
     var avatarHtml = unit.image
       ? "<img src='" + unit.image + "' alt='" + unit.ka + "' class='dash-avatar-img'>"
@@ -2255,9 +2255,9 @@
         ]),
         el("div", { class: "dash-stat" }, [
           el("div", { class: "dash-stat-icon dash-ring-wrap", html:
-            "<svg width='9' height='9' viewBox='0 0 9 9'>" +
-            "<circle cx='4.5' cy='4.5' r='3.5' fill='none' stroke='var(--gold-soft)' stroke-width='1.5'/>" +
-            "<circle cx='4.5' cy='4.5' r='3.5' fill='none' stroke='var(--gold)' stroke-width='1.5' stroke-linecap='round' stroke-dasharray='22' style='--off:" + ringOff + ";animation:fillA 1.2s ease-out forwards' transform='rotate(-90 4.5 4.5)'/>" +
+            "<svg width='14' height='14' viewBox='0 0 14 14'>" +
+            "<circle cx='7' cy='7' r='5.5' fill='none' stroke='var(--gold-soft)' stroke-width='2.2'/>" +
+            "<circle cx='7' cy='7' r='5.5' fill='none' stroke='var(--gold)' stroke-width='2.2' stroke-linecap='round' stroke-dasharray='35' style='--off:" + ringOff + ";animation:fillA 1.2s ease-out forwards' transform='rotate(-90 7 7)'/>" +
             "</svg>"
           }),
           el("p", { class: "dash-stat-value" }, [document.createTextNode(pct + "%")]),
