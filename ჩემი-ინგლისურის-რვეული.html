@@ -1335,6 +1335,18 @@
       ]
     },
     {
+      id: "selfIntro", kind: "dialogue", ka: "საკუთარი თავის წარდგენა", en: "Introducing yourself",
+      note: "შეავსე საკუთარი თავის წარდგენის ნიმუში საკუთარი მონაცემებით — წიგნის თანახმად.",
+      items: [
+        { prompt: "Hello, I am ___.", instruction: "შეავსე საკუთარი სახელით.", answer: "Nono" },
+        { prompt: "My surname is ___.", instruction: "შეავსე საკუთარი გვარით.", answer: "Jarieshvili" },
+        { prompt: "I am a ___.", instruction: "შეავსე საკუთარი პროფესიით.", answer: "security officer" },
+        { prompt: "I am ___ years old.", instruction: "შეავსე საკუთარი ასაკით.", answer: "31" },
+        { prompt: "I am from ___.", instruction: "შეავსე ქვეყნით, საიდანაც ხარ.", answer: "Georgia" },
+        { prompt: "I live in ___.", instruction: "შეავსე ქალაქით, სადაც ცხოვრობ.", answer: "Tbilisi" }
+      ]
+    },
+    {
       id: "dialogueClub", kind: "dialogue", ka: "დიალოგი: კლუბის ახალი წევრი", en: "David & Beth — new club member",
       note: "შეავსე დიალოგის ცარიელი ადგილები — David გაცნობის დიალოგი წიგნიდან.",
       items: [
@@ -1684,7 +1696,7 @@
   ];
 
   var UNITS = [
-    { id: "u1", short: "Unit 1", ka: "Unit 1 — მისალმება და გაცნობა", deckIds: ["greetings"], grammarIds: ["pronouns", "dialogueClub", "readingIntro"], image: "unit1-greetings.jpg" },
+    { id: "u1", short: "Unit 1", ka: "Unit 1 — მისალმება და გაცნობა", deckIds: ["greetings"], grammarIds: ["pronouns", "selfIntro", "dialogueClub", "readingIntro"], image: "unit1-greetings.jpg" },
     { id: "u2", short: "Unit 2", ka: "Unit 2 — კუთვნილება", deckIds: ["belongings"], grammarIds: ["possAdj", "possS", "wrapupPoss", "dialogueLostFound", "readingBelongings"], image: null },
     { id: "u3", short: "Unit 3", ka: "Unit 3 — ოჯახი", deckIds: ["family", "relationships"], grammarIds: ["toBe", "demonstratives", "readingJacob", "dialogueFriends"], image: "unit3-family.jpg" },
     { id: "u4", short: "Unit 4", ka: "Unit 4 — აწმყო განუსაზღვრელი დრო", deckIds: ["dailyHabits"], grammarIds: ["presentForms", "presentQuestions", "dialogueHabits", "readingHabits"], image: null },
