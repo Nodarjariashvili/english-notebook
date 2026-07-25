@@ -2584,10 +2584,10 @@
     UNIT_SECTION_DEFS.forEach(function (s) { accordionOpen[unit.id + ":" + s.key] = (s.key === key); });
     if (key === "lex") {
       var decks = unitDecks(unit);
-      if (decks.length === 1) { openDeckFlip(decks[0].id); renderHome(); return; }
+      if (decks.length === 1) { openDeckFlip(decks[0].id); renderGrammarView(); renderHome(); return; }
     } else if (key === "grammar" || key === "dialogue" || key === "reading") {
       var topics = unitTopicsByKind(unit, key);
-      if (topics.length === 1) { openTopic(topics[0].id); renderHome(); return; }
+      if (topics.length === 1) { openTopic(topics[0].id); renderCardsView(); renderHome(); return; }
     }
     renderCardsView();
     renderGrammarView();
