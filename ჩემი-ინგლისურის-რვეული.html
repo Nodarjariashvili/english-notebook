@@ -2441,6 +2441,7 @@
           document.createTextNode(c.label)
         ])
       ]);
+      card.addEventListener("click", function (key) { return function () { gotoUnitSection(unit, key); }; }(c.key));
       grid.appendChild(card);
     });
     wrap.appendChild(grid);
@@ -2595,7 +2596,7 @@
       if (decks.length === 1) { openDeckFlip(decks[0].id); renderGrammarView(); renderHome(); return; }
     } else if (key === "grammar" || key === "dialogue" || key === "reading") {
       var topics = unitTopicsByKind(unit, key);
-      if (topics.length === 1) { openTopic(topics[0].id); renderCardsView(); renderHome(); return; }
+      if (topics.length === 1 || (key === "dialogue" && topics.length > 1)) { openTopic(topics[0].id); renderCardsView(); renderHome(); return; }
     }
     renderCardsView();
     renderGrammarView();
