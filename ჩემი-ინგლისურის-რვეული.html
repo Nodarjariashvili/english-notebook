@@ -2440,6 +2440,7 @@
 
   function renderMaterialDetail(unit, key) {
     var wrap = el("div", {});
+    wrap.appendChild(renderUnitSectionTabs(unit, key));
     var back = el("button", { class: "back-link", type: "button" }, [document.createTextNode("← მასალის კატეგორიებში დაბრუნება")]);
     back.addEventListener("click", function () { materialDetailOpen = null; renderHome(); });
     wrap.appendChild(back);
