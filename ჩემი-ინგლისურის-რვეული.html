@@ -877,23 +877,10 @@
         { en: "Hello", ipa: "/heˈloʊ/", ka: "გამარჯობა" },
         { en: "Hi", ipa: "/haɪ/", ka: "სალამი" },
         { en: "Hey", ipa: "/heɪ/", ka: "ჰეი" },
-        { en: "How are you?", ipa: "/haʊ ɑːr juː/", ka: "როგორ ხარ?" },
-        { en: "What's up?", ipa: "/wɑːts ʌp/", ka: "როგორ ხარ? / რას შვრები?" },
-        { en: "How is it going?", ipa: "/haʊ ɪz ɪt ˈɡoʊɪŋ/", ka: "საქმეები როგორ მიდის?" },
-        { en: "How are you doing?", ipa: "/haʊ ɑːr juː ˈduːɪŋ/", ka: "როგორ ხარ?" },
-        { en: "How have you been?", ipa: "/haʊ hæv juː bɪn/", ka: "როგორ იყავი ბოლო დროს?" },
-        { en: "What have you been up to?", ipa: "/wɑːt hæv juː bɪn ʌp tu/", ka: "რას აკეთებდი ბოლო დროს?" },
         { en: "Good morning", ipa: "/ɡʊd ˈmɔːrnɪŋ/", ka: "დილა მშვიდობისა" },
         { en: "Good afternoon", ipa: "/ɡʊd ˌæftərˈnuːn/", ka: "დღე მშვიდობისა" },
         { en: "Good evening", ipa: "/ɡʊd ˈiːvnɪŋ/", ka: "საღამო მშვიდობისა" },
         { en: "Good night", ipa: "/ɡʊd naɪt/", ka: "ღამე მშვიდობისა" },
-        { en: "I am good", ipa: "/aɪ æm ɡʊd/", ka: "კარგად ვარ" },
-        { en: "I am great", ipa: "/aɪ æm ɡreɪt/", ka: "კარგად ვარ" },
-        { en: "Doing really well", ipa: "/ˈduːɪŋ ˈrɪəli wɛl/", ka: "საუკეთესოდ ვარ" },
-        { en: "I can't complain", ipa: "/aɪ kænt kəmˈpleɪn/", ka: "ცუდად არ ვარ" },
-        { en: "Could not be better", ipa: "/kʊd nɑt biː ˈbɛtər/", ka: "საუკეთესოდ ვარ" },
-        { en: "Thank you, I am good. How about you?", ipa: "", ka: "გმადლობთ, კარგად ვარ. შენ როგორ ხარ?" },
-        { en: "Me too, thank you", ipa: "/miː tuː θæŋk juː/", ka: "მეც კარგად, გმადლობთ" },
         { en: "Goodbye", ipa: "/ɡʊd baɪ/", ka: "ნახვამდის" },
         { en: "Bye", ipa: "/baɪ/", ka: "ნახვამდის" },
         { en: "Bye-bye", ipa: "/baɪ baɪ/", ka: "ნახვამდის" },
@@ -1345,6 +1332,25 @@
       ]
     },
     {
+      id: "greetingsQA", kind: "dialogue", ka: "მისალმება-შეკითხვის ფრაზები", en: "Greeting & small-talk questions/answers",
+      note: "ხშირად გამოყენებადი მისალმება-შეკითხვის ტიპის ფრაზები — გამოიყენება საუბრის დაწყებისას, ვინმეს განწყობის/საქმეების შესახებ კითხვისა და პასუხისთვის.",
+      items: [
+        { prompt: "How are you?", instruction: "თარგმნე ქართულად.", answer: "როგორ ხარ?" },
+        { prompt: "What's up?", instruction: "თარგმნე ქართულად.", answer: "როგორ ხარ? / რას შვრები?" },
+        { prompt: "How is it going?", instruction: "თარგმნე ქართულად.", answer: "საქმეები როგორ მიდის?" },
+        { prompt: "How are you doing?", instruction: "თარგმნე ქართულად.", answer: "როგორ ხარ?" },
+        { prompt: "How have you been?", instruction: "თარგმნე ქართულად.", answer: "როგორ იყავი ბოლო დროს?" },
+        { prompt: "What have you been up to?", instruction: "თარგმნე ქართულად.", answer: "რას აკეთებდი ბოლო დროს?" },
+        { prompt: "I am good", instruction: "თარგმნე ქართულად.", answer: "კარგად ვარ" },
+        { prompt: "I am great", instruction: "თარგმნე ქართულად.", answer: "კარგად ვარ" },
+        { prompt: "Doing really well", instruction: "თარგმნე ქართულად.", answer: "საუკეთესოდ ვარ" },
+        { prompt: "I can't complain", instruction: "თარგმნე ქართულად.", answer: "ცუდად არ ვარ" },
+        { prompt: "Could not be better", instruction: "თარგმნე ქართულად.", answer: "საუკეთესოდ ვარ" },
+        { prompt: "Thank you, I am good. How about you?", instruction: "თარგმნე ქართულად.", answer: "გმადლობთ, კარგად ვარ. შენ როგორ ხარ?" },
+        { prompt: "Me too, thank you", instruction: "თარგმნე ქართულად.", answer: "მეც კარგად, გმადლობთ" }
+      ]
+    },
+    {
       id: "selfIntro", kind: "dialogue", ka: "საკუთარი თავის წარდგენა", en: "Introducing yourself",
       note: "შეავსე საკუთარი თავის წარდგენის ნიმუში საკუთარი მონაცემებით — წიგნის თანახმად.",
       items: [
@@ -1706,7 +1712,7 @@
   ];
 
   var UNITS = [
-    { id: "u1", short: "Unit 1", ka: "Unit 1 — მისალმება და გაცნობა", deckIds: ["greetings"], grammarIds: ["pronouns", "selfIntro", "dialogueClub", "readingIntro"], image: "unit1-greetings.jpg" },
+    { id: "u1", short: "Unit 1", ka: "Unit 1 — მისალმება და გაცნობა", deckIds: ["greetings"], grammarIds: ["pronouns", "greetingsQA", "selfIntro", "dialogueClub", "readingIntro"], image: "unit1-greetings.jpg" },
     { id: "u2", short: "Unit 2", ka: "Unit 2 — კუთვნილება", deckIds: ["belongings"], grammarIds: ["possAdj", "possS", "wrapupPoss", "dialogueLostFound", "readingBelongings"], image: null },
     { id: "u3", short: "Unit 3", ka: "Unit 3 — ოჯახი", deckIds: ["family", "relationships"], grammarIds: ["toBe", "demonstratives", "readingJacob", "dialogueFriends"], image: "unit3-family.jpg" },
     { id: "u4", short: "Unit 4", ka: "Unit 4 — აწმყო განუსაზღვრელი დრო", deckIds: ["dailyHabits"], grammarIds: ["presentForms", "presentQuestions", "dialogueHabits", "readingHabits"], image: null },
