@@ -221,11 +221,14 @@
   .masthead .subtitle { color: var(--ink-soft); font-size: 0.88rem; }
   .masthead-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
   .theme-toggle, .settings-toggle {
-    border: 1px solid var(--border); background: var(--surface); color: var(--ink-soft);
-    border-radius: 999px; padding: 6px 12px; font-size: 0.76rem; cursor: pointer;
-    display: inline-flex; align-items: center; gap: 6px; transition: border-color 0.15s ease;
+    border: none; background: var(--brand); color: #fff;
+    border-radius: 999px; padding: 7px 14px; font-size: 0.76rem; font-weight: 700; cursor: pointer;
+    display: inline-flex; align-items: center; gap: 6px;
+    box-shadow: 0 3px 0 var(--brand-ink), 0 4px 10px var(--shadow);
+    transition: transform 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
   }
-  .theme-toggle:hover, .settings-toggle:hover { border-color: var(--info); }
+  .theme-toggle:hover, .settings-toggle:hover { background: var(--brand-ink); transform: scale(1.05); box-shadow: 0 3px 0 var(--brand-ink), 0 6px 14px var(--shadow); }
+  .theme-toggle:active, .settings-toggle:active { transform: scale(0.97); box-shadow: 0 1px 0 var(--brand-ink), 0 2px 6px var(--shadow); }
 
   .view { display: none; padding: 26px clamp(18px, 4vw, 34px) 28px; }
 
