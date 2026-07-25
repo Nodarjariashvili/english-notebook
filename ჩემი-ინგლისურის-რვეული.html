@@ -3160,6 +3160,68 @@
     additionalProperties: false
   };
 
+  var GENERAL_CHAT_CHIPS = [
+    ["მისალმება", "Hello! My name is Nono."],
+    ["ოჯახი", "I want to talk about my family."],
+    ["დღის რეჟიმი", "Let's talk about my daily routine."],
+    ["მოწონება/არმოწონება", "I want to talk about things I like and dislike."],
+    ["კითხვები ჩემზე", "Can you ask me questions about myself?"],
+    ["ჯეიქობის ოჯახზე კითხვები", "Can you quiz me about Jacob's family from the reading?"],
+    ["კეირასა და ლიამზე", "Can you quiz me about Keira and Liam's daily routines?"]
+  ];
+
+  var CHAT_TOPIC_CHIPS = {
+    u1: [
+      ["მისალმება", "Hello! My name is Nono."],
+      ["გაცნობა", "Let's introduce ourselves to each other."],
+      ["როგორ ხარ?", "How are you today?"],
+      ["დამშვიდობება", "How do people say goodbye in English?"],
+      ["კითხვები ჩემზე", "Can you ask me questions about myself?"]
+    ],
+    u2: [
+      ["ჩემი ნივთები", "Let's talk about my belongings."],
+      ["ვისია ეს?", "Can you ask me whose things these are?"],
+      ["დაკარგული ნივთი", "I lost something — can we practice a lost and found dialogue?"],
+      ["საკუთრება", "Let's practice saying what belongs to me and my family."]
+    ],
+    u3: [
+      ["ოჯახი", "I want to talk about my family."],
+      ["მეგობრები", "Let's talk about my friends."],
+      ["ჯეიქობის ოჯახზე კითხვები", "Can you quiz me about Jacob's family from the reading?"],
+      ["ნათესავები", "Can you ask me about my relatives?"]
+    ],
+    u4: [
+      ["დღის ჩვევები", "Let's talk about my daily habits."],
+      ["რას აკეთებ ჩვეულებრივ?", "What do you usually do every day?"],
+      ["კვირის განრიგი", "Can you ask me about my weekly habits?"]
+    ],
+    u5: [
+      ["რამდენად ხშირად?", "Let's practice how often I do things."],
+      ["ჩვევების სიხშირე", "Can you ask me how often I do certain activities?"]
+    ],
+    u6: [
+      ["მოწონება/არმოწონება", "I want to talk about things I like and dislike."],
+      ["საყვარელი საქმიანობები", "What are your favorite hobbies?"],
+      ["რას ვერ ვიტან", "Let's talk about things I really don't enjoy doing."]
+    ],
+    u7: [
+      ["დღის რეჟიმი", "Let's talk about my daily routine."],
+      ["განრიგი და დრო", "Can you ask me about times and schedules?"],
+      ["კეირასა და ლიამზე", "Can you quiz me about Keira and Liam's daily routines?"],
+      ["კვირის დღეები", "Let's talk about days of the week and my calendar."]
+    ],
+    u8: [
+      ["პროფესია", "Let's talk about my job."],
+      ["სამუშაო გასაუბრება", "Can we practice a job interview dialogue?"],
+      ["ხასიათი", "Can you ask me about my personality?"]
+    ],
+    u9: [
+      ["საყიდლები", "Let's talk about grocery shopping."],
+      ["საკვები", "I want to talk about food I like."],
+      ["სამზარეულოს ნივთები", "Can you ask me about kitchen items?"]
+    ]
+  };
+
   function getChatKey() { return localStorage.getItem(CHAT_KEY_STORAGE) || ""; }
   function setChatKey(k) { localStorage.setItem(CHAT_KEY_STORAGE, k); }
   function clearChatKey() { localStorage.removeItem(CHAT_KEY_STORAGE); }
@@ -3625,15 +3687,8 @@
     root.appendChild(errorBanner);
 
     var chips = el("div", { class: "chat-chips" });
-    [
-      ["მისალმება", "Hello! My name is Nono."],
-      ["ოჯახი", "I want to talk about my family."],
-      ["დღის რეჟიმი", "Let's talk about my daily routine."],
-      ["მოწონება/არმოწონება", "I want to talk about things I like and dislike."],
-      ["კითხვები ჩემზე", "Can you ask me questions about myself?"],
-      ["ჯეიქობის ოჯახზე კითხვები", "Can you quiz me about Jacob's family from the reading?"],
-      ["კეირასა და ლიამზე", "Can you quiz me about Keira and Liam's daily routines?"]
-    ].forEach(function (pair) {
+    var chipList = scopedUnit ? (CHAT_TOPIC_CHIPS[scopedUnit.id] || GENERAL_CHAT_CHIPS) : GENERAL_CHAT_CHIPS;
+    chipList.forEach(function (pair) {
       var chip = el("button", { class: "chat-chip", type: "button" }, [document.createTextNode(pair[0])]);
       chip.addEventListener("click", function () {
         var ta = document.getElementById("chatUserInput");
