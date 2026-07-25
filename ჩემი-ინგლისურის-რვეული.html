@@ -1189,8 +1189,24 @@
   var GRAMMAR = [
     {
       id: "pronouns", kind: "grammar", ka: "პირის ნაცვალსახელები", en: "Subject & object pronouns",
-      note: "ობიექტური ნაცვალსახელები (me, you, him, her, it, us, them) გამოიყენება მაშინ, როცა სახელი ზმნის შემდეგ ან წინდებულის შემდეგ დგას.",
+      note: "ინგლისურ ენაში პირის ნაცვალსახელები გამოიყენება არსებითი სახელების ჩასანაცვლებლად, რათა თავიდან იქნას აცილებული მათი გამეორება. არსებობს ორი სახის პირის ნაცვალსახელი: სუბიექტური (სუბიექტის აღმნიშვნელი) და ობიექტური (ობიექტის აღმნიშვნელი). სუბიექტური ნაცვალსახელებია: I, you, he, she, it, we და they — მხოლობითში: I (მე), you (შენ), he/she/it (ის); მრავლობითში: you (თქვენ), we (ჩვენ), they (ისინი). შენიშვნა: he გამოიყენება მამრობითი სქესის აღსანიშნავად, she — მდედრობითი სქესის, it კი ცხოველებისა და უსულო საგნების აღსანიშნავად (მათ შორის აბსტრაქტული ცნებებისთვისაც, მაგალითად სილამაზე, სიყვარული, ბუნება და ა.შ.). ობიექტური ნაცვალსახელები (me, you, him, her, it, us, them) გამოიყენება მაშინ, როცა სახელი ზმნის შემდეგ ან წინდებულის შემდეგ დგას.",
       items: [
+        { prompt: "My name is Alex. ___ am a manager.", instruction: "შეავსე სწორი სუბიექტური ნაცვალსახელით.", answer: "I" },
+        { prompt: "This is Lucy. ___ are friends.", instruction: "შეავსე სწორი სუბიექტური ნაცვალსახელით.", answer: "We" },
+        { prompt: "___ is my cat.", instruction: "შეავსე სწორი სუბიექტური ნაცვალსახელით.", answer: "It" },
+        { prompt: "___ are Ana, Mariam and Nika. I am Alex.", instruction: "შეავსე სწორი სუბიექტური ნაცვალსახელით.", answer: "They" },
+        { prompt: "___ is a beautiful girl.", instruction: "შეავსე სწორი სუბიექტური ნაცვალსახელით.", answer: "She" },
+        { prompt: "___ is a good boy.", instruction: "შეავსე სწორი სუბიექტური ნაცვალსახელით.", answer: "He" },
+        { prompt: "The boy is tall. ___ is tall.", instruction: "შეავსე he, she, it, they ან we.", answer: "He" },
+        { prompt: "The girl is beautiful. ___ is beautiful.", instruction: "შეავსე he, she, it, they ან we.", answer: "She" },
+        { prompt: "My friends and I work. ___ work.", instruction: "შეავსე he, she, it, they ან we.", answer: "We" },
+        { prompt: "The city is beautiful. ___ is beautiful.", instruction: "შეავსე he, she, it, they ან we.", answer: "It" },
+        { prompt: "Irakli is a policeman. ___ is a policeman.", instruction: "შეავსე he, she, it, they ან we.", answer: "He" },
+        { prompt: "Sandro and Mariam come from Georgia. ___ come from Georgia.", instruction: "შეავსე he, she, it, they ან we.", answer: "They" },
+        { prompt: "The books are interesting. ___ are interesting.", instruction: "შეავსე he, she, it, they ან we.", answer: "They" },
+        { prompt: "Nicolo is my name. ___ am Nicolo.", instruction: "შეავსე he, she, it, they ან we.", answer: "I" },
+        { prompt: "Anastasia is Russian. ___ is Russian.", instruction: "შეავსე he, she, it, they ან we.", answer: "She" },
+        { prompt: "You and I are immigrants. ___ are immigrants.", instruction: "შეავსე he, she, it, they ან we.", answer: "We" },
         { prompt: "I always help out <u>my friends</u>.", instruction: "ჩაანაცვლე ხაზგასმული ნაწილი ნაცვალსახელით.", answer: "them" },
         { prompt: "I am helping out <u>my girlfriend</u>.", instruction: "ჩაანაცვლე ხაზგასმული ნაწილი ნაცვალსახელით.", answer: "her" },
         { prompt: "The boys are riding <u>their bikes</u>.", instruction: "ჩაანაცვლე ხაზგასმული ნაწილი ნაცვალსახელით.", answer: "them" },
@@ -1208,13 +1224,14 @@
         { prompt: "I want to go with ___. (they / them)", instruction: "აირჩიე სწორი ფორმა.", answer: "them" },
         { prompt: "___ am very well. (I / me)", instruction: "აირჩიე სწორი ფორმა.", answer: "I" },
         { prompt: "We are looking at ___ because she is beautiful. (her / she)", instruction: "აირჩიე სწორი ფორმა.", answer: "her" },
+        { prompt: "We are looking at her because ___ is beautiful. (she / her)", instruction: "აირჩიე სწორი ფორმა.", answer: "she" },
         { prompt: "Can ___ eat this salad? (we / us)", instruction: "აირჩიე სწორი ფორმა.", answer: "we" },
         { prompt: "No, the salad is not for ___. (we / us)", instruction: "აირჩიე სწორი ფორმა.", answer: "us" }
       ]
     },
     {
       id: "possAdj", kind: "grammar", ka: "კუთვნილებითი ნაცვალსახელები", en: "my / your / his / her / its / our / their",
-      note: "კუთვნილებითი ნაცვალსახელი ყოველთვის არსებით სახელს უსწრებს წინ: my brother, her name, our friends.",
+      note: "კუთვნილების გამოსახატავად გამოიყენება კუთვნილებითი ნაცვალსახელები: my, your, his, her, its, our და their — ისინი ყოველთვის დგას არსებითი სახელის წინ: my brother, her name, our friends. მხოლობით რიცხვში: my — ჩემი, your — შენი, his/her/its — მისი. მრავლობით რიცხვში: your — თქვენი, our — ჩვენი, their — მათი.",
       items: [
         { prompt: "Hi, I am Sandra. What is ___ name?", instruction: "შეავსე სწორი კუთვნილებითი ნაცვალსახელით.", answer: "your" },
         { prompt: "We are from Georgia. ___ names are Saba and Tatia.", instruction: "შეავსე სწორი კუთვნილებითი ნაცვალსახელით.", answer: "our" },
@@ -1242,7 +1259,7 @@
     },
     {
       id: "demonstratives", kind: "grammar", ka: "This / That / These / Those", en: "ახლოს და შორს მყოფი საგნები",
-      note: "This/that — მხოლობითისთვის (ახლოს/შორს), these/those — მრავლობითისთვის (ახლოს/შორს).",
+      note: "ჩვენებითი ზედსართავი სახელები გამოიყენება არსებითი სახელების წინ, მოსაუბრესთან სიახლოვის ან დაშორების აღსანიშნავად — სულ ოთხია: this, that, these და those. This/that — მხოლობითისთვის (this — ეს, ახლოს მდგარი; that — ის, შორს მდგარი), these/those — მრავლობითისთვის (these — ეს/ესენი, ახლოს მდგარი; those — ის/ისინი, შორს მდგარი). მაგალითად: This car belongs to my father. (ეს მანქანა მამაჩემს ეკუთვნის.) These shoes are too big for me. (ეს ფეხსაცმელები ჩემთვის დიდია.) That boy is from Turkey. (ის ბიჭი თურქეთიდანაა.) Those boxes are too heavy. (ის ყუთები ძალიან მძიმეა.)",
       items: [
         { prompt: "Is <u>these</u> a photo of your brother?", instruction: "იპოვე შეცდომა და გაასწორე.", answer: "this" },
         { prompt: "What's in <u>these</u> box?", instruction: "იპოვე შეცდომა და გაასწორე.", answer: "this" },
@@ -1391,7 +1408,7 @@
     },
     {
       id: "toBe", kind: "grammar", ka: "ზმნა To Be (am/is/are)", en: "to be — am / is / are",
-      note: "TO BE ზმნა გამოსახავს ყოფნას და აწმყო დროში იღებს am, is და are ფორმებს (I am, he/she/it is, you/we/they are). კითხვით სიტყვებთან ერთად გამოიყენება ვინაობის/დროის/ადგილის დასაზუსტებლად: When, What, How, Why, Where, Which, Who.",
+      note: "TO BE ზმნა გამოხატავს ყოფნას და აწმყო დროში იღებს am, is და are ფორმებს (I am, he/she/it is, you/we/they are). თხრობითი წინადადება: I am tired. He/She/It is tired. You/We/They are tired. კითხვითი წინადადება: Am I tired? Is he/she/it tired? Are you/we/they tired? უარყოფითი წინადადება: I am not tired. He/She/It is not tired. You/We/They are not tired. კითხვით სიტყვებთან ერთად გამოიყენება ვინაობის/დროის/ადგილის დასაზუსტებლად: When, What, How, Why, Where, Which, Who.",
       items: [
         { prompt: "Amanda ___ from Italy.", instruction: "შეავსე am/is/are.", answer: "is" },
         { prompt: "She ___ from New Jersey, USA.", instruction: "შეავსე am/is/are.", answer: "is" },
