@@ -2358,7 +2358,7 @@
       "</span>";
   }
 
-  function accordionSection(unitId, key, icon, title, metaHtml, buildBody, color) {
+  function accordionSection(unitId, key, icon, title, metaHtml, buildBody, color, directNav) {
     var stateKey = unitId + ":" + key;
     var isOpen = !!accordionOpen[stateKey];
     var wrap = el("div", { class: "accordion" + (isOpen ? " open" : ""), "data-color": color || "" });
@@ -2375,6 +2375,7 @@
     buildBody(inner);
     body.appendChild(inner);
     header.addEventListener("click", function () {
+      if (directNav) { directNav(); return; }
       accordionOpen[stateKey] = !accordionOpen[stateKey];
       wrap.classList.toggle("open");
     });
@@ -2407,7 +2408,7 @@
           vocabGrid.appendChild(card);
         });
         body.appendChild(vocabGrid);
-      }, "info"));
+      }, "info", unitDecks(unit).length === 1 ? function () { openDeckFlip(unitDecks(unit)[0].id); } : null));
 
       var practiceMode = cardsMode === "flip" ? "voice" : cardsMode;
       var exAgg = { done: 0, total: 0 };
@@ -2985,21 +2986,21 @@
         root.appendChild(accordionSection(unit.id, "grammar", "📐", "გრამატიკა", miniProgressHtml(gAgg.done, gAgg.total), function (body) {
           body.appendChild(el("p", { style: "color:var(--ink-soft);margin:0 0 10px;max-width:60ch;font-size:0.85rem" }, [document.createTextNode("გრამატიკის წესები და სავარჯიშოები ამ თავიდან.")]));
           body.appendChild(topicGrid(grammarTopics));
-        }, "violet"));
+        }, "violet", grammarTopics.length === 1 ? function () { openTopic(grammarTopics[0].id); } : null));
       }
       if (dialogueTopics.length) {
         var dAgg = topicsAgg(dialogueTopics);
         root.appendChild(accordionSection(unit.id, "dialogue", "💬", "დიალოგები", miniProgressHtml(dAgg.done, dAgg.total), function (body) {
           body.appendChild(el("p", { style: "color:var(--ink-soft);margin:0 0 10px;max-width:60ch;font-size:0.85rem" }, [document.createTextNode("შეავსე დიალოგის ცარიელი ადგილები წიგნის დიალოგებიდან.")]));
           body.appendChild(topicGrid(dialogueTopics));
-        }, "gold"));
+        }, "gold", dialogueTopics.length === 1 ? function () { openTopic(dialogueTopics[0].id); } : null));
       }
       if (readingTopics.length) {
         var rAgg = topicsAgg(readingTopics);
         root.appendChild(accordionSection(unit.id, "reading", "✏️", "სავარჯიშოები — წაკითხვის გაგება", miniProgressHtml(rAgg.done, rAgg.total), function (body) {
           body.appendChild(el("p", { style: "color:var(--ink-soft);margin:0 0 10px;max-width:60ch;font-size:0.85rem" }, [document.createTextNode("წაიკითხე ტექსტი და უპასუხე კითხვებს.")]));
           body.appendChild(topicGrid(readingTopics));
-        }, "cyan"));
+        }, "cyan", readingTopics.length === 1 ? function () { openTopic(readingTopics[0].id); } : null));
       }
       return;
     }
