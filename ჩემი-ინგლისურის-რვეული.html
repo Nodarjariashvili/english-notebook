@@ -527,11 +527,13 @@
   .ref-group { margin-bottom: 24px; }
   .ref-group h3 { font-size: 1rem; color: var(--brand-ink); margin-bottom: 10px; }
   .ref-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
-  .ref-table tr { border-bottom: 1px solid var(--paper-rule); }
-  .ref-table td { padding: 7px 8px; vertical-align: top; }
-  .ref-table td.en { font-weight: 500; width: 40%; }
-  .ref-table td.ipa { color: var(--ink-faint); font-size: 0.82rem; width: 22%; }
-  .ref-table td.ka { color: var(--ink-soft); }
+  .ref-table tr { border-bottom: 1px solid var(--border); transition: background 0.15s ease; }
+  .ref-table tr:nth-child(even) { background: var(--paper); }
+  .ref-table tr:hover { background: var(--info-soft); }
+  .ref-table td { padding: 9px 10px; vertical-align: top; }
+  .ref-table td.en { font-weight: 700; color: var(--ink); width: 40%; }
+  .ref-table td.ipa { color: var(--ink-faint); font-size: 0.8rem; font-style: italic; width: 22%; }
+  .ref-table td.ka { color: var(--info); font-weight: 600; }
   .ref-table tr.hide { display: none; }
   .ref-empty { color: var(--ink-faint); font-size: 0.9rem; padding: 10px 0; }
 
