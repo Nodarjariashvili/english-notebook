@@ -598,7 +598,7 @@
     --accent-color: var(--brand); --accent-soft: var(--brand-soft);
     border: 1px solid var(--border); border-left: 3px solid var(--accent-color);
     background: var(--surface); border-radius: 20px; padding: 12px 14px;
-    box-shadow: 0 2px 8px var(--shadow);
+    box-shadow: 0 2px 8px var(--shadow); width: 100%; text-align: left; cursor: pointer;
   }
   .material-card[data-color="info"] { --accent-color: var(--info); --accent-soft: var(--info-soft); }
   .material-card[data-color="cyan"] { --accent-color: var(--cyan); --accent-soft: var(--cyan-soft); }
@@ -2358,31 +2358,21 @@
     if (materialPreview) root.appendChild(materialPreview);
   }
 
+  var materialDetailOpen = null;
+
   function unitMaterialCategories(unit) {
     var cats = [];
-    var decks = unitDecks(unit);
-    if (decks.length) {
-      var sample = [];
-      decks.forEach(function (d) { d.cards.forEach(function (c) { if (sample.length < 6) sample.push(c.en); }); });
-      cats.push({
-        icon: "📖", label: "ლექსიკონი", color: "info",
-        title: decks.map(function (d) { return d.ka; }).join(", "),
-        sample: sample.join(", ") + (sample.length ? "…" : "")
-      });
+    if (unitDecks(unit).length) {
+      cats.push({ key: "lex", icon: "📖", label: "ლექსიკონი", color: "info" });
     }
     [
       ["grammar", "📐", "გრამატიკა", "violet"],
       ["dialogue", "💬", "დიალოგები", "gold"],
       ["reading", "✏️", "ტექსტები", "cyan"]
     ].forEach(function (k) {
-      var topics = unitTopicsByKind(unit, k[0]);
-      if (!topics.length) return;
-      var note = topics[0].note || "";
-      cats.push({
-        icon: k[1], label: k[2], color: k[3],
-        title: topics.map(function (t) { return t.ka; }).join(", "),
-        sample: note.slice(0, 110) + (note.length > 110 ? "…" : "")
-      });
+      if (unitTopicsByKind(unit, k[0]).length) {
+        cats.push({ key: k[0], icon: k[1], label: k[2], color: k[3] });
+      }
     });
     return cats;
   }
@@ -2391,19 +2381,66 @@
     var cats = unitMaterialCategories(unit);
     if (!cats.length) return null;
     var wrap = el("div", { class: "material-preview" });
+
+    if (materialDetailOpen && cats.some(function (c) { return c.key === materialDetailOpen; })) {
+      wrap.appendChild(renderMaterialDetail(unit, materialDetailOpen));
+      return wrap;
+    }
+
     wrap.appendChild(el("div", { class: "material-preview-title" }, [document.createTextNode("📚 ამ თავის სასწავლი მასალა")]));
     var grid = el("div", { class: "material-preview-grid" });
     cats.forEach(function (c) {
-      grid.appendChild(el("div", { class: "material-card", "data-color": c.color || "" }, [
+      var card = el("button", { class: "material-card", type: "button", "data-color": c.color || "" }, [
         el("div", { class: "material-card-head" }, [
           el("span", { class: "icon" }, [document.createTextNode(c.icon)]),
           document.createTextNode(c.label)
-        ]),
-        el("div", { class: "material-card-body" }, [document.createTextNode(c.title)]),
-        el("div", { class: "material-card-sample" }, [document.createTextNode(c.sample)])
-      ]));
+        ])
+      ]);
+      card.addEventListener("click", function (key) { return function () { materialDetailOpen = key; renderHome(); }; }(c.key));
+      grid.appendChild(card);
     });
     wrap.appendChild(grid);
+    return wrap;
+  }
+
+  function renderMaterialDetail(unit, key) {
+    var wrap = el("div", {});
+    var back = el("button", { class: "back-link", type: "button" }, [document.createTextNode("← მასალის კატეგორიებში დაბრუნება")]);
+    back.addEventListener("click", function () { materialDetailOpen = null; renderHome(); });
+    wrap.appendChild(back);
+
+    if (key === "lex") {
+      wrap.appendChild(el("h3", { style: "margin:14px 0 10px" }, [document.createTextNode("📖 ლექსიკონი")]));
+      unitDecks(unit).forEach(function (deck) {
+        var group = el("div", { class: "ref-group" });
+        group.appendChild(el("h3", {}, [document.createTextNode(deck.ka)]));
+        var table = el("table", { class: "ref-table" });
+        deck.cards.forEach(function (c) {
+          table.appendChild(el("tr", {}, [
+            el("td", { class: "en" }, [document.createTextNode(c.en)]),
+            el("td", { class: "ipa" }, [document.createTextNode(c.ipa || "")]),
+            el("td", { class: "ka" }, [document.createTextNode(c.ka)])
+          ]));
+        });
+        group.appendChild(table);
+        wrap.appendChild(group);
+      });
+      return wrap;
+    }
+
+    var meta = key === "grammar" ? ["📐", "გრამატიკა"] : key === "dialogue" ? ["💬", "დიალოგები"] : ["✏️", "ტექსტები"];
+    wrap.appendChild(el("h3", { style: "margin:14px 0 10px" }, [document.createTextNode(meta[0] + " " + meta[1])]));
+    unitTopicsByKind(unit, key).forEach(function (topic) {
+      wrap.appendChild(el("h4", { style: "margin:16px 0 6px" }, [document.createTextNode(topic.ka)]));
+      if (key === "dialogue") {
+        topic.items.forEach(function (it) {
+          var text = it.prompt.replace(/<u>|<\/u>/g, "").replace("___", it.answer);
+          wrap.appendChild(el("p", { style: "white-space:pre-line;margin:0 0 12px;font-size:0.92rem;line-height:1.6" }, [document.createTextNode(text)]));
+        });
+      } else {
+        wrap.appendChild(el("p", { style: "margin:0 0 14px;font-size:0.92rem;line-height:1.6;color:var(--ink-soft)" }, [document.createTextNode(topic.note || "")]));
+      }
+    });
     return wrap;
   }
 
