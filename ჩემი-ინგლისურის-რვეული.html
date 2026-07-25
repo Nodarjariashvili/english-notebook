@@ -207,14 +207,94 @@
   .masthead .title-block { display: flex; flex-direction: column; gap: 2px; }
   .masthead h1 { font-size: clamp(1.3rem, 2.6vw, 1.7rem); color: var(--green-ink); }
   .masthead .subtitle { color: var(--ink-soft); font-size: 0.88rem; }
-  .theme-toggle {
+  .masthead-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+  .theme-toggle, .settings-toggle {
     border: 1px solid var(--border); background: var(--surface); color: var(--ink-soft);
     border-radius: 999px; padding: 6px 12px; font-size: 0.76rem; cursor: pointer;
     display: inline-flex; align-items: center; gap: 6px; transition: border-color 0.15s ease;
   }
-  .theme-toggle:hover { border-color: var(--green); }
+  .theme-toggle:hover, .settings-toggle:hover { border-color: var(--green); }
 
   .view { display: none; padding: 26px clamp(18px, 4vw, 34px) 28px; }
+
+  /* ---------- settings page ---------- */
+  .settings-page { max-width: 620px; margin: 0 auto; }
+  .settings-profile-card {
+    display: flex; align-items: center; gap: 16px; background: var(--paper);
+    border: 1px solid var(--border); border-radius: 14px; padding: 20px; margin: 18px 0 22px;
+  }
+  .settings-profile-card .avatar { width: 56px; height: 56px; font-size: 1.15rem; }
+  .settings-profile-name-row { display: flex; align-items: center; gap: 8px; }
+  .settings-profile-name-row h3 { font-size: 1.1rem; }
+  .settings-edit-btn {
+    border: 1px solid var(--border); background: var(--surface); color: var(--ink-soft);
+    border-radius: 999px; width: 28px; height: 28px; display: inline-flex; align-items: center;
+    justify-content: center; cursor: pointer; font-size: 0.82rem; flex-shrink: 0; transition: border-color 0.15s ease;
+  }
+  .settings-edit-btn:hover { border-color: var(--green); color: var(--green-ink); }
+  .settings-edit-form { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 12px; margin-top: 10px; }
+  .settings-edit-form label { font-size: 0.76rem; color: var(--ink-faint); font-weight: 600; display: block; margin-bottom: 3px; }
+  .settings-edit-form input {
+    width: 100%; padding: 8px 10px; border-radius: 8px; border: 1.5px solid var(--border);
+    background: var(--surface); color: var(--ink); font-size: 0.88rem;
+  }
+  .settings-edit-form input:focus { border-color: var(--green); }
+  .settings-edit-actions { grid-column: 1 / -1; display: flex; gap: 8px; margin-top: 4px; }
+
+  .settings-section {
+    background: var(--paper); border: 1px solid var(--border); border-radius: 14px;
+    padding: 18px 20px; margin-bottom: 18px;
+  }
+  .settings-section h4 { font-size: 0.98rem; color: var(--green-ink); margin-bottom: 4px; }
+  .settings-section .settings-section-sub { font-size: 0.8rem; color: var(--ink-faint); margin-bottom: 12px; }
+  .settings-row {
+    display: flex; align-items: center; gap: 12px; padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .settings-row:last-child { border-bottom: none; padding-bottom: 0; }
+  .settings-row-main { flex: 1; min-width: 0; }
+  .settings-row-label { font-weight: 600; font-size: 0.9rem; color: var(--ink); }
+  .settings-row-value { font-size: 0.8rem; color: var(--ink-faint); margin-top: 1px; }
+  .settings-icon-circle {
+    width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; font-size: 1.05rem;
+  }
+  .settings-icon-circle[data-color="green"] { background: var(--green-soft); }
+  .settings-icon-circle[data-color="blue"] { background: var(--info-soft); }
+  .settings-icon-circle[data-color="orange"] { background: var(--gold-soft); }
+  .settings-icon-circle[data-color="violet"] { background: var(--violet-soft); }
+
+  .toggle-switch { position: relative; display: inline-block; width: 42px; height: 24px; flex-shrink: 0; }
+  .toggle-switch input { opacity: 0; width: 0; height: 0; }
+  .toggle-switch .toggle-track {
+    position: absolute; inset: 0; background: var(--border); border-radius: 999px;
+    cursor: pointer; transition: background 0.18s ease;
+  }
+  .toggle-switch .toggle-track::before {
+    content: ""; position: absolute; width: 18px; height: 18px; left: 3px; top: 3px;
+    background: var(--surface); border-radius: 50%; transition: transform 0.18s ease; box-shadow: 0 1px 3px var(--shadow);
+  }
+  .toggle-switch input:checked + .toggle-track { background: var(--green); }
+  .toggle-switch input:checked + .toggle-track::before { transform: translateX(18px); }
+
+  .level-pills { display: flex; gap: 6px; flex-wrap: wrap; }
+  .level-pill {
+    border: 1.5px solid var(--border); background: var(--surface); color: var(--ink-soft);
+    border-radius: 999px; padding: 6px 13px; font-size: 0.8rem; font-weight: 600; cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+  }
+  .level-pill:hover { border-color: var(--green); }
+  .level-pill.active { background: var(--green); border-color: var(--green); color: var(--surface); }
+
+  .settings-key-status { font-size: 0.76rem; font-weight: 600; padding: 2px 9px; border-radius: 999px; }
+  .settings-key-status.connected { background: var(--green-soft); color: var(--green-ink); }
+  .settings-key-status.disconnected { background: var(--rust-soft); color: var(--rust); }
+
+  .reminder-banner {
+    background: var(--gold-soft); color: var(--ink); border: 1px solid var(--gold);
+    border-radius: 12px; padding: 12px 16px; font-size: 0.88rem; font-weight: 600;
+    margin-bottom: 16px;
+  }
   .view.active { display: block; }
   .page.unit-mode #view-cards, .page.unit-mode #view-grammar { padding-top: 10px; }
   @media (min-width: 760px) {
@@ -649,7 +729,10 @@
           <h1>ჩემი ინგლისურის რვეული</h1>
           <div class="subtitle">Nono's English Notebook — Unit 1 based on Speaking Tags</div>
         </div>
-        <button class="theme-toggle" id="themeToggle" type="button" aria-label="თემის შეცვლა">◐ თემა</button>
+        <div class="masthead-actions">
+          <button class="settings-toggle" id="settingsToggle" type="button" aria-label="პარამეტრები">⚙ პარამეტრები</button>
+          <button class="theme-toggle" id="themeToggle" type="button" aria-label="თემის შეცვლა">◐ თემა</button>
+        </div>
       </header>
 
       <section id="view-home" class="view active"></section>
@@ -657,6 +740,7 @@
       <section id="view-grammar" class="view"></section>
       <section id="view-reference" class="view"></section>
       <section id="view-chat" class="view"></section>
+      <section id="view-settings" class="view"></section>
     </div>
   </div>
 </div>
@@ -673,6 +757,17 @@
     city: "თბილისი", cityEn: "Tbilisi",
     job: "უსაფრთხოების თანამშრომელი", jobEn: "security officer"
   };
+  var PROFILE_STORAGE = "nonaEnglishNotebook.profile";
+  applyProfileOverrides();
+
+  var SETTINGS_STORAGE = "nonaEnglishNotebook.settings";
+  var SETTINGS_DEFAULTS = { level: "beginner", soundEffects: true, autoSpeak: false, reminders: true };
+  var LEVEL_META = {
+    beginner: { label: "დამწყები (A1-A2)", prompt: "an elementary (A1-A2)" },
+    intermediate: { label: "საშუალო (A2-B1)", prompt: "a pre-intermediate/intermediate (A2-B1)" },
+    advanced: { label: "მაღალი (B1-B2)", prompt: "an upper (B1-B2)" }
+  };
+  var appSettings = loadSettings();
 
   var DECKS = [
     {
@@ -1566,6 +1661,7 @@
     return html;
   }
   function markWithConfetti(ok) {
+    if (ok) playDing();
     return "<span class='mark'>" + checkMarkSvg(ok) + (ok ? confettiHtml() : "") + "</span>";
   }
   function bigConfettiHtml() {
@@ -1961,6 +2057,7 @@
     if (id === "home") renderHome();
     if (id === "reference") renderReferenceView();
     if (id === "chat") renderChatView();
+    if (id === "settings") renderSettingsView();
   }
 
   function currentUnitObj() {
@@ -2015,6 +2112,12 @@
     if (currentUnit) {
       renderUnitHeader(root);
       return;
+    }
+
+    if (appSettings.reminders && !(state.activity && state.activity[dateKeyOf(new Date())])) {
+      root.appendChild(el("div", { class: "reminder-banner" }, [
+        document.createTextNode("👋 დღეს ჯერ არ ისწავლე რამე — დაიწყე თუნდაც ერთი თავით!")
+      ]));
     }
 
     var hero = el("div", { class: "home-hero" });
@@ -3042,6 +3145,284 @@
   function setOpenAiKey(k) { localStorage.setItem(OPENAI_KEY_STORAGE, k); }
   function clearOpenAiKey() { localStorage.removeItem(OPENAI_KEY_STORAGE); }
 
+  /* ---------- profile overrides (settings page name edit) ---------- */
+  function applyProfileOverrides() {
+    var raw;
+    try { raw = localStorage.getItem(PROFILE_STORAGE); } catch (e) { return; }
+    if (!raw) return;
+    var over;
+    try { over = JSON.parse(raw); } catch (e) { return; }
+    ["name", "nameEn", "surname", "surnameEn"].forEach(function (k) {
+      if (over[k]) PROFILE[k] = over[k];
+    });
+  }
+  function saveProfileOverrides(over) {
+    try { localStorage.setItem(PROFILE_STORAGE, JSON.stringify(over)); } catch (e) {}
+  }
+
+  /* ---------- app settings (settings page) ---------- */
+  function loadSettings() {
+    var raw;
+    try { raw = localStorage.getItem(SETTINGS_STORAGE); } catch (e) { raw = null; }
+    var parsed = {};
+    if (raw) { try { parsed = JSON.parse(raw); } catch (e) { parsed = {}; } }
+    var out = {};
+    Object.keys(SETTINGS_DEFAULTS).forEach(function (k) {
+      out[k] = (parsed[k] !== undefined) ? parsed[k] : SETTINGS_DEFAULTS[k];
+    });
+    return out;
+  }
+  function saveSettings() {
+    try { localStorage.setItem(SETTINGS_STORAGE, JSON.stringify(appSettings)); } catch (e) {}
+  }
+  function playDing() {
+    if (!appSettings.soundEffects) return;
+    try {
+      var AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContextClass) return;
+      var ctx = new AudioContextClass();
+      var osc = ctx.createOscillator();
+      var gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(880, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(1320, ctx.currentTime + 0.12);
+      gain.gain.setValueAtTime(0.12, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.22);
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.23);
+      osc.onended = function () { ctx.close(); };
+    } catch (e) {}
+  }
+
+  /* ---------- settings page ---------- */
+  function renderSettingsView() {
+    var root = document.getElementById("view-settings");
+    root.innerHTML = "";
+    var page = el("div", { class: "settings-page" });
+
+    var back = el("button", { class: "back-link", type: "button" }, [document.createTextNode("← მთავარზე დაბრუნება")]);
+    back.addEventListener("click", function () { switchView("home"); });
+    page.appendChild(back);
+
+    page.appendChild(el("h2", { style: "margin:16px 0 0" }, [document.createTextNode("პარამეტრები")]));
+
+    page.appendChild(renderSettingsProfileBlock());
+    page.appendChild(renderSettingsAccountSection());
+    page.appendChild(renderSettingsLearningSection());
+    page.appendChild(renderSettingsPrefsSection());
+
+    root.appendChild(page);
+  }
+
+  function renderSettingsProfileBlock() {
+    var outer = el("div", {});
+    var initials = (PROFILE.nameEn[0] + PROFILE.surnameEn[0]).toUpperCase();
+    var card = el("div", { class: "settings-profile-card" });
+    card.appendChild(el("div", { class: "avatar" }, [document.createTextNode(initials)]));
+
+    var right = el("div", { style: "flex:1;min-width:0" });
+    var nameRow = el("div", { class: "settings-profile-name-row" });
+    nameRow.appendChild(el("h3", {}, [document.createTextNode(PROFILE.name + " " + PROFILE.surname)]));
+    var editBtn = el("button", { class: "settings-edit-btn", type: "button", title: "სახელის რედაქტირება" }, [document.createTextNode("✎")]);
+    nameRow.appendChild(editBtn);
+    right.appendChild(nameRow);
+    right.appendChild(el("div", { class: "settings-row-value" }, [document.createTextNode(PROFILE.nameEn + " " + PROFILE.surnameEn)]));
+
+    var formWrap = el("div", { style: "display:none" });
+    function field(labelText, id, value) {
+      var wrap = el("div", {});
+      wrap.appendChild(el("label", { for: id }, [document.createTextNode(labelText)]));
+      var input = el("input", { type: "text", id: id });
+      input.value = value;
+      wrap.appendChild(input);
+      return { wrap: wrap, input: input };
+    }
+    var form = el("div", { class: "settings-edit-form" });
+    var fName = field("სახელი (ქართულად)", "setNameKa", PROFILE.name);
+    var fNameEn = field("Name (English)", "setNameEn", PROFILE.nameEn);
+    var fSurname = field("გვარი (ქართულად)", "setSurnameKa", PROFILE.surname);
+    var fSurnameEn = field("Surname (English)", "setSurnameEn", PROFILE.surnameEn);
+    form.appendChild(fName.wrap); form.appendChild(fNameEn.wrap);
+    form.appendChild(fSurname.wrap); form.appendChild(fSurnameEn.wrap);
+
+    var actions = el("div", { class: "settings-edit-actions" });
+    var saveBtn = el("button", { class: "check-btn", type: "button" }, [document.createTextNode("შენახვა")]);
+    saveBtn.addEventListener("click", function () {
+      var over = {
+        name: fName.input.value.trim() || PROFILE.name,
+        nameEn: fNameEn.input.value.trim() || PROFILE.nameEn,
+        surname: fSurname.input.value.trim() || PROFILE.surname,
+        surnameEn: fSurnameEn.input.value.trim() || PROFILE.surnameEn
+      };
+      PROFILE.name = over.name; PROFILE.nameEn = over.nameEn;
+      PROFILE.surname = over.surname; PROFILE.surnameEn = over.surnameEn;
+      saveProfileOverrides(over);
+      renderSettingsView();
+      renderTabs();
+    });
+    var cancelBtn = el("button", { class: "redo-btn", type: "button" }, [document.createTextNode("გაუქმება")]);
+    cancelBtn.addEventListener("click", function () { formWrap.style.display = "none"; });
+    actions.appendChild(saveBtn); actions.appendChild(cancelBtn);
+    form.appendChild(actions);
+    formWrap.appendChild(form);
+    right.appendChild(formWrap);
+
+    editBtn.addEventListener("click", function () {
+      formWrap.style.display = formWrap.style.display === "none" ? "block" : "none";
+    });
+
+    card.appendChild(right);
+    outer.appendChild(card);
+    return outer;
+  }
+
+  function renderSettingsKeyRow(icon, color, label, sub, getter, setter, clearer, placeholder) {
+    var wrap = el("div", {});
+    var row = el("div", { class: "settings-row" });
+    row.appendChild(el("div", { class: "settings-icon-circle", "data-color": color }, [document.createTextNode(icon)]));
+    var main = el("div", { class: "settings-row-main" });
+    main.appendChild(el("div", { class: "settings-row-label" }, [document.createTextNode(label)]));
+    main.appendChild(el("div", { class: "settings-row-value" }, [document.createTextNode(sub)]));
+    row.appendChild(main);
+    var connected = !!getter();
+    row.appendChild(el("span", { class: "settings-key-status " + (connected ? "connected" : "disconnected") }, [
+      document.createTextNode(connected ? "დაკავშირებულია" : "არაა დაკავშირებული")
+    ]));
+    var editBtn = el("button", { class: "settings-edit-btn", type: "button", title: "რედაქტირება" }, [document.createTextNode("✎")]);
+    row.appendChild(editBtn);
+    wrap.appendChild(row);
+
+    var formWrap = el("div", { style: "display:none;padding:0 0 10px 48px" });
+    var keyRow = el("div", { class: "chat-key-row" });
+    var input = el("input", { type: "password", placeholder: placeholder, autocomplete: "off", spellcheck: "false" });
+    input.value = getter();
+    var toggleBtn = el("button", { class: "chat-toggle-btn", type: "button" }, [document.createTextNode("👁")]);
+    toggleBtn.addEventListener("click", function () { input.type = input.type === "password" ? "text" : "password"; });
+    keyRow.appendChild(input); keyRow.appendChild(toggleBtn);
+    formWrap.appendChild(keyRow);
+
+    var actions = el("div", { style: "display:flex;gap:8px;margin-top:8px" });
+    var saveBtn = el("button", { class: "check-btn", type: "button" }, [document.createTextNode("შენახვა")]);
+    saveBtn.addEventListener("click", function () {
+      var v = input.value.trim();
+      if (v) setter(v); else clearer();
+      renderSettingsView();
+    });
+    actions.appendChild(saveBtn);
+    if (connected) {
+      var clearBtn = el("button", { class: "redo-btn", type: "button", style: "color:var(--rust);border-color:var(--rust)" }, [document.createTextNode("წაშლა")]);
+      clearBtn.addEventListener("click", function () { clearer(); renderSettingsView(); });
+      actions.appendChild(clearBtn);
+    }
+    formWrap.appendChild(actions);
+    wrap.appendChild(formWrap);
+
+    editBtn.addEventListener("click", function () {
+      formWrap.style.display = formWrap.style.display === "none" ? "block" : "none";
+    });
+
+    return wrap;
+  }
+
+  function renderSettingsAccountSection() {
+    var sec = el("div", { class: "settings-section" });
+    sec.appendChild(el("h4", {}, [document.createTextNode("ანგარიში")]));
+    sec.appendChild(el("div", { class: "settings-section-sub" }, [document.createTextNode("პროფილის დეტალები და დაკავშირებული API გასაღებები")]));
+
+    [
+      ["🎂", "green", "ასაკი", String(PROFILE.age)],
+      ["📍", "blue", "ქალაქი", PROFILE.city + " (" + PROFILE.cityEn + ")"],
+      ["💼", "orange", "პროფესია", PROFILE.job]
+    ].forEach(function (r) {
+      var row = el("div", { class: "settings-row" });
+      row.appendChild(el("div", { class: "settings-icon-circle", "data-color": r[1] }, [document.createTextNode(r[0])]));
+      var main = el("div", { class: "settings-row-main" });
+      main.appendChild(el("div", { class: "settings-row-label" }, [document.createTextNode(r[2])]));
+      main.appendChild(el("div", { class: "settings-row-value" }, [document.createTextNode(r[3])]));
+      row.appendChild(main);
+      sec.appendChild(row);
+    });
+
+    sec.appendChild(renderSettingsKeyRow("🤖", "violet", "Anthropic API გასაღები", "ჩატისთვის", getChatKey, setChatKey, clearChatKey, "sk-ant-api03-..."));
+    sec.appendChild(renderSettingsKeyRow("🎙", "blue", "OpenAI API გასაღები", "ხმით საუბრისთვის (არასავალდებულო)", getOpenAiKey, setOpenAiKey, clearOpenAiKey, "sk-proj-..."));
+
+    return sec;
+  }
+
+  function renderSettingsLearningSection() {
+    var sec = el("div", { class: "settings-section" });
+    sec.appendChild(el("h4", {}, [document.createTextNode("სწავლის პარამეტრები")]));
+
+    var row1 = el("div", { class: "settings-row" });
+    row1.appendChild(el("div", { class: "settings-icon-circle", "data-color": "green" }, [document.createTextNode("🗣")]));
+    var main1 = el("div", { class: "settings-row-main" });
+    main1.appendChild(el("div", { class: "settings-row-label" }, [document.createTextNode("მშობლიური ენა")]));
+    main1.appendChild(el("div", { class: "settings-row-value" }, [document.createTextNode("ქართული")]));
+    row1.appendChild(main1);
+    sec.appendChild(row1);
+
+    var row2 = el("div", { class: "settings-row" });
+    row2.appendChild(el("div", { class: "settings-icon-circle", "data-color": "blue" }, [document.createTextNode("📘")]));
+    var main2 = el("div", { class: "settings-row-main" });
+    main2.appendChild(el("div", { class: "settings-row-label" }, [document.createTextNode("შესასწავლი ენა")]));
+    main2.appendChild(el("div", { class: "settings-row-value" }, [document.createTextNode("ინგლისური")]));
+    row2.appendChild(main2);
+    sec.appendChild(row2);
+
+    var row3 = el("div", { class: "settings-row" });
+    row3.appendChild(el("div", { class: "settings-icon-circle", "data-color": "orange" }, [document.createTextNode("🎯")]));
+    var main3 = el("div", { class: "settings-row-main" });
+    main3.appendChild(el("div", { class: "settings-row-label" }, [document.createTextNode("ენის დონე")]));
+    var pills = el("div", { class: "level-pills", style: "margin-top:6px" });
+    [["beginner", "დამწყები"], ["intermediate", "საშუალო"], ["advanced", "მაღალი"]].forEach(function (lv) {
+      var pill = el("button", { class: "level-pill" + (appSettings.level === lv[0] ? " active" : ""), type: "button" }, [document.createTextNode(lv[1])]);
+      pill.addEventListener("click", function (val) { return function () {
+        appSettings.level = val;
+        saveSettings();
+        renderSettingsView();
+      }; }(lv[0]));
+      pills.appendChild(pill);
+    });
+    main3.appendChild(pills);
+    row3.appendChild(main3);
+    sec.appendChild(row3);
+
+    return sec;
+  }
+
+  function renderSettingsToggleRow(icon, color, label, sub, key) {
+    var row = el("div", { class: "settings-row" });
+    row.appendChild(el("div", { class: "settings-icon-circle", "data-color": color }, [document.createTextNode(icon)]));
+    var main = el("div", { class: "settings-row-main" });
+    main.appendChild(el("div", { class: "settings-row-label" }, [document.createTextNode(label)]));
+    if (sub) main.appendChild(el("div", { class: "settings-row-value" }, [document.createTextNode(sub)]));
+    row.appendChild(main);
+
+    var switchLabel = el("label", { class: "toggle-switch" });
+    var input = el("input", { type: "checkbox" });
+    input.checked = !!appSettings[key];
+    input.addEventListener("change", function () {
+      appSettings[key] = input.checked;
+      saveSettings();
+      if (key === "reminders" && currentView === "home" && !currentUnit) renderHome();
+    });
+    switchLabel.appendChild(input);
+    switchLabel.appendChild(el("span", { class: "toggle-track" }));
+    row.appendChild(switchLabel);
+
+    return row;
+  }
+
+  function renderSettingsPrefsSection() {
+    var sec = el("div", { class: "settings-section" });
+    sec.appendChild(el("h4", {}, [document.createTextNode("პარამეტრები")]));
+    sec.appendChild(renderSettingsToggleRow("🔔", "green", "ხმოვანი ეფექტები", "სწორი პასუხის დროს მოკლე ხმა", "soundEffects"));
+    sec.appendChild(renderSettingsToggleRow("🔊", "blue", "ავტომატური ხმოვანი წაკითხვა", "ჩატის პასუხების ავტომატური წარმოთქმა", "autoSpeak"));
+    sec.appendChild(renderSettingsToggleRow("⏰", "orange", "შეხსენებები", "შეხსენება მთავარ გვერდზე, თუ დღეს არ ისწავლე", "reminders"));
+    return sec;
+  }
+
   function buildSystemPrompt() {
     var scopedUnit = chatScopeUnit ? UNITS.filter(function (u) { return u.id === chatScopeUnit; })[0] : null;
     var relevantDecks = scopedUnit ? unitDecks(scopedUnit) : DECKS;
@@ -3065,7 +3446,7 @@
       "You are " + PROFILE.nameEn + "'s friendly English conversation partner for spoken/written practice.",
       "",
       "Learner profile: " + PROFILE.nameEn + " (" + PROFILE.name + ") " + PROFILE.surnameEn + ", " + PROFILE.age + ", from " + PROFILE.countryEn + ", lives in " + PROFILE.cityEn + ", works as a " + PROFILE.jobEn + ".",
-      "She is an elementary (A1-A2) English learner working through Unit 1 of a textbook called \"Speaking Tags.\"",
+      "She is " + (LEVEL_META[appSettings.level] || LEVEL_META.beginner).prompt + " English learner working through a textbook called \"Speaking Tags.\"",
       ""
     ];
     if (scopedUnit) {
@@ -3395,8 +3776,9 @@
       if (voiceModeOn) {
         setVoiceStatus("speaking");
         speakChatTextAuto(parsed);
-      } else if (!isVoiceTurn && textarea) {
-        textarea.focus();
+      } else {
+        if (appSettings.autoSpeak) speakChatText(parsed.reply);
+        if (!isVoiceTurn && textarea) textarea.focus();
       }
     }).catch(function (err) {
       removeChatTyping();
@@ -3735,6 +4117,10 @@
       try { localStorage.setItem("nonaEnglishNotebook.theme", next); } catch (e) {}
     });
   }
+
+  document.getElementById("settingsToggle").addEventListener("click", function () {
+    switchView("settings");
+  });
 
   initTheme();
   switchView("home");
