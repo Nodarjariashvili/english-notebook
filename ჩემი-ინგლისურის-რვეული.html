@@ -4939,8 +4939,8 @@
     console.log("[admin-debug] showAdminDirectly() called");
     var notebookEl = document.getElementById("notebook");
     console.log("[admin-debug] #notebook element found:", !!notebookEl);
-    notebookEl.style.display = "none";
-    console.log("[admin-debug] #notebook.style.display set to:", notebookEl.style.display);
+    notebookEl.style.display = "";
+    console.log("[admin-debug] #notebook.style.display reset to (must be visible, #view-admin is nested inside it):", notebookEl.style.display);
     var gateRoot = document.getElementById("auth-gate-root");
     console.log("[admin-debug] #auth-gate-root element found:", !!gateRoot);
     gateRoot.style.display = "none";
@@ -4951,6 +4951,7 @@
     console.log("[admin-debug] #view-admin is inside #notebook (DOM ancestry):", notebookEl && viewAdminEl ? notebookEl.contains(viewAdminEl) : "n/a");
     viewAdminEl.classList.add("active");
     console.log("[admin-debug] #view-admin classList after activation:", viewAdminEl.className);
+    console.log("[admin-debug] კონტენტის რენდერამდე ვეძებ ელემენტს, getElementById id:", "view-admin", "| ელემენტი null არის:", document.getElementById("view-admin") === null);
     console.log("[admin-debug] about to call renderAdminView()");
     renderAdminView();
     console.log("[admin-debug] renderAdminView() finished, #view-admin.innerHTML length:", viewAdminEl.innerHTML.length);
@@ -4977,6 +4978,8 @@
 
     form.addEventListener("submit", function (e) {
       e.preventDefault();
+      console.log("[admin-debug] 'შესვლა' ღილაკი დაჭერილია, შეყვანილი კოდი:", codeInput.value);
+      console.log("[admin-debug] კოდი სწორია:", codeInput.value === ADMIN_ACCESS_CODE);
       console.log("[admin-debug] code form submitted, entered value matches ADMIN_ACCESS_CODE:", codeInput.value === ADMIN_ACCESS_CODE);
       msgBox.innerHTML = "";
       if (codeInput.value === ADMIN_ACCESS_CODE) {
