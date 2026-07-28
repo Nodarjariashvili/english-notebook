@@ -4936,13 +4936,25 @@
   }
 
   function showAdminDirectly() {
-    document.getElementById("notebook").style.display = "none";
+    console.log("[admin-debug] showAdminDirectly() called");
+    var notebookEl = document.getElementById("notebook");
+    console.log("[admin-debug] #notebook element found:", !!notebookEl);
+    notebookEl.style.display = "none";
+    console.log("[admin-debug] #notebook.style.display set to:", notebookEl.style.display);
     var gateRoot = document.getElementById("auth-gate-root");
+    console.log("[admin-debug] #auth-gate-root element found:", !!gateRoot);
     gateRoot.style.display = "none";
     gateRoot.innerHTML = "";
     document.querySelectorAll(".view").forEach(function (v) { v.classList.remove("active"); });
-    document.getElementById("view-admin").classList.add("active");
+    var viewAdminEl = document.getElementById("view-admin");
+    console.log("[admin-debug] #view-admin element found:", !!viewAdminEl);
+    console.log("[admin-debug] #view-admin is inside #notebook (DOM ancestry):", notebookEl && viewAdminEl ? notebookEl.contains(viewAdminEl) : "n/a");
+    viewAdminEl.classList.add("active");
+    console.log("[admin-debug] #view-admin classList after activation:", viewAdminEl.className);
+    console.log("[admin-debug] about to call renderAdminView()");
     renderAdminView();
+    console.log("[admin-debug] renderAdminView() finished, #view-admin.innerHTML length:", viewAdminEl.innerHTML.length);
+    console.log("[admin-debug] NOTE: #notebook.style.display is still:", notebookEl.style.display, "-- if this is 'none', #view-admin will stay invisible even though it's marked active, because it is a DOM descendant of #notebook.");
   }
 
   function renderAdminCodeGate() {
@@ -4965,9 +4977,11 @@
 
     form.addEventListener("submit", function (e) {
       e.preventDefault();
+      console.log("[admin-debug] code form submitted, entered value matches ADMIN_ACCESS_CODE:", codeInput.value === ADMIN_ACCESS_CODE);
       msgBox.innerHTML = "";
       if (codeInput.value === ADMIN_ACCESS_CODE) {
-        try { sessionStorage.setItem(ADMIN_CODE_STORAGE_KEY, "1"); } catch (e2) {}
+        try { sessionStorage.setItem(ADMIN_CODE_STORAGE_KEY, "1"); console.log("[admin-debug] sessionStorage flag set successfully"); } catch (e2) { console.log("[admin-debug] sessionStorage.setItem FAILED:", e2.message); }
+        console.log("[admin-debug] calling showAdminDirectly()...");
         showAdminDirectly();
       } else {
         msgBox.appendChild(el("div", { class: "auth-gate-msg error" }, [document.createTextNode("არასწორი კოდი.")]));
@@ -4980,6 +4994,7 @@
   }
 
   function handleAdminRoute() {
+    console.log("[admin-debug] handleAdminRoute() called, isAdminCodeVerified():", isAdminCodeVerified());
     if (isAdminCodeVerified()) {
       showAdminDirectly();
     } else {
