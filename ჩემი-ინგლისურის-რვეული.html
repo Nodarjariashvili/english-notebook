@@ -863,6 +863,27 @@
 (function () {
   "use strict";
 
+  /* ============================================================
+     CONTENT DATA — everything below, down to "END CONTENT DATA",
+     is lesson material only (no rendering/UI logic). To add a new
+     unit's material, edit here — nothing else needs to change.
+
+     Shapes:
+       PROFILE            — { name, nameEn, surname, surnameEn, age, country, countryEn, city, cityEn, job, jobEn }
+       DECKS   (vocabulary decks)
+         { id, ka, en, cards: [ { en, ipa, ka } ] }
+       GRAMMAR (grammar notes / dialogues / reading passages — one pool, split by `kind`)
+         { id, kind: "grammar"|"dialogue"|"reading", ka, en, note?, sections?, items: [ { prompt, instruction, answer, accept? } ] }
+       REFERENCE_GRAMMAR  (condensed tables shown on the "ცნობარი" tab)
+         { title, rows: [ [en, ipa, ka], ... ] }
+       UNITS   — which decks/topics belong to which unit, in display order
+         { id, short, ka, deckIds: [DECKS.id...], grammarIds: [GRAMMAR.id...], image }
+
+     Invariant: every id listed in UNITS.deckIds / UNITS.grammarIds must
+     exist in DECKS / GRAMMAR respectively (audited: 13 decks, 34 grammar/
+     dialogue/reading topics, 9 units, 0 broken references, 0 orphans).
+     ============================================================ */
+
   var PROFILE = {
     name: "ნონო", nameEn: "Nono",
     surname: "ჯარიაშვილი", surnameEn: "Jarieshvili",
@@ -1750,6 +1771,11 @@
 
   var STORAGE_KEY = "nonaEnglishNotebook.v1";
   var CARD_MODES = ["flip", "voice", "written", "mc"];
+  /* ============================================================
+     END CONTENT DATA. Everything from here down is application
+     logic, state management, and UI rendering — not lesson content.
+     ============================================================ */
+
   var state = loadState();
 
   function loadState() {
