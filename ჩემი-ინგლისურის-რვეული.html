@@ -10,6 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@400;600;700;800&family=Caveat:wght@600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <style>
   :root {
     --paper: oklch(96% 0.02 340);
@@ -822,6 +823,28 @@
   .chat-voice-status .pulse-dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; animation: statusPulse 1s infinite ease-in-out; }
   @keyframes statusPulse { 0%, 100% { opacity: 0.4; transform: scale(0.85); } 50% { opacity: 1; transform: scale(1.1); } }
 
+  /* --- Auth gate (Supabase email/password) --- */
+  .auth-gate-root { width: 100%; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+  .auth-gate-card {
+    width: 100%; max-width: 380px; background: var(--surface); border: 1px solid var(--border);
+    border-radius: 26px; box-shadow: 0 18px 40px var(--shadow), 0 2px 0 var(--border);
+    padding: 32px 28px;
+  }
+  .auth-gate-title { font-size: 1.2rem; color: var(--brand-ink); margin-bottom: 4px; }
+  .auth-gate-sub { color: var(--ink-soft); font-size: 0.85rem; margin: 0 0 20px; }
+  .auth-gate-tabs { display: flex; gap: 6px; background: var(--paper); border-radius: 14px; padding: 4px; margin-bottom: 18px; }
+  .auth-gate-tab { flex: 1; border: none; background: none; padding: 8px 10px; border-radius: 10px; font-weight: 700; font-size: 0.85rem; color: var(--ink-soft); cursor: pointer; }
+  .auth-gate-tab.active { background: var(--brand-gradient); color: #fff; }
+  .auth-gate-field { margin-bottom: 14px; }
+  .auth-gate-field label { display: block; font-size: 0.8rem; font-weight: 600; margin-bottom: 6px; color: var(--ink); }
+  .auth-gate-field input { width: 100%; padding: 11px 14px; border-radius: 12px; border: 1.5px solid var(--border); background: var(--surface); color: var(--ink); font-family: inherit; font-size: 0.92rem; }
+  .auth-gate-field input:focus { border-color: var(--brand); }
+  .auth-gate-submit { width: 100%; border: none; background: var(--brand-gradient); color: #fff; padding: 12px 22px; border-radius: 14px; font-weight: 700; cursor: pointer; font-size: 0.92rem; box-shadow: 0 4px 0 var(--brand-ink); margin-top: 4px; }
+  .auth-gate-submit:disabled { opacity: 0.6; cursor: default; }
+  .auth-gate-msg { font-size: 0.82rem; margin-top: 12px; line-height: 1.5; }
+  .auth-gate-msg.error { color: var(--rust); }
+  .auth-gate-msg.info { color: var(--green-ink); }
+
   @media (max-width: 640px) {
     .notebook { flex-direction: column; }
     .tabs { flex-direction: row; flex-wrap: wrap; padding-top: 0; margin-bottom: 10px; }
@@ -835,7 +858,8 @@
 <body>
 
 <div class="desk">
-  <div class="notebook">
+  <div id="auth-gate-root" class="auth-gate-root" style="display:none"></div>
+  <div class="notebook" id="notebook">
     <nav class="tabs" id="tabs"></nav>
     <div class="page">
       <header class="masthead">
@@ -3785,6 +3809,17 @@
     sec.appendChild(el("h4", {}, [document.createTextNode("ანგარიში")]));
     sec.appendChild(el("div", { class: "settings-section-sub" }, [document.createTextNode("პროფილის დეტალები და დაკავშირებული API გასაღებები")]));
 
+    var loginRow = el("div", { class: "settings-row" });
+    loginRow.appendChild(el("div", { class: "settings-icon-circle", "data-color": "green" }, [document.createTextNode("👤")]));
+    var loginMain = el("div", { class: "settings-row-main" });
+    loginMain.appendChild(el("div", { class: "settings-row-label" }, [document.createTextNode("შესული ანგარიში")]));
+    loginMain.appendChild(el("div", { class: "settings-row-value" }, [document.createTextNode(currentAuthUser ? currentAuthUser.email : "—")]));
+    loginRow.appendChild(loginMain);
+    var logoutBtn = el("button", { class: "redo-btn", type: "button", style: "margin-top:0;color:var(--rust);border-color:var(--rust)" }, [document.createTextNode("გამოსვლა")]);
+    logoutBtn.addEventListener("click", function () { signOutUser(); });
+    loginRow.appendChild(logoutBtn);
+    sec.appendChild(loginRow);
+
     [
       ["🎂", "green", "ასაკი", String(PROFILE.age)],
       ["📍", "blue", "ქალაქი", PROFILE.city + " (" + PROFILE.cityEn + ")"],
@@ -4793,6 +4828,119 @@
     });
   }
 
+  /* ---------- auth (Supabase email/password) ---------- */
+  var SUPABASE_URL = "https://wddqjehzoicwkqyqfiqs.supabase.co";
+  var SUPABASE_ANON_KEY = "sb_publishable_zitiafi593Rb2zBZjxgSag_F85xhVCf";
+  var supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  var currentAuthUser = null;
+  var appStarted = false;
+
+  function startAppOnce() {
+    if (appStarted) return;
+    appStarted = true;
+    document.getElementById("settingsToggle").addEventListener("click", function () {
+      switchView("settings");
+    });
+    initTheme();
+    if (location.hash === "#admin") {
+      document.querySelectorAll(".view").forEach(function (v) { v.classList.remove("active"); });
+      document.getElementById("view-admin").classList.add("active");
+      renderAdminView();
+    } else {
+      switchView("home");
+    }
+  }
+
+  function showApp(user) {
+    currentAuthUser = user;
+    var gateRoot = document.getElementById("auth-gate-root");
+    gateRoot.style.display = "none";
+    gateRoot.innerHTML = "";
+    document.getElementById("notebook").style.display = "";
+    startAppOnce();
+  }
+
+  function showGate(mode) {
+    currentAuthUser = null;
+    document.getElementById("notebook").style.display = "none";
+    var root = document.getElementById("auth-gate-root");
+    root.style.display = "flex";
+    renderAuthGate(root, mode || "login");
+  }
+
+  function renderAuthGate(root, mode) {
+    root.innerHTML = "";
+    var card = el("div", { class: "auth-gate-card" });
+    card.appendChild(el("div", { class: "auth-gate-title" }, [document.createTextNode("ჩემი ინგლისურის რვეული")]));
+    card.appendChild(el("p", { class: "auth-gate-sub" }, [document.createTextNode("გააგრძელე სასწავლად — გაიარე ავტორიზაცია.")]));
+
+    var tabs = el("div", { class: "auth-gate-tabs" });
+    var loginTab = el("button", { class: "auth-gate-tab" + (mode === "login" ? " active" : ""), type: "button" }, [document.createTextNode("შესვლა")]);
+    var signupTab = el("button", { class: "auth-gate-tab" + (mode === "signup" ? " active" : ""), type: "button" }, [document.createTextNode("რეგისტრაცია")]);
+    loginTab.addEventListener("click", function () { renderAuthGate(root, "login"); });
+    signupTab.addEventListener("click", function () { renderAuthGate(root, "signup"); });
+    tabs.appendChild(loginTab); tabs.appendChild(signupTab);
+    card.appendChild(tabs);
+
+    var form = el("form", {});
+    var emailInput = el("input", { type: "email", autocomplete: "email", required: "required" });
+    var passInput = el("input", { type: "password", autocomplete: mode === "login" ? "current-password" : "new-password", required: "required", minlength: "6" });
+    form.appendChild(el("div", { class: "auth-gate-field" }, [el("label", {}, [document.createTextNode("ელფოსტა")]), emailInput]));
+    form.appendChild(el("div", { class: "auth-gate-field" }, [el("label", {}, [document.createTextNode("პაროლი")]), passInput]));
+
+    var submitBtn = el("button", { class: "auth-gate-submit", type: "submit" }, [document.createTextNode(mode === "login" ? "შესვლა" : "რეგისტრაცია")]);
+    form.appendChild(submitBtn);
+
+    var msgBox = el("div", {});
+    form.appendChild(msgBox);
+
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      var email = emailInput.value.trim();
+      var password = passInput.value;
+      if (!email || !password) return;
+      submitBtn.setAttribute("disabled", "disabled");
+      msgBox.innerHTML = "";
+
+      var action = mode === "login"
+        ? supabaseClient.auth.signInWithPassword({ email: email, password: password })
+        : supabaseClient.auth.signUp({ email: email, password: password });
+
+      action.then(function (res) {
+        submitBtn.removeAttribute("disabled");
+        if (res.error) {
+          msgBox.appendChild(el("div", { class: "auth-gate-msg error" }, [document.createTextNode(res.error.message)]));
+          return;
+        }
+        if (mode === "signup" && !res.data.session) {
+          msgBox.appendChild(el("div", { class: "auth-gate-msg info" }, [
+            document.createTextNode("რეგისტრაცია წარმატებულია — შეამოწმე ელფოსტა და დაადასტურე ანგარიში, შემდეგ შედი 'შესვლა' ტაბიდან.")
+          ]));
+          return;
+        }
+        /* session present -> onAuthStateChange fires showApp() automatically */
+      }).catch(function (err) {
+        submitBtn.removeAttribute("disabled");
+        msgBox.appendChild(el("div", { class: "auth-gate-msg error" }, [document.createTextNode("კავშირის შეცდომა: " + err.message)]));
+      });
+    });
+
+    card.appendChild(form);
+    root.appendChild(card);
+  }
+
+  function signOutUser() {
+    supabaseClient.auth.signOut();
+  }
+
+  supabaseClient.auth.onAuthStateChange(function (event, session) {
+    if (session && session.user) {
+      showApp(session.user);
+    } else {
+      showGate("login");
+    }
+  });
+
   /* ---------- theme ---------- */
   function initTheme() {
     var saved = null;
@@ -4808,18 +4956,6 @@
     });
   }
 
-  document.getElementById("settingsToggle").addEventListener("click", function () {
-    switchView("settings");
-  });
-
-  initTheme();
-  if (location.hash === "#admin") {
-    document.querySelectorAll(".view").forEach(function (v) { v.classList.remove("active"); });
-    document.getElementById("view-admin").classList.add("active");
-    renderAdminView();
-  } else {
-    switchView("home");
-  }
 })();
 </script>
 
