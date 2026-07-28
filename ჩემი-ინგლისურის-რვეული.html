@@ -4842,13 +4842,7 @@
       switchView("settings");
     });
     initTheme();
-    if (location.hash === "#admin") {
-      document.querySelectorAll(".view").forEach(function (v) { v.classList.remove("active"); });
-      document.getElementById("view-admin").classList.add("active");
-      renderAdminView();
-    } else {
-      switchView("home");
-    }
+    switchView("home");
   }
 
   function showApp(user) {
@@ -4933,13 +4927,77 @@
     supabaseClient.auth.signOut();
   }
 
-  supabaseClient.auth.onAuthStateChange(function (event, session) {
-    if (session && session.user) {
-      showApp(session.user);
+  /* ---------- admin access code (independent of Supabase auth — no email/rate-limit dependency) ---------- */
+  var ADMIN_ACCESS_CODE = "nonoadmin2026";
+  var ADMIN_CODE_STORAGE_KEY = "nonaEnglishNotebook.adminCodeVerified";
+
+  function isAdminCodeVerified() {
+    try { return sessionStorage.getItem(ADMIN_CODE_STORAGE_KEY) === "1"; } catch (e) { return false; }
+  }
+
+  function showAdminDirectly() {
+    document.getElementById("notebook").style.display = "none";
+    var gateRoot = document.getElementById("auth-gate-root");
+    gateRoot.style.display = "none";
+    gateRoot.innerHTML = "";
+    document.querySelectorAll(".view").forEach(function (v) { v.classList.remove("active"); });
+    document.getElementById("view-admin").classList.add("active");
+    renderAdminView();
+  }
+
+  function renderAdminCodeGate() {
+    var root = document.getElementById("auth-gate-root");
+    document.getElementById("notebook").style.display = "none";
+    root.style.display = "flex";
+    root.innerHTML = "";
+
+    var card = el("div", { class: "auth-gate-card" });
+    card.appendChild(el("div", { class: "auth-gate-title" }, [document.createTextNode("🔒 Admin წვდომა")]));
+    card.appendChild(el("p", { class: "auth-gate-sub" }, [document.createTextNode("ეს გვერდი ცალკე კოდითაა დაცული — Supabase login-ისგან სრულად დამოუკიდებელია.")]));
+
+    var form = el("form", {});
+    var codeInput = el("input", { type: "password", autocomplete: "off", required: "required" });
+    form.appendChild(el("div", { class: "auth-gate-field" }, [el("label", {}, [document.createTextNode("Admin კოდი")]), codeInput]));
+    var submitBtn = el("button", { class: "auth-gate-submit", type: "submit" }, [document.createTextNode("შესვლა")]);
+    form.appendChild(submitBtn);
+    var msgBox = el("div", {});
+    form.appendChild(msgBox);
+
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      msgBox.innerHTML = "";
+      if (codeInput.value === ADMIN_ACCESS_CODE) {
+        try { sessionStorage.setItem(ADMIN_CODE_STORAGE_KEY, "1"); } catch (e2) {}
+        showAdminDirectly();
+      } else {
+        msgBox.appendChild(el("div", { class: "auth-gate-msg error" }, [document.createTextNode("არასწორი კოდი.")]));
+        codeInput.value = "";
+      }
+    });
+
+    card.appendChild(form);
+    root.appendChild(card);
+  }
+
+  function handleAdminRoute() {
+    if (isAdminCodeVerified()) {
+      showAdminDirectly();
     } else {
-      showGate("login");
+      renderAdminCodeGate();
     }
-  });
+  }
+
+  if (location.hash === "#admin") {
+    handleAdminRoute();
+  } else {
+    supabaseClient.auth.onAuthStateChange(function (event, session) {
+      if (session && session.user) {
+        showApp(session.user);
+      } else {
+        showGate("login");
+      }
+    });
+  }
 
   /* ---------- theme ---------- */
   function initTheme() {
