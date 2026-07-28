@@ -855,6 +855,7 @@
       <section id="view-reference" class="view"></section>
       <section id="view-chat" class="view"></section>
       <section id="view-settings" class="view"></section>
+      <section id="view-admin" class="view"></section>
     </div>
   </div>
 </div>
@@ -3451,6 +3452,79 @@
     additionalProperties: false
   };
 
+  /* ---------- admin: content import from photo (hidden, not linked from nav) ---------- */
+  var ADMIN_SYSTEM_PROMPT = "შენ ეხმარები ინგლისურის სახელმძღვანელოს გვერდის ფოტოს ციფრულ მასალად გადაქცევაში. წაიკითხე მხოლოდ ის, რაც სურათზე ნამდვილად სჩანს — არაფერი გამოიგონო და არაფერი დაამატო, რაც სურათზე არ წერია. თუ რაიმე ბუნდოვანია, ბუნდოვნად იკითხება ან გაუგებარია, ჩაწერე ეს კონკრეტულად 'notes' ველში და ნუ გამოიცნობ. დაალაგე ნაპოვნი კონტენტი 4 კატეგორიად: (1) lexicon — ცალკეული სიტყვები და მარტივი მისალმებები, თარგმანით; (2) grammar — გრამატიკის წესები და ახსნა-განმარტებები; (3) dialogues — საუბრის/კითხვა-პასუხის ტიპის ფრაზები (ორ ან მეტ სიტყვიანი) და სრული დიალოგები; (4) reading — წასაკითხი ტექსტები/comprehension პასაჟები. თუ რომელიმე კატეგორია სურათზე არ არის წარმოდგენილი, დააბრუნე მისთვის ცარიელი მასივი — არ გამოიგონო შემავსებელი მაგალითები.";
+
+  var ADMIN_OUTPUT_SCHEMA = {
+    type: "object",
+    properties: {
+      lexicon: {
+        type: "array",
+        description: "Individual vocabulary words / short greeting-type phrases visible in the image, with Georgian translation.",
+        items: {
+          type: "object",
+          properties: {
+            en: { type: "string" },
+            ka: { type: "string" },
+            ipa: { type: "string", description: "IPA pronunciation if determinable, else empty string" }
+          },
+          required: ["en", "ka", "ipa"],
+          additionalProperties: false
+        }
+      },
+      grammar: {
+        type: "array",
+        description: "Grammar rules/explanations visible in the image.",
+        items: {
+          type: "object",
+          properties: {
+            title_ka: { type: "string" },
+            note: { type: "string", description: "The grammar explanation, transcribed/summarized in Georgian." }
+          },
+          required: ["title_ka", "note"],
+          additionalProperties: false
+        }
+      },
+      dialogues: {
+        type: "array",
+        description: "Conversational Q&A-type phrases or full dialogue exchanges visible in the image.",
+        items: {
+          type: "object",
+          properties: {
+            title_ka: { type: "string" },
+            lines: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: { en: { type: "string" }, ka: { type: "string" } },
+                required: ["en", "ka"],
+                additionalProperties: false
+              }
+            }
+          },
+          required: ["title_ka", "lines"],
+          additionalProperties: false
+        }
+      },
+      reading: {
+        type: "array",
+        description: "Full reading/comprehension passages visible in the image, transcribed verbatim.",
+        items: {
+          type: "object",
+          properties: {
+            title_ka: { type: "string" },
+            text_en: { type: "string" }
+          },
+          required: ["title_ka", "text_en"],
+          additionalProperties: false
+        }
+      },
+      notes: { type: "string", description: "Anything unclear, unreadable, or ambiguous in the photo that needs the user's manual review. Empty string if nothing." }
+    },
+    required: ["lexicon", "grammar", "dialogues", "reading", "notes"],
+    additionalProperties: false
+  };
+
   var GENERAL_CHAT_CHIPS = [
     ["მისალმება", "Hello! My name is Nono."],
     ["ოჯახი", "I want to talk about my family."],
@@ -4471,6 +4545,210 @@
     });
   }
 
+  /* ---------- admin: content import from photo (hidden view, no nav link — reach via #admin in the address bar) ---------- */
+  function jsStringLiteral(s) {
+    return "\"" + String(s == null ? "" : s).replace(/\\/g, "\\\\").replace(/"/g, "\\\"").replace(/\n/g, "\\n") + "\"";
+  }
+
+  function adminSlugify(s) {
+    var out = String(s || "").toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
+    return out || "newItem";
+  }
+
+  function buildAdminInsertSnippet(parsed, unitId) {
+    var lines = [];
+    if (parsed.lexicon && parsed.lexicon.length) {
+      lines.push("// === ლექსიკონი — ჩასვი ეს ბარათები " + unitId + "-ის შესაბამის DECKS ჩანაწერის cards: [...] მასივში ===");
+      parsed.lexicon.forEach(function (w) {
+        lines.push("{ en: " + jsStringLiteral(w.en) + ", ipa: " + jsStringLiteral(w.ipa || "") + ", ka: " + jsStringLiteral(w.ka) + " },");
+      });
+      lines.push("");
+    }
+    if (parsed.grammar && parsed.grammar.length) {
+      lines.push("// === გრამატიკა — ჩასვი ეს ჩანაწერები GRAMMAR მასივში, და დაამატე მათი id UNITS." + unitId + ".grammarIds-ში ===");
+      parsed.grammar.forEach(function (g) {
+        lines.push("{ id: " + jsStringLiteral(adminSlugify(g.title_ka)) + ", kind: \"grammar\", ka: " + jsStringLiteral(g.title_ka) + ", en: \"\", note: " + jsStringLiteral(g.note) + ", items: [] },");
+      });
+      lines.push("");
+    }
+    if (parsed.dialogues && parsed.dialogues.length) {
+      lines.push("// === დიალოგები — ჩასვი ეს ჩანაწერები GRAMMAR მასივში, და დაამატე მათი id UNITS." + unitId + ".grammarIds-ში ===");
+      parsed.dialogues.forEach(function (d) {
+        var itemsStr = (d.lines || []).map(function (ln) {
+          return "{ prompt: " + jsStringLiteral(ln.en) + ", instruction: \"თარგმნე ქართულად.\", answer: " + jsStringLiteral(ln.ka) + " }";
+        }).join(", ");
+        lines.push("{ id: " + jsStringLiteral(adminSlugify(d.title_ka)) + ", kind: \"dialogue\", ka: " + jsStringLiteral(d.title_ka) + ", en: \"\", items: [" + itemsStr + "] },");
+      });
+      lines.push("");
+    }
+    if (parsed.reading && parsed.reading.length) {
+      lines.push("// === ტექსტები — ჩასვი ეს ჩანაწერები GRAMMAR მასივში, და დაამატე მათი id UNITS." + unitId + ".grammarIds-ში ===");
+      parsed.reading.forEach(function (r) {
+        lines.push("{ id: " + jsStringLiteral(adminSlugify(r.title_ka)) + ", kind: \"reading\", ka: " + jsStringLiteral(r.title_ka) + ", en: \"\", note: " + jsStringLiteral(r.text_en) + ", items: [] },");
+      });
+      lines.push("");
+    }
+    lines.push("// შენიშვნა: items: [] ცარიელია — სავარჯიშო კითხვები ფოტოზე ჩანს, თუ ცალკეა, ხელით დაამატე.");
+    lines.push("// ნუ დაგავიწყდება ზემოთ ახალი id-ების დამატება UNITS." + unitId + ".deckIds / .grammarIds მასივებში!");
+    return lines.join("\n");
+  }
+
+  function renderAdminResult(container, parsed, unitId) {
+    container.innerHTML = "";
+    if (parsed.notes) {
+      container.appendChild(el("p", { style: "background:var(--gold-soft);border-left:3px solid var(--gold);border-radius:10px;padding:10px 14px;font-size:0.85rem;margin:0 0 14px" }, [
+        document.createTextNode("⚠️ Claude-ის შენიშვნა: " + parsed.notes)
+      ]));
+    }
+    container.appendChild(el("h4", { style: "margin:0 0 8px" }, [document.createTextNode("მიღებული JSON (გადაამოწმე თვალით):")]));
+    var pre = el("pre", { style: "background:var(--paper);border:1px solid var(--border);border-radius:10px;padding:12px;font-size:0.8rem;overflow:auto;max-height:340px" }, [
+      document.createTextNode(JSON.stringify(parsed, null, 2))
+    ]);
+    container.appendChild(pre);
+
+    var insertBtn = el("button", { class: "check-btn", type: "button" }, [document.createTextNode("დამატება Unit-ში")]);
+    container.appendChild(insertBtn);
+
+    var snippetWrap = el("div", { style: "display:none;margin-top:14px" });
+    container.appendChild(snippetWrap);
+
+    insertBtn.addEventListener("click", function () {
+      var snippet = buildAdminInsertSnippet(parsed, unitId);
+      snippetWrap.innerHTML = "";
+      snippetWrap.appendChild(el("p", { style: "font-size:0.85rem;color:var(--ink-soft);margin:0 0 8px" }, [
+        document.createTextNode("ეს გვერდი ვერ წერს პირდაპირ .html ფაილში (ბრაუზერს არ აქვს ამის უფლება) — დააკოპირე ეს კოდი და ჩასვი ხელით DECKS/GRAMMAR მასივებში, ტესტირების და commit-ის შემდეგ, ისევე როგორც აქამდე ყოველთვის ხდებოდა.")
+      ]));
+      var textarea = el("textarea", { readonly: "readonly", style: "width:100%;min-height:200px;font-family:monospace;font-size:0.8rem;padding:10px;border-radius:10px;border:1px solid var(--border);background:var(--paper)" });
+      textarea.value = snippet;
+      snippetWrap.appendChild(textarea);
+      var copyBtn = el("button", { class: "check-btn", type: "button", style: "margin-top:8px" }, [document.createTextNode("კოპირება")]);
+      copyBtn.addEventListener("click", function () {
+        textarea.select();
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(textarea.value).then(function () {
+            copyBtn.textContent = "დაკოპირდა ✓";
+            setTimeout(function () { copyBtn.textContent = "კოპირება"; }, 1500);
+          });
+        } else {
+          document.execCommand("copy");
+        }
+      });
+      snippetWrap.appendChild(copyBtn);
+      snippetWrap.style.display = "block";
+    });
+  }
+
+  function renderAdminView() {
+    var root = document.getElementById("view-admin");
+    root.innerHTML = "";
+    root.appendChild(el("h2", {}, [document.createTextNode("🔧 ახალი მასალის დამატება (admin)")]));
+    root.appendChild(el("p", { style: "color:var(--ink-soft);max-width:60ch;margin:6px 0 18px;font-size:0.85rem" }, [
+      document.createTextNode("ატვირთე სახელმძღვანელოს გვერდის ფოტო — Claude წაიკითხავს ტექსტს და დაალაგებს ლექსიკონის/გრამატიკის/დიალოგების/ტექსტების კატეგორიებად. ეს გვერდი მთავარ მენიუში არ ჩანს.")
+    ]));
+
+    var unitRow = el("div", { style: "margin-bottom:14px" });
+    unitRow.appendChild(el("label", { style: "display:block;font-weight:600;margin-bottom:6px;font-size:0.85rem" }, [document.createTextNode("Unit (სად დაემატება):")]));
+    var select = el("select", { style: "padding:8px 12px;border-radius:10px;border:1px solid var(--border);font-size:0.9rem" });
+    UNITS.forEach(function (u) {
+      select.appendChild(el("option", { value: u.id }, [document.createTextNode(u.short + " — " + u.ka)]));
+    });
+    unitRow.appendChild(select);
+    root.appendChild(unitRow);
+
+    var fileInput = el("input", { type: "file", accept: "image/*" });
+    root.appendChild(el("div", { style: "margin-bottom:14px" }, [fileInput]));
+
+    var preview = el("div", { style: "margin-bottom:14px" });
+    root.appendChild(preview);
+
+    var analyzeBtn = el("button", { class: "check-btn", type: "button", disabled: "disabled" }, [document.createTextNode("გააანალიზე სურათი")]);
+    root.appendChild(analyzeBtn);
+
+    var statusBox = el("div", { style: "margin:12px 0;font-size:0.85rem;color:var(--ink-soft)" });
+    root.appendChild(statusBox);
+
+    var resultBox = el("div", {});
+    root.appendChild(resultBox);
+
+    var currentImageBase64 = null;
+    var currentImageMediaType = null;
+
+    fileInput.addEventListener("change", function () {
+      var file = fileInput.files[0];
+      preview.innerHTML = "";
+      currentImageBase64 = null;
+      analyzeBtn.setAttribute("disabled", "disabled");
+      if (!file) return;
+      currentImageMediaType = file.type || "image/jpeg";
+      var reader = new FileReader();
+      reader.onload = function () {
+        var dataUrl = reader.result;
+        currentImageBase64 = dataUrl.split(",")[1];
+        preview.appendChild(el("img", { src: dataUrl, style: "max-width:220px;border-radius:12px;border:1px solid var(--border);display:block" }));
+        analyzeBtn.removeAttribute("disabled");
+      };
+      reader.readAsDataURL(file);
+    });
+
+    analyzeBtn.addEventListener("click", function () {
+      if (!currentImageBase64) return;
+      if (!getChatKey()) {
+        statusBox.textContent = "საჭიროა Anthropic API გასაღები — შეიყვანე ⚙ Settings გვერდზე.";
+        return;
+      }
+      analyzeBtn.setAttribute("disabled", "disabled");
+      statusBox.textContent = "იტვირთება და აანალიზებს სურათს...";
+      resultBox.innerHTML = "";
+
+      fetch(CHAT_API_URL, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "x-api-key": getChatKey(),
+          "anthropic-version": "2023-06-01",
+          "anthropic-dangerous-direct-browser-access": "true"
+        },
+        body: JSON.stringify({
+          model: CHAT_MODEL,
+          max_tokens: 4000,
+          system: ADMIN_SYSTEM_PROMPT,
+          messages: [{
+            role: "user",
+            content: [
+              { type: "image", source: { type: "base64", media_type: currentImageMediaType, data: currentImageBase64 } },
+              { type: "text", text: "გააანალიზე ეს სურათი და დააბრუნე სტრუქტურირებული JSON, ზუსტად მოცემული სქემის მიხედვით." }
+            ]
+          }],
+          output_config: {
+            effort: "medium",
+            format: { type: "json_schema", schema: ADMIN_OUTPUT_SCHEMA }
+          }
+        })
+      }).then(function (res) {
+        return res.json().then(function (data) { return { ok: res.ok, status: res.status, data: data }; });
+      }).then(function (result) {
+        analyzeBtn.removeAttribute("disabled");
+        if (!result.ok) {
+          var msg = result.data && result.data.error && result.data.error.message ? result.data.error.message : "უცნობი შეცდომა (სტატუსი " + result.status + ")";
+          if (result.status === 401) msg = "API გასაღები არასწორია ან ვადაგასულია — შეამოწმე ⚙ Settings გვერდზე.";
+          statusBox.textContent = "შეცდომა: " + msg;
+          return;
+        }
+        var content = result.data.content || [];
+        var textBlock = null;
+        for (var i = 0; i < content.length; i++) { if (content[i].type === "text") { textBlock = content[i]; break; } }
+        if (!textBlock) { statusBox.textContent = "პასუხი ვერ მოვიდა — სცადე ისევ."; return; }
+        var parsed;
+        try { parsed = JSON.parse(textBlock.text); } catch (e) { statusBox.textContent = "JSON ვერ დაპარსდა: " + e.message; return; }
+        statusBox.textContent = "მზადაა — გადაამოწმე შედეგი ქვემოთ:";
+        renderAdminResult(resultBox, parsed, select.value);
+      }).catch(function (err) {
+        analyzeBtn.removeAttribute("disabled");
+        statusBox.textContent = "კავშირის შეცდომა: " + err.message;
+      });
+    });
+  }
+
   /* ---------- theme ---------- */
   function initTheme() {
     var saved = null;
@@ -4491,7 +4769,13 @@
   });
 
   initTheme();
-  switchView("home");
+  if (location.hash === "#admin") {
+    document.querySelectorAll(".view").forEach(function (v) { v.classList.remove("active"); });
+    document.getElementById("view-admin").classList.add("active");
+    renderAdminView();
+  } else {
+    switchView("home");
+  }
 })();
 </script>
 
