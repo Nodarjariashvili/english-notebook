@@ -4546,6 +4546,24 @@
   }
 
   /* ---------- admin: content import from photo (hidden view, no nav link — reach via #admin in the address bar) ---------- */
+  var heic2anyLoadPromise = null;
+  function loadHeic2Any() {
+    if (window.heic2any) return Promise.resolve();
+    if (heic2anyLoadPromise) return heic2anyLoadPromise;
+    heic2anyLoadPromise = new Promise(function (resolve, reject) {
+      var s = document.createElement("script");
+      s.src = "https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js";
+      s.onload = function () { resolve(); };
+      s.onerror = function () { heic2anyLoadPromise = null; reject(new Error("heic2any ბიბლიოთეკის ჩატვირთვა ვერ მოხერხდა — ინტერნეტთან კავშირი შეამოწმე.")); };
+      document.head.appendChild(s);
+    });
+    return heic2anyLoadPromise;
+  }
+
+  function isHeicFile(file) {
+    return /image\/hei[cf]/i.test(file.type || "") || /\.hei[cf]$/i.test(file.name || "");
+  }
+
   function jsStringLiteral(s) {
     return "\"" + String(s == null ? "" : s).replace(/\\/g, "\\\\").replace(/"/g, "\\\"").replace(/\n/g, "\\n") + "\"";
   }
@@ -4673,13 +4691,8 @@
     var currentImageBase64 = null;
     var currentImageMediaType = null;
 
-    fileInput.addEventListener("change", function () {
-      var file = fileInput.files[0];
-      preview.innerHTML = "";
-      currentImageBase64 = null;
-      analyzeBtn.setAttribute("disabled", "disabled");
-      if (!file) return;
-      currentImageMediaType = file.type || "image/jpeg";
+    function showImagePreview(blob, mediaType) {
+      currentImageMediaType = mediaType;
       var reader = new FileReader();
       reader.onload = function () {
         var dataUrl = reader.result;
@@ -4687,7 +4700,32 @@
         preview.appendChild(el("img", { src: dataUrl, style: "max-width:220px;border-radius:12px;border:1px solid var(--border);display:block" }));
         analyzeBtn.removeAttribute("disabled");
       };
-      reader.readAsDataURL(file);
+      reader.readAsDataURL(blob);
+    }
+
+    fileInput.addEventListener("change", function () {
+      var file = fileInput.files[0];
+      preview.innerHTML = "";
+      currentImageBase64 = null;
+      analyzeBtn.setAttribute("disabled", "disabled");
+      if (!file) return;
+
+      if (isHeicFile(file)) {
+        preview.appendChild(el("p", { style: "color:var(--ink-soft);font-size:0.85rem" }, [document.createTextNode("HEIC ფაილი კონვერტირდება...")]));
+        loadHeic2Any().then(function () {
+          return window.heic2any({ blob: file, toType: "image/jpeg", quality: 0.82 });
+        }).then(function (result) {
+          var outBlob = Array.isArray(result) ? result[0] : result;
+          preview.innerHTML = "";
+          showImagePreview(outBlob, "image/jpeg");
+        }).catch(function (err) {
+          preview.innerHTML = "";
+          preview.appendChild(el("p", { style: "color:var(--rust)" }, [document.createTextNode("HEIC კონვერტაცია ვერ მოხერხდა: " + err.message)]));
+        });
+        return;
+      }
+
+      showImagePreview(file, file.type || "image/jpeg");
     });
 
     analyzeBtn.addEventListener("click", function () {
