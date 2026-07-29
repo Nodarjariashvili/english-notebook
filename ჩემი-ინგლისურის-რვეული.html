@@ -7,6 +7,10 @@
 <meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>ჩემი ინგლისურის რვეული — Nono's English Notebook</title>
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#d72f92">
+<link rel="apple-touch-icon" href="./apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@400;600;700;800&family=Caveat:wght@600&display=swap" rel="stylesheet">
@@ -5026,6 +5030,13 @@
       var next = effectiveDark ? "light" : "dark";
       document.documentElement.setAttribute("data-theme", next);
       try { localStorage.setItem("nonaEnglishNotebook.theme", next); } catch (e) {}
+    });
+  }
+
+  /* ---------- PWA service worker registration ---------- */
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("./service-worker.js").catch(function (err) {
+      console.error("Service worker registration failed:", err.message);
     });
   }
 

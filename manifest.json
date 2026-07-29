@@ -1,0 +1,12 @@
+{
+  "name": "ჩემი ინგლისურის რვეული",
+  "short_name": "ინგლისური",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#fcedf6",
+  "theme_color": "#d72f92",
+  "icons": [
+    { "src": "icon-192.png", "type": "image/png", "sizes": "192x192" },
+    { "src": "icon-512.png", "type": "image/png", "sizes": "512x512" }
+  ]
+}
