@@ -4906,6 +4906,7 @@
   }
 
   function showGate(mode) {
+    console.log("showGate() called, mode:", mode, "-- setting currentAuthUser to null (was:", currentAuthUser, ")");
     currentAuthUser = null;
     document.getElementById("notebook").style.display = "none";
     var root = document.getElementById("auth-gate-root");
