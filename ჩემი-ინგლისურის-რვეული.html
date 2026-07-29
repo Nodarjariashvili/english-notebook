@@ -1888,6 +1888,7 @@
   }
   var supabaseSaveTimer = null;
   function saveState() {
+    console.log("saveState() called, currentAuthUser at this moment:", currentAuthUser);
     if (!state.activity) state.activity = {};
     state.activity[dateKeyOf(new Date())] = true;
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) {}
@@ -1903,6 +1904,7 @@
           activity: state.activity,
           updated_at: new Date().toISOString()
         }, { onConflict: "user_id" }).then(function (res) {
+          console.log("Supabase upsert response, full error object:", res.error);
           if (res.error) console.error("Supabase progress sync failed:", res.error.message);
         });
       }, 1500);
@@ -4934,6 +4936,7 @@
 
   function showGate(mode) {
     console.log("showGate() called, mode:", mode, "-- setting currentAuthUser to null (was:", currentAuthUser, ")");
+    console.trace("showGate() call stack (who called this, setting currentAuthUser = null):");
     currentAuthUser = null;
     document.getElementById("notebook").style.display = "none";
     var root = document.getElementById("auth-gate-root");
@@ -5085,6 +5088,7 @@
     handleAdminRoute();
   } else {
     supabaseClient.auth.onAuthStateChange(function (event, session) {
+      console.log("onAuthStateChange fired -- event:", event, "| session exists:", !!session, "| user id:", session && session.user ? session.user.id : null);
       if (session && session.user) {
         showApp(session.user);
       } else {
