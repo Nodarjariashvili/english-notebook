@@ -1885,6 +1885,7 @@
     if (currentAuthUser) {
       if (supabaseSaveTimer) clearTimeout(supabaseSaveTimer);
       supabaseSaveTimer = setTimeout(function () {
+        console.log("Attempting Supabase save, user:", currentAuthUser);
         supabaseClient.from("user_progress").upsert({
           user_id: currentAuthUser.id,
           cards: state.cards,
