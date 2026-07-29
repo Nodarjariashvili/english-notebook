@@ -2181,17 +2181,23 @@
     return node;
   }
 
+  /* SVG icons instead of emoji glyphs -- emoji rely on the platform's color-emoji font being
+     substituted in for the app's own text font stack, which is not guaranteed to happen reliably
+     at small sizes; inline SVG with stroke="currentColor" always renders, on every platform. */
+  var EYE_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+  var EYE_OFF_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><path d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-7 0-11-8-11-8a18.5 18.5 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
+
   /* wraps a type="password" input with an in-field show/hide toggle icon; returns the wrapper element to append instead of the bare input */
   function attachPasswordToggle(input) {
     var wrap = el("div", { class: "password-field-wrap" }, [input]);
-    var toggleBtn = el("button", { class: "password-toggle-btn", type: "button", "aria-label": "პაროლის ჩვენება/დამალვა" }, [document.createTextNode("👁️")]);
+    var toggleBtn = el("button", { class: "password-toggle-btn", type: "button", "aria-label": "პაროლის ჩვენება/დამალვა", html: EYE_SVG });
     toggleBtn.addEventListener("click", function () {
       if (input.type === "password") {
         input.type = "text";
-        toggleBtn.textContent = "🙈";
+        toggleBtn.innerHTML = EYE_OFF_SVG;
       } else {
         input.type = "password";
-        toggleBtn.textContent = "👁️";
+        toggleBtn.innerHTML = EYE_SVG;
       }
     });
     wrap.appendChild(toggleBtn);
