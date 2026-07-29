@@ -767,10 +767,20 @@
   .chat-setup p { color: var(--ink-soft); font-size: 0.92rem; line-height: 1.55; }
   .chat-setup label { display: block; font-weight: 600; font-size: 0.86rem; margin: 16px 0 6px; }
   .chat-key-row { display: flex; gap: 8px; }
-  .chat-key-row input { flex: 1; padding: 11px 14px; border-radius: 10px; border: 1.5px solid var(--border); background: var(--surface); color: var(--ink); font-size: 0.92rem; font-family: monospace; }
+  .chat-key-row .password-field-wrap { flex: 1; }
+  .chat-key-row input { width: 100%; padding: 11px 14px; border-radius: 10px; border: 1.5px solid var(--border); background: var(--surface); color: var(--ink); font-size: 0.92rem; font-family: monospace; }
   .chat-key-row input:focus { border-color: var(--brand); }
-  .chat-toggle-btn { border: 1px solid var(--border); background: var(--surface); border-radius: 10px; padding: 0 14px; cursor: pointer; color: var(--ink-soft); }
   .chat-hint { font-size: 0.8rem; color: var(--ink-faint); margin-top: 14px; }
+
+  /* --- password field show/hide toggle (in-field, right-aligned icon) --- */
+  .password-field-wrap { position: relative; display: flex; align-items: stretch; }
+  .password-field-wrap input { padding-right: 44px !important; }
+  .password-toggle-btn {
+    position: absolute; right: 0; top: 0; height: 100%; min-width: 44px; min-height: 44px;
+    display: flex; align-items: center; justify-content: center;
+    background: none; border: none; cursor: pointer; font-size: 1.05rem; color: var(--ink-soft); padding: 0;
+  }
+  .password-toggle-btn:hover { color: var(--brand); }
 
   .chat-topbar { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 6px; }
   .chat-scope-badge { display: inline-flex; align-items: center; gap: 8px; background: var(--brand-soft); color: var(--brand-ink); border-radius: 999px; padding: 5px 12px 5px 14px; font-size: 0.82rem; font-weight: 600; }
@@ -2169,6 +2179,23 @@
     }
     (children || []).forEach(function (c) { if (c) node.appendChild(c); });
     return node;
+  }
+
+  /* wraps a type="password" input with an in-field show/hide toggle icon; returns the wrapper element to append instead of the bare input */
+  function attachPasswordToggle(input) {
+    var wrap = el("div", { class: "password-field-wrap" }, [input]);
+    var toggleBtn = el("button", { class: "password-toggle-btn", type: "button", "aria-label": "პაროლის ჩვენება/დამალვა" }, [document.createTextNode("👁️")]);
+    toggleBtn.addEventListener("click", function () {
+      if (input.type === "password") {
+        input.type = "text";
+        toggleBtn.textContent = "🙈";
+      } else {
+        input.type = "password";
+        toggleBtn.textContent = "👁️";
+      }
+    });
+    wrap.appendChild(toggleBtn);
+    return wrap;
   }
 
   /* ---------- mastery helpers ---------- */
@@ -3823,9 +3850,7 @@
     var keyRow = el("div", { class: "chat-key-row" });
     var input = el("input", { type: "password", placeholder: placeholder, autocomplete: "off", spellcheck: "false" });
     input.value = getter();
-    var toggleBtn = el("button", { class: "chat-toggle-btn", type: "button" }, [document.createTextNode("👁")]);
-    toggleBtn.addEventListener("click", function () { input.type = input.type === "password" ? "text" : "password"; });
-    keyRow.appendChild(input); keyRow.appendChild(toggleBtn);
+    keyRow.appendChild(attachPasswordToggle(input));
     formWrap.appendChild(keyRow);
 
     var actions = el("div", { style: "display:flex;gap:8px;margin-top:8px" });
@@ -4053,18 +4078,14 @@
     var row1 = el("div", { class: "chat-key-row" });
     var input1 = el("input", { type: "password", id: "chatApiKeyInput", placeholder: "sk-ant-api03-...", autocomplete: "off", spellcheck: "false" });
     input1.value = getChatKey();
-    var toggle1 = el("button", { class: "chat-toggle-btn", type: "button" }, [document.createTextNode("👁")]);
-    toggle1.addEventListener("click", function () { input1.type = input1.type === "password" ? "text" : "password"; });
-    row1.appendChild(input1); row1.appendChild(toggle1);
+    row1.appendChild(attachPasswordToggle(input1));
     box.appendChild(row1);
 
     box.appendChild(el("label", { for: "chatOpenAiKeyInput" }, [document.createTextNode("OpenAI API გასაღები (ხმით საუბრისთვის — არასავალდებულო)")]));
     var row2 = el("div", { class: "chat-key-row" });
     var input2 = el("input", { type: "password", id: "chatOpenAiKeyInput", placeholder: "sk-proj-...", autocomplete: "off", spellcheck: "false" });
     input2.value = getOpenAiKey();
-    var toggle2 = el("button", { class: "chat-toggle-btn", type: "button" }, [document.createTextNode("👁")]);
-    toggle2.addEventListener("click", function () { input2.type = input2.type === "password" ? "text" : "password"; });
-    row2.appendChild(input2); row2.appendChild(toggle2);
+    row2.appendChild(attachPasswordToggle(input2));
     box.appendChild(row2);
 
     var btnRow = el("div", { style: "display:flex;gap:10px;flex-wrap:wrap;margin-top:16px" });
@@ -4932,7 +4953,7 @@
     var emailInput = el("input", { type: "email", autocomplete: "email", required: "required" });
     var passInput = el("input", { type: "password", autocomplete: mode === "login" ? "current-password" : "new-password", required: "required", minlength: "6" });
     form.appendChild(el("div", { class: "auth-gate-field" }, [el("label", {}, [document.createTextNode("ელფოსტა")]), emailInput]));
-    form.appendChild(el("div", { class: "auth-gate-field" }, [el("label", {}, [document.createTextNode("პაროლი")]), passInput]));
+    form.appendChild(el("div", { class: "auth-gate-field" }, [el("label", {}, [document.createTextNode("პაროლი")]), attachPasswordToggle(passInput)]));
 
     var submitBtn = el("button", { class: "auth-gate-submit", type: "submit" }, [document.createTextNode(mode === "login" ? "შესვლა" : "რეგისტრაცია")]);
     form.appendChild(submitBtn);
@@ -5021,7 +5042,7 @@
 
     var form = el("form", {});
     var codeInput = el("input", { type: "password", autocomplete: "off", required: "required" });
-    form.appendChild(el("div", { class: "auth-gate-field" }, [el("label", {}, [document.createTextNode("Admin კოდი")]), codeInput]));
+    form.appendChild(el("div", { class: "auth-gate-field" }, [el("label", {}, [document.createTextNode("Admin კოდი")]), attachPasswordToggle(codeInput)]));
     var submitBtn = el("button", { class: "auth-gate-submit", type: "submit" }, [document.createTextNode("შესვლა")]);
     form.appendChild(submitBtn);
     var msgBox = el("div", {});
