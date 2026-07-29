@@ -1811,9 +1811,9 @@
      logic, state management, and UI rendering — not lesson content.
      ============================================================ */
 
-  var state = loadState();
+  var state = { cards: {}, quiz: {}, activity: {} };
 
-  function loadState() {
+  function loadStateFromLocalStorage() {
     var s;
     try {
       var raw = localStorage.getItem(STORAGE_KEY);
@@ -1834,6 +1834,32 @@
     });
     return s;
   }
+
+  /* loadState() returns a Promise now, so it can consult Supabase (user_progress)
+     when a session exists, falling back to localStorage otherwise. Only called
+     from showApp(user), i.e. after the Supabase auth session is confirmed. */
+  function loadState() {
+    if (!currentAuthUser) {
+      return Promise.resolve(loadStateFromLocalStorage());
+    }
+    return supabaseClient.from("user_progress").select("*").eq("user_id", currentAuthUser.id).maybeSingle()
+      .then(function (res) {
+        if (res.error) return loadStateFromLocalStorage();
+        if (res.data) {
+          return {
+            cards: res.data.cards || {},
+            quiz: res.data.quiz || {},
+            activity: res.data.activity || {}
+          };
+        }
+        /* no row yet for this user (first time with this table) -- seed from
+           whatever progress already exists locally on this device/browser. */
+        return loadStateFromLocalStorage();
+      })
+      .catch(function () {
+        return loadStateFromLocalStorage();
+      });
+  }
   function dateKeyOf(d) {
     var mm = String(d.getMonth() + 1); if (mm.length < 2) mm = "0" + mm;
     var dd = String(d.getDate()); if (dd.length < 2) dd = "0" + dd;
@@ -1850,10 +1876,26 @@
     }
     return streak;
   }
+  var supabaseSaveTimer = null;
   function saveState() {
     if (!state.activity) state.activity = {};
     state.activity[dateKeyOf(new Date())] = true;
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) {}
+
+    if (currentAuthUser) {
+      if (supabaseSaveTimer) clearTimeout(supabaseSaveTimer);
+      supabaseSaveTimer = setTimeout(function () {
+        supabaseClient.from("user_progress").upsert({
+          user_id: currentAuthUser.id,
+          cards: state.cards,
+          quiz: state.quiz,
+          activity: state.activity,
+          updated_at: new Date().toISOString()
+        }, { onConflict: "user_id" }).then(function (res) {
+          if (res.error) console.error("Supabase progress sync failed:", res.error.message);
+        });
+      }, 1500);
+    }
   }
 
   function normalize(s) {
@@ -4855,7 +4897,11 @@
     gateRoot.style.display = "none";
     gateRoot.innerHTML = "";
     document.getElementById("notebook").style.display = "";
-    startAppOnce();
+    if (appStarted) return; /* already running -- state is already loaded and kept in sync via saveState() */
+    loadState().then(function (loadedState) {
+      state = loadedState;
+      startAppOnce();
+    });
   }
 
   function showGate(mode) {
