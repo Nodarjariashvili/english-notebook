@@ -2709,39 +2709,6 @@
   }
 
   var accordionOpen = {};
-  function miniProgressHtml(done, total) {
-    var pct = total ? Math.round((done / total) * 100) : 0;
-    var color = total === 0 ? "var(--border)" : pct >= 75 ? "var(--green)" : pct > 0 ? "var(--gold)" : "var(--border)";
-    return "<span class='ring' style='--pct:" + pct + ";--ring-color:" + color + "' title='" + done + " / " + total + "'>" +
-      "<span class='ring-hole'><span class='ring-label'>" + pct + "%</span></span>" +
-      "</span>";
-  }
-
-  function accordionSection(unitId, key, icon, title, metaHtml, buildBody, color, directNav) {
-    var stateKey = unitId + ":" + key;
-    var isOpen = !!accordionOpen[stateKey];
-    var wrap = el("div", { class: "accordion" + (isOpen ? " open" : ""), "data-color": color || "" });
-    var header = el("button", { class: "accordion-header", type: "button" }, [
-      el("span", { class: "accordion-title" }, [
-        el("span", { class: "accordion-icon" }, [document.createTextNode(icon)]),
-        document.createTextNode(title)
-      ]),
-      el("span", { class: "accordion-meta", html: metaHtml }),
-      el("span", { class: "accordion-chevron" }, [document.createTextNode("▾")])
-    ]);
-    var body = el("div", { class: "accordion-body" });
-    var inner = el("div", { class: "accordion-body-inner" });
-    buildBody(inner);
-    body.appendChild(inner);
-    header.addEventListener("click", function () {
-      if (directNav) { directNav(); return; }
-      accordionOpen[stateKey] = !accordionOpen[stateKey];
-      wrap.classList.toggle("open");
-    });
-    wrap.appendChild(header);
-    wrap.appendChild(body);
-    return wrap;
-  }
 
   /* ---------- unit section tabs (shown at top of any section-detail view) ---------- */
   var UNIT_SECTION_DEFS = [
@@ -2796,26 +2763,24 @@
     if (!cardsSub) {
       var unit = currentUnitObj();
 
-      var flipAgg = { done: 0, total: 0 };
-      unitDecks(unit).forEach(function (d) { var dm = deckMastery(d, "flip"); flipAgg.done += dm.green; flipAgg.total += dm.total; });
       if (unitDecks(unit).length > 1) {
-        root.appendChild(accordionSection(unit.id, "lex", "📖", "ლექსიკონი", miniProgressHtml(flipAgg.done, flipAgg.total), function (body) {
-          body.appendChild(el("p", { style: "color:var(--ink-soft);margin:0 0 10px;max-width:60ch;font-size:0.85rem" }, [
-            document.createTextNode("ამ თავის სიტყვები და ფრაზები — დააჭირე კომპლექტს ბარათების სანახავად.")
-          ]));
-          var vocabGrid = el("div", { class: "picker-grid" });
-          unitDecks(unit).forEach(function (deck) {
-            var dm = deckMastery(deck);
-            var card = el("button", { class: "picker-card", type: "button" }, [
-              el("span", { class: "ka" }, [document.createTextNode(deck.ka)]),
-              el("span", { class: "en" }, [document.createTextNode(deck.en)]),
-              el("span", { class: "meta" }, [document.createTextNode(deck.cards.length + " ბარათი · ვიცი " + dm.green + "/" + dm.total)])
-            ]);
-            card.addEventListener("click", function (id) { return function () { openDeckFlip(id); }; }(deck.id));
-            vocabGrid.appendChild(card);
-          });
-          body.appendChild(vocabGrid);
-        }, "info", null));
+        var lexDirect = el("div", {});
+        lexDirect.appendChild(el("p", { style: "color:var(--ink-soft);margin:0 0 10px;max-width:60ch;font-size:0.85rem" }, [
+          document.createTextNode("ამ თავის სიტყვები და ფრაზები — დააჭირე კომპლექტს ბარათების სანახავად.")
+        ]));
+        var vocabGrid = el("div", { class: "picker-grid" });
+        unitDecks(unit).forEach(function (deck) {
+          var dm = deckMastery(deck);
+          var card = el("button", { class: "picker-card", type: "button" }, [
+            el("span", { class: "ka" }, [document.createTextNode(deck.ka)]),
+            el("span", { class: "en" }, [document.createTextNode(deck.en)]),
+            el("span", { class: "meta" }, [document.createTextNode(deck.cards.length + " ბარათი · ვიცი " + dm.green + "/" + dm.total)])
+          ]);
+          card.addEventListener("click", function (id) { return function () { openDeckFlip(id); }; }(deck.id));
+          vocabGrid.appendChild(card);
+        });
+        lexDirect.appendChild(vocabGrid);
+        root.appendChild(lexDirect);
       }
 
       return;
@@ -3350,25 +3315,17 @@
       var dialogueTopics = unitTopicsByKind(unit, "dialogue");
       var readingTopics = unitTopicsByKind(unit, "reading");
 
-      function topicsAgg(topics) {
-        var done = 0, total = 0;
-        topics.forEach(function (t) { var m = topicMastery(t); done += m.correct; total += m.total; });
-        return { done: done, total: total };
-      }
-
       if (grammarTopics.length > 1) {
-        var gAgg = topicsAgg(grammarTopics);
-        root.appendChild(accordionSection(unit.id, "grammar", "📐", "გრამატიკა", miniProgressHtml(gAgg.done, gAgg.total), function (body) {
-          body.appendChild(el("p", { style: "color:var(--ink-soft);margin:0 0 10px;max-width:60ch;font-size:0.85rem" }, [document.createTextNode("გრამატიკის წესები და სავარჯიშოები ამ თავიდან.")]));
-          body.appendChild(topicGrid(grammarTopics));
-        }, "violet", null));
+        var grammarDirect = el("div", {});
+        grammarDirect.appendChild(el("p", { style: "color:var(--ink-soft);margin:0 0 10px;max-width:60ch;font-size:0.85rem" }, [document.createTextNode("გრამატიკის წესები და სავარჯიშოები ამ თავიდან.")]));
+        grammarDirect.appendChild(topicGrid(grammarTopics));
+        root.appendChild(grammarDirect);
       }
       if (readingTopics.length > 1) {
-        var rAgg = topicsAgg(readingTopics);
-        root.appendChild(accordionSection(unit.id, "reading", "✏️", "სავარჯიშოები — წაკითხვის გაგება", miniProgressHtml(rAgg.done, rAgg.total), function (body) {
-          body.appendChild(el("p", { style: "color:var(--ink-soft);margin:0 0 10px;max-width:60ch;font-size:0.85rem" }, [document.createTextNode("წაიკითხე ტექსტი და უპასუხე კითხვებს.")]));
-          body.appendChild(topicGrid(readingTopics));
-        }, "cyan", null));
+        var readingDirect = el("div", {});
+        readingDirect.appendChild(el("p", { style: "color:var(--ink-soft);margin:0 0 10px;max-width:60ch;font-size:0.85rem" }, [document.createTextNode("წაიკითხე ტექსტი და უპასუხე კითხვებს.")]));
+        readingDirect.appendChild(topicGrid(readingTopics));
+        root.appendChild(readingDirect);
       }
       return;
     }
