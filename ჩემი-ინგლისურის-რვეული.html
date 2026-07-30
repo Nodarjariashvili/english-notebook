@@ -840,6 +840,8 @@
   .auth-gate-field input:focus { border-color: var(--brand); }
   .auth-gate-submit { width: 100%; border: none; background: var(--brand-gradient); color: #fff; padding: 12px 22px; border-radius: 14px; font-weight: 700; cursor: pointer; font-size: 0.92rem; box-shadow: 0 4px 0 var(--brand-ink); margin-top: 4px; }
   .auth-gate-submit:disabled { opacity: 0.6; cursor: default; }
+  .auth-gate-remember { display: flex; align-items: center; gap: 8px; margin: 2px 0 16px; font-size: 0.85rem; color: var(--ink-soft); cursor: pointer; }
+  .auth-gate-remember input { width: 16px; height: 16px; accent-color: var(--brand); cursor: pointer; }
   .auth-gate-msg { font-size: 0.82rem; margin-top: 12px; line-height: 1.5; }
   .auth-gate-msg.error { color: var(--rust); }
   .auth-gate-msg.info { color: var(--green-ink); }
@@ -4760,7 +4762,28 @@
   /* ---------- auth (Supabase email/password) ---------- */
   var SUPABASE_URL = "https://wddqjehzoicwkqyqfiqs.supabase.co";
   var SUPABASE_ANON_KEY = "sb_publishable_zitiafi593Rb2zBZjxgSag_F85xhVCf";
-  var supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  /* "Remember me" — a small flag (always in localStorage) decides where the SDK
+     itself persists the session: localStorage survives browser restarts,
+     sessionStorage is cleared when the browser closes. Default = remembered. */
+  var AUTH_REMEMBER_KEY = "nonaEnglishNotebook.rememberMe";
+  function authRememberEnabled() {
+    try { return localStorage.getItem(AUTH_REMEMBER_KEY) !== "0"; } catch (e) { return true; }
+  }
+  var authStorageAdapter = {
+    getItem: function (key) {
+      try { return (authRememberEnabled() ? localStorage : sessionStorage).getItem(key); } catch (e) { return null; }
+    },
+    setItem: function (key, value) {
+      try { (authRememberEnabled() ? localStorage : sessionStorage).setItem(key, value); } catch (e) {}
+    },
+    removeItem: function (key) {
+      try { (authRememberEnabled() ? localStorage : sessionStorage).removeItem(key); } catch (e) {}
+    }
+  };
+  var supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    auth: { storage: authStorageAdapter, persistSession: true, autoRefreshToken: true }
+  });
   var currentAuthUser = null;
   var appStarted = false;
 
@@ -4817,6 +4840,16 @@
     form.appendChild(el("div", { class: "auth-gate-field" }, [el("label", {}, [document.createTextNode("ელფოსტა")]), emailInput]));
     form.appendChild(el("div", { class: "auth-gate-field" }, [el("label", {}, [document.createTextNode("პაროლი")]), attachPasswordToggle(passInput)]));
 
+    var rememberInput = null;
+    if (mode === "login") {
+      rememberInput = el("input", { type: "checkbox" });
+      rememberInput.checked = true;
+      var rememberLabel = el("label", { class: "auth-gate-remember" }, [
+        rememberInput, document.createTextNode("დამახსოვრება")
+      ]);
+      form.appendChild(rememberLabel);
+    }
+
     var submitBtn = el("button", { class: "auth-gate-submit", type: "submit" }, [document.createTextNode(mode === "login" ? "შესვლა" : "რეგისტრაცია")]);
     form.appendChild(submitBtn);
 
@@ -4830,6 +4863,8 @@
       if (!email || !password) return;
       submitBtn.setAttribute("disabled", "disabled");
       msgBox.innerHTML = "";
+
+      try { localStorage.setItem(AUTH_REMEMBER_KEY, (rememberInput ? rememberInput.checked : true) ? "1" : "0"); } catch (e) {}
 
       var action = mode === "login"
         ? supabaseClient.auth.signInWithPassword({ email: email, password: password })
