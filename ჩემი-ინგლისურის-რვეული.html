@@ -212,7 +212,8 @@
   }
 
   .desk { position: relative; z-index: 1; min-height: 100vh; display: flex; justify-content: center; padding: clamp(12px, 3vw, 40px); }
-  .notebook { width: 100%; display: flex; align-items: flex-start; }
+  .notebook { width: 100%; display: flex; flex-direction: column; }
+  .notebook-body { width: 100%; display: flex; align-items: flex-start; }
 
   /* --- Tab rail --- */
   .tabs { display: flex; flex-direction: column; gap: 10px; padding-top: 54px; flex-shrink: 0; z-index: 2; }
@@ -346,7 +347,6 @@
   .page.unit-mode #view-cards, .page.unit-mode #view-grammar { padding-top: 10px; }
   @media (min-width: 760px) {
     .page.unit-mode { display: grid; grid-template-columns: 1fr 1fr; align-items: start; column-gap: 6px; }
-    .page.unit-mode .masthead { grid-column: 1 / -1; }
     .page.unit-mode #view-home { grid-column: 1 / -1; }
     .page.unit-mode:has(#view-cards.active):not(:has(#view-grammar.active)) #view-cards { grid-column: 1 / -1; }
     .page.unit-mode:has(#view-grammar.active):not(:has(#view-cards.active)) #view-grammar { grid-column: 1 / -1; }
@@ -848,7 +848,7 @@
   .auth-gate-msg.info { color: var(--green-ink); }
 
   @media (max-width: 640px) {
-    .notebook { flex-direction: column; }
+    .notebook-body { flex-direction: column; }
     .tabs { flex-direction: row; flex-wrap: wrap; padding-top: 0; margin-bottom: 10px; }
     .tab { border-radius: 16px; border-right: 1px solid var(--border); margin-right: 0; box-shadow: none; }
     .tab.active { transform: none; }
@@ -863,26 +863,27 @@
 <div class="desk">
   <div id="auth-gate-root" class="auth-gate-root" style="display:none"></div>
   <div class="notebook" id="notebook">
-    <nav class="tabs" id="tabs"></nav>
-    <div class="page">
-      <header class="masthead">
-        <div class="title-block">
-          <h1>ჩემი ინგლისურის რვეული</h1>
-          <div class="subtitle">Nono's English Notebook — Unit 1 based on Speaking Tags</div>
-        </div>
-        <div class="masthead-actions">
-          <button class="settings-toggle" id="settingsToggle" type="button" aria-label="პარამეტრები">⚙ პარამეტრები</button>
-          <button class="theme-toggle" id="themeToggle" type="button" aria-label="თემის შეცვლა">◐ თემა</button>
-        </div>
-      </header>
-
-      <section id="view-home" class="view active"></section>
-      <section id="view-cards" class="view"></section>
-      <section id="view-grammar" class="view"></section>
-      <section id="view-reference" class="view"></section>
-      <section id="view-chat" class="view"></section>
-      <section id="view-settings" class="view"></section>
-      <section id="view-admin" class="view"></section>
+    <header class="masthead">
+      <div class="title-block">
+        <h1>ჩემი ინგლისურის რვეული</h1>
+        <div class="subtitle">Nono's English Notebook — Unit 1 based on Speaking Tags</div>
+      </div>
+      <div class="masthead-actions">
+        <button class="settings-toggle" id="settingsToggle" type="button" aria-label="პარამეტრები">⚙ პარამეტრები</button>
+        <button class="theme-toggle" id="themeToggle" type="button" aria-label="თემის შეცვლა">◐ თემა</button>
+      </div>
+    </header>
+    <div class="notebook-body">
+      <nav class="tabs" id="tabs"></nav>
+      <div class="page">
+        <section id="view-home" class="view active"></section>
+        <section id="view-cards" class="view"></section>
+        <section id="view-grammar" class="view"></section>
+        <section id="view-reference" class="view"></section>
+        <section id="view-chat" class="view"></section>
+        <section id="view-settings" class="view"></section>
+        <section id="view-admin" class="view"></section>
+      </div>
     </div>
   </div>
 </div>
@@ -2308,18 +2309,6 @@
   function renderTabs() {
     var wrap = document.getElementById("tabs");
     wrap.innerHTML = "";
-    UNITS.forEach(function (unit) {
-      var m = unitMastery(unit);
-      var dot = el("span", { class: "dot" });
-      if (m.colorState !== "none") dot.setAttribute("data-state", m.colorState);
-      var btn = el("button", { class: "tab tab-unit" + (currentUnit === unit.id ? " active" : ""), type: "button" }, [
-        dot, document.createTextNode(unit.short)
-      ]);
-      btn.addEventListener("click", function (id) { return function () { openUnit(id); }; }(unit.id));
-      wrap.appendChild(btn);
-    });
-
-    wrap.appendChild(el("div", { class: "tab-divider" }));
     TABS.forEach(function (t) {
       var dotState = "none";
       if (t.id === "home") dotState = overallMastery(UNITS, unitMastery).colorState;
@@ -2332,6 +2321,18 @@
         if (id === "chat" && chatScopeUnit !== null) { chatScopeUnit = null; chatHistory = []; chatStarted = false; }
         switchView(id);
       }; }(t.id));
+      wrap.appendChild(btn);
+    });
+
+    wrap.appendChild(el("div", { class: "tab-divider" }));
+    UNITS.forEach(function (unit) {
+      var m = unitMastery(unit);
+      var dot = el("span", { class: "dot" });
+      if (m.colorState !== "none") dot.setAttribute("data-state", m.colorState);
+      var btn = el("button", { class: "tab tab-unit" + (currentUnit === unit.id ? " active" : ""), type: "button" }, [
+        dot, document.createTextNode(unit.short)
+      ]);
+      btn.addEventListener("click", function (id) { return function () { openUnit(id); }; }(unit.id));
       wrap.appendChild(btn);
     });
   }
