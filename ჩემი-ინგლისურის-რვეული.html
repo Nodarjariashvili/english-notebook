@@ -2573,12 +2573,8 @@
   var materialDetailOpen = null;
 
   function unitMaterialCategories(unit) {
-    /* a category is only shown here if it does NOT also have a real, functional
-       accordion rendered below (in view-cards/view-grammar) -- when both exist,
-       the top card was a purely decorative duplicate of the working accordion. */
     var cats = [];
-    var deckCount = unitDecks(unit).length;
-    if (deckCount > 0 && !(deckCount > 1)) {
+    if (unitDecks(unit).length) {
       cats.push({ key: "lex", icon: "📖", label: "ლექსიკონი", color: "info" });
     }
     [
@@ -2586,9 +2582,7 @@
       ["dialogue", "💬", "დიალოგები", "gold"],
       ["reading", "✏️", "ტექსტები", "cyan"]
     ].forEach(function (k) {
-      var count = unitTopicsByKind(unit, k[0]).length;
-      var hasAccordionBelow = (k[0] === "grammar" || k[0] === "reading") && count > 1;
-      if (count > 0 && !hasAccordionBelow) {
+      if (unitTopicsByKind(unit, k[0]).length) {
         cats.push({ key: k[0], icon: k[1], label: k[2], color: k[3] });
       }
     });
