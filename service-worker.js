@@ -1,4 +1,4 @@
-var CACHE_NAME = "notebook-cache-v8";
+var CACHE_NAME = "notebook-cache-v9";
 var CACHED_FILES = [
   "./",
   "./index.html",
@@ -12,7 +12,14 @@ var CACHED_FILES = [
 self.addEventListener("install", function (event) {
   event.waitUntil(
     caches.open(CACHE_NAME).then(function (cache) {
-      return cache.addAll(CACHED_FILES);
+      /* cache each file independently -- cache.addAll() is all-or-nothing, so
+         a single failed/blocked resource would abort the whole install and
+         leave an old service worker (and old cached HTML) stuck in control. */
+      return Promise.all(CACHED_FILES.map(function (url) {
+        return cache.add(url).catch(function (err) {
+          console.error("SW install: failed to cache", url, err);
+        });
+      }));
     })
   );
   self.skipWaiting();

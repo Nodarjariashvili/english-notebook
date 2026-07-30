@@ -4783,9 +4783,31 @@
       try { (authRememberEnabled() ? localStorage : sessionStorage).removeItem(key); } catch (e) {}
     }
   };
-  var supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-    auth: { storage: authStorageAdapter, persistSession: true, autoRefreshToken: true }
-  });
+  function showLoadFailure() {
+    var root = document.getElementById("auth-gate-root");
+    document.getElementById("notebook").style.display = "none";
+    root.style.display = "flex";
+    root.innerHTML = "";
+    var card = el("div", { class: "auth-gate-card" });
+    card.appendChild(el("div", { class: "auth-gate-title" }, [document.createTextNode("⚠️ ჩატვირთვა ვერ მოხერხდა")]));
+    card.appendChild(el("p", { class: "auth-gate-sub" }, [
+      document.createTextNode("დაკავშირება ვერ მოხერხდა — შეამოწმე ინტერნეტი და სცადე თავიდან.")
+    ]));
+    var retryBtn = el("button", { class: "auth-gate-submit", type: "button" }, [document.createTextNode("თავიდან ცდა")]);
+    retryBtn.addEventListener("click", function () { location.reload(); });
+    card.appendChild(retryBtn);
+    root.appendChild(card);
+  }
+
+  var supabaseClient = null;
+  try {
+    if (!window.supabase) throw new Error("Supabase SDK failed to load (CDN unreachable)");
+    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: { storage: authStorageAdapter, persistSession: true, autoRefreshToken: true }
+    });
+  } catch (e) {
+    console.error("Supabase client init failed:", e.message);
+  }
   var currentAuthUser = null;
   var appStarted = false;
 
@@ -4976,6 +4998,8 @@
 
   if (location.hash === "#admin") {
     handleAdminRoute();
+  } else if (!supabaseClient) {
+    showLoadFailure();
   } else {
     supabaseClient.auth.onAuthStateChange(function (event, session) {
       console.log("onAuthStateChange fired -- event:", event, "| session exists:", !!session, "| user id:", session && session.user ? session.user.id : null);
