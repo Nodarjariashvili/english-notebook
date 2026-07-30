@@ -252,6 +252,11 @@
   .masthead .title-block { display: flex; flex-direction: column; gap: 2px; }
   .masthead h1 { font-size: clamp(1.3rem, 2.6vw, 1.7rem); color: var(--brand-ink); }
   .masthead .subtitle { color: var(--ink-soft); font-size: 0.88rem; }
+  .admin-badge {
+    display: inline-block; vertical-align: middle; margin-left: 8px;
+    background: var(--gold); color: #fff; font-size: 0.62rem; font-weight: 800;
+    text-transform: uppercase; letter-spacing: 0.06em; padding: 2px 8px; border-radius: 999px;
+  }
   .masthead-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
   .theme-toggle, .settings-toggle {
     border: none; background: var(--brand-gradient); color: #fff;
@@ -3758,6 +3763,19 @@
     loginRow.appendChild(logoutBtn);
     sec.appendChild(loginRow);
 
+    if (isAdminUser) {
+      var adminRow = el("div", { class: "settings-row" });
+      adminRow.appendChild(el("div", { class: "settings-icon-circle", "data-color": "violet" }, [document.createTextNode("🔧")]));
+      var adminMain = el("div", { class: "settings-row-main" });
+      adminMain.appendChild(el("div", { class: "settings-row-label" }, [document.createTextNode("კონტენტის მართვა (Admin)")]));
+      adminMain.appendChild(el("div", { class: "settings-row-value" }, [document.createTextNode("სურათის ატვირთვა და ანალიზი")]));
+      adminRow.appendChild(adminMain);
+      var adminBtn = el("button", { class: "redo-btn", type: "button", style: "margin-top:0" }, [document.createTextNode("გახსნა")]);
+      adminBtn.addEventListener("click", function () { location.hash = "#admin"; location.reload(); });
+      adminRow.appendChild(adminBtn);
+      sec.appendChild(adminRow);
+    }
+
     [
       ["🎂", "green", "ასაკი", String(PROFILE.age)],
       ["📍", "blue", "ქალაქი", PROFILE.city + " (" + PROFILE.cityEn + ")"],
@@ -4812,33 +4830,58 @@
   var currentAuthUser = null;
   var appStarted = false;
 
-  function startAppOnce() {
+  /* admin is whoever is logged into this exact Supabase account -- not a shared
+     code/route, so it can't be used by anyone who isn't actually signed in as her. */
+  var ADMIN_EMAIL = "nonojariashvili@gmail.com";
+  var isAdminUser = false;
+
+  function updateAdminBadge() {
+    var titleEl = document.querySelector(".masthead .title-block h1");
+    if (!titleEl) return;
+    var existing = document.getElementById("admin-badge");
+    if (isAdminUser) {
+      if (!existing) {
+        titleEl.appendChild(el("span", { id: "admin-badge", class: "admin-badge" }, [document.createTextNode("Admin")]));
+      }
+    } else if (existing) {
+      existing.remove();
+    }
+  }
+
+  function startAppOnce(goToAdmin) {
     if (appStarted) return;
     appStarted = true;
     document.getElementById("settingsToggle").addEventListener("click", function () {
       switchView("settings");
     });
     initTheme();
-    switchView("home");
+    if (goToAdmin) { showAdminDirectly(); } else { switchView("home"); }
   }
 
   function showApp(user) {
     currentAuthUser = user;
+    isAdminUser = !!(user && user.email && user.email.toLowerCase() === ADMIN_EMAIL);
+    updateAdminBadge();
     var gateRoot = document.getElementById("auth-gate-root");
     gateRoot.style.display = "none";
     gateRoot.innerHTML = "";
     document.getElementById("notebook").style.display = "";
-    if (appStarted) return; /* already running -- state is already loaded and kept in sync via saveState() */
+    var wantsAdmin = location.hash === "#admin";
+    if (wantsAdmin && !isAdminUser) location.hash = ""; /* not authorized -- silently fall back to the normal app */
+    if (appStarted) {
+      if (wantsAdmin && isAdminUser) showAdminDirectly();
+      return; /* already running -- state is already loaded and kept in sync via saveState() */
+    }
     loadState().then(function (loadedState) {
       state = loadedState;
-      startAppOnce();
+      startAppOnce(wantsAdmin && isAdminUser);
     });
   }
 
   function showGate(mode) {
-    console.log("showGate() called, mode:", mode, "-- setting currentAuthUser to null (was:", currentAuthUser, ")");
-    console.trace("showGate() call stack (who called this, setting currentAuthUser = null):");
     currentAuthUser = null;
+    isAdminUser = false;
+    updateAdminBadge();
     document.getElementById("notebook").style.display = "none";
     var root = document.getElementById("auth-gate-root");
     root.style.display = "flex";
@@ -4922,88 +4965,21 @@
     supabaseClient.auth.signOut();
   }
 
-  /* ---------- admin access code (independent of Supabase auth — no email/rate-limit dependency) ---------- */
-  var ADMIN_ACCESS_CODE = "nonoadmin2026";
-  var ADMIN_CODE_STORAGE_KEY = "nonaEnglishNotebook.adminCodeVerified";
-
-  function isAdminCodeVerified() {
-    try { return sessionStorage.getItem(ADMIN_CODE_STORAGE_KEY) === "1"; } catch (e) { return false; }
-  }
-
+  /* ---------- admin panel (gated by ADMIN_EMAIL above -- reached via #admin once signed in) ---------- */
   function showAdminDirectly() {
-    console.log("[admin-debug] showAdminDirectly() called");
-    var notebookEl = document.getElementById("notebook");
-    console.log("[admin-debug] #notebook element found:", !!notebookEl);
-    notebookEl.style.display = "";
-    console.log("[admin-debug] #notebook.style.display reset to (must be visible, #view-admin is nested inside it):", notebookEl.style.display);
+    document.getElementById("notebook").style.display = "";
     var gateRoot = document.getElementById("auth-gate-root");
-    console.log("[admin-debug] #auth-gate-root element found:", !!gateRoot);
     gateRoot.style.display = "none";
     gateRoot.innerHTML = "";
     document.querySelectorAll(".view").forEach(function (v) { v.classList.remove("active"); });
-    var viewAdminEl = document.getElementById("view-admin");
-    console.log("[admin-debug] #view-admin element found:", !!viewAdminEl);
-    console.log("[admin-debug] #view-admin is inside #notebook (DOM ancestry):", notebookEl && viewAdminEl ? notebookEl.contains(viewAdminEl) : "n/a");
-    viewAdminEl.classList.add("active");
-    console.log("[admin-debug] #view-admin classList after activation:", viewAdminEl.className);
-    console.log("[admin-debug] about to call renderAdminView()");
+    document.getElementById("view-admin").classList.add("active");
     renderAdminView();
-    console.log("[admin-debug] renderAdminView() finished, #view-admin.innerHTML length:", viewAdminEl.innerHTML.length);
-    console.log("[admin-debug] NOTE: #notebook.style.display is still:", notebookEl.style.display, "-- if this is 'none', #view-admin will stay invisible even though it's marked active, because it is a DOM descendant of #notebook.");
   }
 
-  function renderAdminCodeGate() {
-    var root = document.getElementById("auth-gate-root");
-    document.getElementById("notebook").style.display = "none";
-    root.style.display = "flex";
-    root.innerHTML = "";
-
-    var card = el("div", { class: "auth-gate-card" });
-    card.appendChild(el("div", { class: "auth-gate-title" }, [document.createTextNode("🔒 Admin წვდომა")]));
-    card.appendChild(el("p", { class: "auth-gate-sub" }, [document.createTextNode("ეს გვერდი ცალკე კოდითაა დაცული — Supabase login-ისგან სრულად დამოუკიდებელია.")]));
-
-    var form = el("form", {});
-    var codeInput = el("input", { type: "password", autocomplete: "off", required: "required" });
-    form.appendChild(el("div", { class: "auth-gate-field" }, [el("label", {}, [document.createTextNode("Admin კოდი")]), attachPasswordToggle(codeInput)]));
-    var submitBtn = el("button", { class: "auth-gate-submit", type: "submit" }, [document.createTextNode("შესვლა")]);
-    form.appendChild(submitBtn);
-    var msgBox = el("div", {});
-    form.appendChild(msgBox);
-
-    form.addEventListener("submit", function (e) {
-      e.preventDefault();
-      console.log("[admin-debug] code form submitted, entered value matches ADMIN_ACCESS_CODE:", codeInput.value === ADMIN_ACCESS_CODE);
-      msgBox.innerHTML = "";
-      if (codeInput.value === ADMIN_ACCESS_CODE) {
-        try { sessionStorage.setItem(ADMIN_CODE_STORAGE_KEY, "1"); console.log("[admin-debug] sessionStorage flag set successfully"); } catch (e2) { console.log("[admin-debug] sessionStorage.setItem FAILED:", e2.message); }
-        console.log("[admin-debug] calling showAdminDirectly()...");
-        showAdminDirectly();
-      } else {
-        msgBox.appendChild(el("div", { class: "auth-gate-msg error" }, [document.createTextNode("არასწორი კოდი.")]));
-        codeInput.value = "";
-      }
-    });
-
-    card.appendChild(form);
-    root.appendChild(card);
-  }
-
-  function handleAdminRoute() {
-    console.log("[admin-debug] handleAdminRoute() called, isAdminCodeVerified():", isAdminCodeVerified());
-    if (isAdminCodeVerified()) {
-      showAdminDirectly();
-    } else {
-      renderAdminCodeGate();
-    }
-  }
-
-  if (location.hash === "#admin") {
-    handleAdminRoute();
-  } else if (!supabaseClient) {
+  if (!supabaseClient) {
     showLoadFailure();
   } else {
     supabaseClient.auth.onAuthStateChange(function (event, session) {
-      console.log("onAuthStateChange fired -- event:", event, "| session exists:", !!session, "| user id:", session && session.user ? session.user.id : null);
       if (session && session.user) {
         showApp(session.user);
       } else {
