@@ -552,6 +552,9 @@
   .grammar-block-label { font-weight: 700; color: var(--ink); font-family: 'Baloo 2', 'Noto Sans Georgian', sans-serif; font-size: 0.95rem; margin-bottom: 4px; }
   .grammar-block p { margin: 0; color: var(--ink); font-size: 0.92rem; line-height: 1.6; max-width: 64ch; }
   .pronoun-word { font-weight: 700; color: var(--accent-pink); }
+  .topic-heading-violet { color: var(--violet); margin-bottom: 6px; }
+  .grammar-note-card { background: var(--violet-soft); border-left: 3px solid var(--violet); border-radius: 14px; padding: 12px 16px; margin: 6px 0 18px; }
+  .grammar-note-card p { margin: 0; color: var(--ink); font-size: 0.92rem; line-height: 1.6; max-width: 64ch; }
   .ref-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
   .ref-table tr { border-bottom: 1px solid var(--border); transition: background 0.15s ease; }
   .ref-table tr:nth-child(even) { background: var(--paper); }
@@ -3334,7 +3337,7 @@
     var back = el("button", { class: "back-link", type: "button" }, [document.createTextNode("← თემებთან დაბრუნება")]);
     back.addEventListener("click", function () { grammarSub = null; renderGrammarView(); });
     root.appendChild(back);
-    root.appendChild(el("h2", { class: topic.commenters ? "topic-heading-accent" : topic.sections ? "topic-heading-warm" : "" }, [document.createTextNode(topic.ka)]));
+    root.appendChild(el("h2", { class: topic.commenters ? "topic-heading-accent" : topic.sections ? "topic-heading-warm" : (topic.kind === "grammar" && topic.note) ? "topic-heading-violet" : "" }, [document.createTextNode(topic.ka)]));
     if (topic.commenters) {
       var commentersWrap = el("div", { class: "commenters-wrap" });
       topic.commenters.forEach(function (c) {
@@ -3358,6 +3361,10 @@
         }
       });
       root.appendChild(sectionsWrap);
+    } else if (topic.note && topic.kind === "grammar") {
+      root.appendChild(el("div", { class: "grammar-note-card" }, [
+        el("p", {}, [document.createTextNode(topic.note)])
+      ]));
     } else if (topic.note) {
       root.appendChild(el("p", { style: "color:var(--ink-soft);max-width:64ch;margin:6px 0 18px;font-size:0.92rem" }, [document.createTextNode(topic.note)]));
     }
