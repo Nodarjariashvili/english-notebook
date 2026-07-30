@@ -362,13 +362,6 @@
     .page.unit-mode:has(#view-grammar.active .accordion.open) { grid-template-columns: 1fr; }
   }
 
-  /* --- Decorative background scatter (fills empty whitespace, non-interactive) --- */
-  .decor-layer { position: absolute; inset: 0; pointer-events: none; overflow: hidden; z-index: 0; }
-  .decor-item { position: absolute; color: var(--gold); opacity: 0.22; animation: decorFloat 4s ease-in-out infinite; }
-  .decor-item svg { width: 100%; height: 100%; display: block; }
-  @keyframes decorFloat { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-8px) rotate(6deg); } }
-  @media (max-width: 700px) { .decor-layer { display: none; } }
-
   /* --- Dashboard --- */
   .home-hero { position: relative; }
   .profile-row { position: relative; z-index: 1; display: flex; gap: 22px; flex-wrap: wrap; margin-bottom: 28px; }
@@ -381,11 +374,6 @@
   .intro-card { flex: 1 1 320px; border: 1px dashed var(--border); border-top: 4px solid var(--rust); border-radius: 20px; padding: 16px 20px; background: var(--surface); }
   .intro-card p { margin: 5px 0; font-size: 0.92rem; }
   .intro-card .blank { color: var(--brand-ink); font-weight: 600; }
-
-  .section-heading { display: flex; align-items: baseline; gap: 10px; margin: 20px 0 8px; }
-  .view .section-heading:first-of-type { margin-top: 0; }
-  .section-heading h2 { font-size: 1.05rem; }
-  .section-heading .rule { flex: 1; height: 1px; background: var(--border); }
 
   .bar { height: 6px; border-radius: 4px; background: var(--border); overflow: hidden; }
   .bar > span { display: block; height: 100%; background: var(--ink-faint); border-radius: 4px; transition: width 0.5s cubic-bezier(.2,.8,.2,1); }
@@ -1883,7 +1871,6 @@
   }
   var supabaseSaveTimer = null;
   function saveState() {
-    console.log("saveState() called, currentAuthUser at this moment:", currentAuthUser);
     if (!state.activity) state.activity = {};
     state.activity[dateKeyOf(new Date())] = true;
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) {}
@@ -1891,7 +1878,6 @@
     if (currentAuthUser) {
       if (supabaseSaveTimer) clearTimeout(supabaseSaveTimer);
       supabaseSaveTimer = setTimeout(function () {
-        console.log("Attempting Supabase save, user:", currentAuthUser);
         supabaseClient.from("user_progress").upsert({
           user_id: currentAuthUser.id,
           cards: state.cards,
@@ -1899,7 +1885,6 @@
           activity: state.activity,
           updated_at: new Date().toISOString()
         }, { onConflict: "user_id" }).then(function (res) {
-          console.log("Supabase upsert response, full error object:", res.error);
           if (res.error) console.error("Supabase progress sync failed:", res.error.message);
         });
       }, 1500);
@@ -2143,16 +2128,6 @@
     u8: PERSON_LAPTOP,
     u9: PERSON_SHOPPING
   };
-
-  function decorLayerHtml(items) {
-    var html = "<div class='decor-layer'>";
-    items.forEach(function (it) {
-      var pos = "top:" + it.top + "%;" + (it.left !== undefined ? "left:" + it.left + "%;" : "right:" + it.right + "%;");
-      html += "<span class='decor-item' style='" + pos + "width:" + it.size + "px;height:" + it.size + "px;animation-delay:" + it.delay + "s'>" + it.svg + "</span>";
-    });
-    html += "</div>";
-    return html;
-  }
 
   function burstConfettiEl(parentEl) {
     var burst = document.createElement("span");
@@ -2604,16 +2579,6 @@
   function backToDecks() { stopPracticeMic(); cardsSub = null; renderCardsView(); }
   function openPracticeItem(idx) { practicePos = idx; practiceListOpen = false; if (cardsMode === "flip") { cardIndex[cardsSub] = idx; } renderCardsView(); }
   function backToPracticeList() { practiceListOpen = true; renderCardsView(); }
-
-  function sectionHeading(icon, title, sub) {
-    var frag = document.createDocumentFragment();
-    frag.appendChild(el("div", { class: "section-heading" }, [
-      el("h2", {}, [document.createTextNode(icon + " " + title)]),
-      el("div", { class: "rule" })
-    ]));
-    if (sub) frag.appendChild(el("p", { style: "color:var(--ink-soft);margin:0 0 10px;max-width:60ch;font-size:0.85rem" }, [document.createTextNode(sub)]));
-    return frag;
-  }
 
   /* ---------- unit section tabs (single always-visible nav bar on a unit page) ---------- */
   var UNIT_SECTION_DEFS = [
