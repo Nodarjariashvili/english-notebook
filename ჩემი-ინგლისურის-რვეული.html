@@ -443,7 +443,7 @@
   .item-picker-card.status-partial .item-picker-status { background: var(--gold); color: #fff; border-color: var(--gold); }
   .item-picker-wide-section { width: 100%; }
 
-  /* --- Unit section tabs (navigate between lex/lexPractice/grammar/dialogue/reading while inside any one of them) --- */
+  /* --- Unit section tabs (single always-visible nav for lex/grammar/dialogue/reading on a unit page) --- */
   .unit-section-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
   .unit-section-tab {
     border: 1.5px solid var(--border); background: var(--surface); color: var(--ink-soft);
@@ -621,24 +621,6 @@
   .activity-day.today .activity-dot { border-color: var(--gold); }
   .activity-day.today { color: var(--ink); font-weight: 700; }
 
-  /* --- Unit material preview (learning material only, no exercises) --- */
-  .material-preview { margin: 0 0 20px; }
-  .material-preview-title { font-weight: 700; font-size: 0.88rem; color: var(--brand-ink); margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
-  .material-preview-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
-  .material-card {
-    --accent-color: var(--brand); --accent-soft: var(--brand-soft);
-    border: 1px solid var(--border); border-left: 3px solid var(--accent-color);
-    background: var(--surface); border-radius: 20px; padding: 12px 14px;
-    box-shadow: 0 2px 8px var(--shadow); width: 100%; text-align: left; cursor: pointer;
-  }
-  .material-card[data-color="info"] { --accent-color: var(--info); --accent-soft: var(--info-soft); }
-  .material-card[data-color="cyan"] { --accent-color: var(--cyan); --accent-soft: var(--cyan-soft); }
-  .material-card[data-color="violet"] { --accent-color: var(--violet); --accent-soft: var(--violet-soft); }
-  .material-card[data-color="gold"] { --accent-color: var(--gold); --accent-soft: var(--gold-soft); }
-  .material-card-head { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 0.85rem; color: var(--ink); margin-bottom: 6px; }
-  .material-card-head .icon { font-size: 1.05rem; display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; border-radius: 10px; background: var(--accent-soft); flex-shrink: 0; }
-  .material-card-body { font-size: 0.82rem; color: var(--ink-soft); margin-bottom: 6px; }
-  .material-card-sample { font-size: 0.76rem; color: var(--ink-faint); line-height: 1.4; }
   .dash-chat-btn { display: flex; align-items: center; justify-content: center; text-align: center; padding: 2px 8px; font-size: 0.72rem; margin: 0; }
 
   /* --- Vocabulary practice modes --- */
@@ -2317,6 +2299,7 @@
   var currentUnit = null;
   var cardsSub = null;
   var grammarSub = null;
+  var unitActiveSection = null;
 
   function renderTabs() {
     var wrap = document.getElementById("tabs");
@@ -2375,17 +2358,20 @@
     document.querySelector(".page").classList.add("unit-mode");
     document.querySelectorAll(".view").forEach(function (v) { v.classList.remove("active"); });
     document.getElementById("view-home").classList.add("active");
-    if (unit.deckIds.length) document.getElementById("view-cards").classList.add("active");
-    if (unit.grammarIds.length) document.getElementById("view-grammar").classList.add("active");
     renderTabs();
-    renderHome();
-    if (unit.deckIds.length) renderCardsView();
-    if (unit.grammarIds.length) renderGrammarView();
+    var firstSection = UNIT_SECTION_DEFS.filter(function (s) { return unitSectionAvailable(unit, s.key); })[0];
+    if (firstSection) {
+      gotoUnitSection(unit, firstSection.key);
+    } else {
+      unitActiveSection = null;
+      renderHome();
+    }
   }
 
   function backToUnits() {
     stopPracticeMic();
     currentUnit = null;
+    unitActiveSection = null;
     document.querySelector(".page").classList.remove("unit-mode");
     document.querySelectorAll(".view").forEach(function (v) { v.classList.remove("active"); });
     document.getElementById("view-home").classList.add("active");
@@ -2566,95 +2552,9 @@
     overview.appendChild(renderActivityWidget());
     root.appendChild(overview);
 
-    var materialPreview = renderUnitMaterialPreview(unit);
-    if (materialPreview) root.appendChild(materialPreview);
-  }
-
-  var materialDetailOpen = null;
-
-  function unitMaterialCategories(unit) {
-    var cats = [];
-    if (unitDecks(unit).length) {
-      cats.push({ key: "lex", icon: "📖", label: "ლექსიკონი", color: "info" });
+    if (UNIT_SECTION_DEFS.some(function (s) { return unitSectionAvailable(unit, s.key); })) {
+      root.appendChild(renderUnitSectionTabs(unit, unitActiveSection));
     }
-    [
-      ["grammar", "📐", "გრამატიკა", "violet"],
-      ["dialogue", "💬", "დიალოგები", "gold"],
-      ["reading", "✏️", "ტექსტები", "cyan"]
-    ].forEach(function (k) {
-      if (unitTopicsByKind(unit, k[0]).length) {
-        cats.push({ key: k[0], icon: k[1], label: k[2], color: k[3] });
-      }
-    });
-    return cats;
-  }
-
-  function renderUnitMaterialPreview(unit) {
-    var cats = unitMaterialCategories(unit);
-    if (!cats.length) return null;
-    var wrap = el("div", { class: "material-preview" });
-
-    if (materialDetailOpen && cats.some(function (c) { return c.key === materialDetailOpen; })) {
-      wrap.appendChild(renderMaterialDetail(unit, materialDetailOpen));
-      return wrap;
-    }
-
-    wrap.appendChild(el("div", { class: "material-preview-title" }, [document.createTextNode("📚 ამ თავის სასწავლი მასალა")]));
-    var grid = el("div", { class: "material-preview-grid" });
-    cats.forEach(function (c) {
-      var card = el("button", { class: "material-card", type: "button", "data-color": c.color || "" }, [
-        el("div", { class: "material-card-head" }, [
-          el("span", { class: "icon" }, [document.createTextNode(c.icon)]),
-          document.createTextNode(c.label)
-        ])
-      ]);
-      card.addEventListener("click", function (key) { return function () { gotoUnitSection(unit, key); }; }(c.key));
-      grid.appendChild(card);
-    });
-    wrap.appendChild(grid);
-    return wrap;
-  }
-
-  function renderMaterialDetail(unit, key) {
-    var wrap = el("div", {});
-    wrap.appendChild(renderUnitSectionTabs(unit, key));
-    var back = el("button", { class: "back-link", type: "button" }, [document.createTextNode("← მასალის კატეგორიებში დაბრუნება")]);
-    back.addEventListener("click", function () { materialDetailOpen = null; renderHome(); });
-    wrap.appendChild(back);
-
-    if (key === "lex") {
-      wrap.appendChild(el("h3", { style: "margin:14px 0 10px" }, [document.createTextNode("📖 ლექსიკონი")]));
-      unitDecks(unit).forEach(function (deck) {
-        var group = el("div", { class: "ref-group" });
-        group.appendChild(el("h3", {}, [document.createTextNode(deck.ka)]));
-        var table = el("table", { class: "ref-table" });
-        deck.cards.forEach(function (c) {
-          table.appendChild(el("tr", {}, [
-            el("td", { class: "en" }, [document.createTextNode(c.en)]),
-            el("td", { class: "ipa" }, [document.createTextNode(c.ipa || "")]),
-            el("td", { class: "ka" }, [document.createTextNode(c.ka)])
-          ]));
-        });
-        group.appendChild(table);
-        wrap.appendChild(group);
-      });
-      return wrap;
-    }
-
-    var meta = key === "grammar" ? ["📐", "გრამატიკა"] : key === "dialogue" ? ["💬", "დიალოგები"] : ["✏️", "ტექსტები"];
-    wrap.appendChild(el("h3", { style: "margin:14px 0 10px" }, [document.createTextNode(meta[0] + " " + meta[1])]));
-    unitTopicsByKind(unit, key).forEach(function (topic) {
-      wrap.appendChild(el("h4", { style: "margin:16px 0 6px" }, [document.createTextNode(topic.ka)]));
-      if (key === "dialogue") {
-        topic.items.forEach(function (it) {
-          var text = it.prompt.replace(/<u>|<\/u>/g, "").replace("___", it.answer);
-          wrap.appendChild(el("p", { style: "white-space:pre-line;margin:0 0 12px;font-size:0.92rem;line-height:1.6" }, [document.createTextNode(text)]));
-        });
-      } else {
-        wrap.appendChild(el("p", { style: "margin:0 0 14px;font-size:0.92rem;line-height:1.6;color:var(--ink-soft)" }, [document.createTextNode(topic.note || "")]));
-      }
-    });
-    return wrap;
   }
 
   function renderActivityWidget() {
@@ -2705,9 +2605,7 @@
     return frag;
   }
 
-  var accordionOpen = {};
-
-  /* ---------- unit section tabs (shown at top of any section-detail view) ---------- */
+  /* ---------- unit section tabs (single always-visible nav bar on a unit page) ---------- */
   var UNIT_SECTION_DEFS = [
     { key: "lex", icon: "📖", label: "ლექსიკონი" },
     { key: "grammar", icon: "📐", label: "გრამატიკა" },
@@ -2721,10 +2619,11 @@
   }
 
   function gotoUnitSection(unit, key) {
+    unitActiveSection = key;
     cardsSub = null;
     grammarSub = null;
-    materialDetailOpen = null;
-    UNIT_SECTION_DEFS.forEach(function (s) { accordionOpen[unit.id + ":" + s.key] = (s.key === key); });
+    document.getElementById("view-cards").classList.toggle("active", key === "lex");
+    document.getElementById("view-grammar").classList.toggle("active", key === "grammar" || key === "dialogue" || key === "reading");
     if (key === "lex") {
       var decks = unitDecks(unit);
       if (decks.length === 1) { openDeckFlip(decks[0].id); renderGrammarView(); renderHome(); return; }
@@ -2754,9 +2653,7 @@
   function renderCardsView() {
     var root = document.getElementById("view-cards");
     root.innerHTML = "";
-    if (cardsSub) {
-      root.appendChild(renderUnitSectionTabs(currentUnitObj(), cardsMode === "flip" ? "lex" : "lexPractice"));
-    }
+    if (unitActiveSection !== "lex") return;
     if (!cardsSub) {
       var unit = currentUnitObj();
 
@@ -3286,10 +3183,7 @@
   function renderGrammarView() {
     var root = document.getElementById("view-grammar");
     root.innerHTML = "";
-    if (grammarSub) {
-      var topicForTabs = GRAMMAR.filter(function (t) { return t.id === grammarSub; })[0];
-      if (topicForTabs) { root.appendChild(renderUnitSectionTabs(currentUnitObj(), topicForTabs.kind)); }
-    }
+    if (unitActiveSection !== "grammar" && unitActiveSection !== "dialogue" && unitActiveSection !== "reading") return;
     if (!grammarSub) {
       var unit = currentUnitObj();
 
@@ -3308,21 +3202,16 @@
         return g;
       }
 
-      var grammarTopics = unitTopicsByKind(unit, "grammar");
-      var dialogueTopics = unitTopicsByKind(unit, "dialogue");
-      var readingTopics = unitTopicsByKind(unit, "reading");
+      var topics = unitTopicsByKind(unit, unitActiveSection);
+      var introText = unitActiveSection === "grammar" ? "გრამატიკის წესები და სავარჯიშოები ამ თავიდან."
+        : unitActiveSection === "dialogue" ? "დიალოგები ამ თავიდან — აირჩიე დიალოგი."
+        : "წაიკითხე ტექსტი და უპასუხე კითხვებს.";
 
-      if (grammarTopics.length > 1) {
-        var grammarDirect = el("div", {});
-        grammarDirect.appendChild(el("p", { style: "color:var(--ink-soft);margin:0 0 10px;max-width:60ch;font-size:0.85rem" }, [document.createTextNode("გრამატიკის წესები და სავარჯიშოები ამ თავიდან.")]));
-        grammarDirect.appendChild(topicGrid(grammarTopics));
-        root.appendChild(grammarDirect);
-      }
-      if (readingTopics.length > 1) {
-        var readingDirect = el("div", {});
-        readingDirect.appendChild(el("p", { style: "color:var(--ink-soft);margin:0 0 10px;max-width:60ch;font-size:0.85rem" }, [document.createTextNode("წაიკითხე ტექსტი და უპასუხე კითხვებს.")]));
-        readingDirect.appendChild(topicGrid(readingTopics));
-        root.appendChild(readingDirect);
+      if (topics.length > 1) {
+        var direct = el("div", {});
+        direct.appendChild(el("p", { style: "color:var(--ink-soft);margin:0 0 10px;max-width:60ch;font-size:0.85rem" }, [document.createTextNode(introText)]));
+        direct.appendChild(topicGrid(topics));
+        root.appendChild(direct);
       }
       return;
     }
