@@ -2308,6 +2308,18 @@
   function renderTabs() {
     var wrap = document.getElementById("tabs");
     wrap.innerHTML = "";
+    UNITS.forEach(function (unit) {
+      var m = unitMastery(unit);
+      var dot = el("span", { class: "dot" });
+      if (m.colorState !== "none") dot.setAttribute("data-state", m.colorState);
+      var btn = el("button", { class: "tab tab-unit" + (currentUnit === unit.id ? " active" : ""), type: "button" }, [
+        dot, document.createTextNode(unit.short)
+      ]);
+      btn.addEventListener("click", function (id) { return function () { openUnit(id); }; }(unit.id));
+      wrap.appendChild(btn);
+    });
+
+    wrap.appendChild(el("div", { class: "tab-divider" }));
     TABS.forEach(function (t) {
       var dotState = "none";
       if (t.id === "home") dotState = overallMastery(UNITS, unitMastery).colorState;
@@ -2320,18 +2332,6 @@
         if (id === "chat" && chatScopeUnit !== null) { chatScopeUnit = null; chatHistory = []; chatStarted = false; }
         switchView(id);
       }; }(t.id));
-      wrap.appendChild(btn);
-    });
-
-    wrap.appendChild(el("div", { class: "tab-divider" }));
-    UNITS.forEach(function (unit) {
-      var m = unitMastery(unit);
-      var dot = el("span", { class: "dot" });
-      if (m.colorState !== "none") dot.setAttribute("data-state", m.colorState);
-      var btn = el("button", { class: "tab tab-unit" + (currentUnit === unit.id ? " active" : ""), type: "button" }, [
-        dot, document.createTextNode(unit.short)
-      ]);
-      btn.addEventListener("click", function (id) { return function () { openUnit(id); }; }(unit.id));
       wrap.appendChild(btn);
     });
   }
