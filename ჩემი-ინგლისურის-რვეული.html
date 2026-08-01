@@ -339,9 +339,6 @@
   .level-pill:hover { border-color: var(--brand); }
   .level-pill.active { background: var(--brand); border-color: var(--brand); color: #fff; }
 
-  .settings-key-status { font-size: 0.76rem; font-weight: 600; padding: 2px 9px; border-radius: 999px; }
-  .settings-key-status.connected { background: var(--green-soft); color: var(--green-ink); }
-  .settings-key-status.disconnected { background: var(--rust-soft); color: var(--rust); }
 
   .reminder-banner {
     background: var(--gold-soft); color: var(--ink); border: 1px solid var(--gold);
@@ -741,15 +738,6 @@
   .big-confetti .confetti-piece { font-size: 18px; animation-duration: 0.7s; }
 
   /* --- Chat tab --- */
-  .chat-setup { border: 1px solid var(--border); border-radius: 20px; padding: 26px clamp(16px, 4vw, 28px); background: var(--paper); max-width: 560px; margin: 0 auto; }
-  .chat-setup h2 { font-size: 1.2rem; margin-bottom: 10px; }
-  .chat-setup p { color: var(--ink-soft); font-size: 0.92rem; line-height: 1.55; }
-  .chat-setup label { display: block; font-weight: 600; font-size: 0.86rem; margin: 16px 0 6px; }
-  .chat-key-row { display: flex; gap: 8px; }
-  .chat-key-row .password-field-wrap { flex: 1; }
-  .chat-key-row input { width: 100%; padding: 11px 14px; border-radius: 10px; border: 1.5px solid var(--border); background: var(--surface); color: var(--ink); font-size: 0.92rem; font-family: monospace; }
-  .chat-key-row input:focus { border-color: var(--brand); }
-  .chat-hint { font-size: 0.8rem; color: var(--ink-faint); margin-top: 14px; }
 
   /* --- password field show/hide toggle (in-field, right-aligned icon) --- */
   .password-field-wrap { position: relative; display: flex; align-items: stretch; }
@@ -764,8 +752,6 @@
   .chat-topbar { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 6px; }
   .chat-scope-badge { display: inline-flex; align-items: center; gap: 8px; background: var(--brand-soft); color: var(--brand-ink); border-radius: 999px; padding: 5px 12px 5px 14px; font-size: 0.82rem; font-weight: 600; }
   .chat-scope-badge button { background: none; border: none; color: var(--brand-ink); cursor: pointer; font-size: 0.95rem; line-height: 1; padding: 0; }
-  .chat-icon-btn { background: none; border: 1px solid var(--border); border-radius: 50%; width: 34px; height: 34px; cursor: pointer; color: var(--ink-soft); transition: border-color 0.15s ease; }
-  .chat-icon-btn:hover { border-color: var(--info); }
 
   .chat-error { background: var(--rust-soft); border: 1px solid var(--rust); color: var(--rust); border-radius: 10px; padding: 10px 14px; font-size: 0.88rem; margin-bottom: 14px; }
 
@@ -2956,11 +2942,6 @@
     }
 
     function listenForAnswer() {
-      if (!getOpenAiKey()) {
-        showPracticeNotice("ხმოვანი სავარჯიშოსთვის საჭიროა OpenAI API გასაღები — დაამატე ⚙ ჩატის ტაბში.");
-        setPracticeStatus("", "");
-        return;
-      }
       setPracticeStatus("listening", "გისმენ...");
       ensurePracticeMic().then(function (stream) {
         recordPracticeUtterance(stream, function (blob) {
@@ -3017,16 +2998,14 @@
     form.append("file", blob, "answer." + ext);
     form.append("model", "whisper-1");
     form.append("language", "en");
-    fetch(WHISPER_API_URL, {
-      method: "POST",
-      headers: { "Authorization": "Bearer " + getOpenAiKey() },
-      body: form
+    edgeFunctionHeaders({}).then(function (headers) {
+      return fetch(WHISPER_FUNCTION_URL, { method: "POST", headers: headers, body: form });
     }).then(function (res) {
       return res.json().then(function (data) { return { ok: res.ok, status: res.status, data: data }; });
     }).then(function (result) {
       if (!result.ok) {
         var msg = result.data && result.data.error && result.data.error.message ? result.data.error.message : "ტრანსკრიფცია ვერ შესრულდა";
-        if (result.status === 401) msg = "OpenAI გასაღები არასწორია — შეამოწმე ⚙ ჩატის ტაბში.";
+        if (result.status === 429) msg = "დღიური ლიმიტი ამოიწურა (50 მოთხოვნა/დღეში) — სცადე ხვალ.";
         cb(null, "Whisper შეცდომა: " + msg);
         return;
       }
@@ -3361,15 +3340,28 @@
   }
 
   /* ---------- chat ---------- */
-  var CHAT_KEY_STORAGE = "nonaEnglishNotebook.apiKey";
-  var OPENAI_KEY_STORAGE = "nonaEnglishNotebook.openaiKey";
-  var CHAT_API_URL = "https://api.anthropic.com/v1/messages";
-  var WHISPER_API_URL = "https://api.openai.com/v1/audio/transcriptions";
+  /* Anthropic/OpenAI calls go through Supabase Edge Functions now, not directly
+     to api.anthropic.com/api.openai.com -- the real keys live server-side only
+     (ANTHROPIC_API_KEY / OPENAI_API_KEY secrets), the Edge Function verifies the
+     caller's Supabase session and enforces a 50/day-per-user rate limit. */
+  var ANTHROPIC_CHAT_FUNCTION_URL = "https://wddqjehzoicwkqyqfiqs.supabase.co/functions/v1/anthropic-chat";
+  var WHISPER_FUNCTION_URL = "https://wddqjehzoicwkqyqfiqs.supabase.co/functions/v1/whisper-transcribe";
+
+  /* headers Supabase Edge Functions require: apikey (the project anon key) plus
+     the signed-in user's own access token, so the function can verify who's calling. */
+  function edgeFunctionHeaders(extra) {
+    return supabaseClient.auth.getSession().then(function (res) {
+      var token = res.data && res.data.session ? res.data.session.access_token : null;
+      var headers = { "apikey": SUPABASE_ANON_KEY, "Authorization": "Bearer " + (token || "") };
+      for (var k in extra) headers[k] = extra[k];
+      return headers;
+    });
+  }
+
   var CHAT_MODEL = "claude-opus-4-8";
   var chatHistory = [];
   var chatScopeUnit = null;
   var chatStarted = false;
-  var chatSettingsOpen = false;
   var mediaRecorder = null;
   var audioChunks = [];
   var isRecording = false;
@@ -3527,13 +3519,6 @@
     ]
   };
 
-  function getChatKey() { return localStorage.getItem(CHAT_KEY_STORAGE) || ""; }
-  function setChatKey(k) { localStorage.setItem(CHAT_KEY_STORAGE, k); }
-  function clearChatKey() { localStorage.removeItem(CHAT_KEY_STORAGE); }
-  function getOpenAiKey() { return localStorage.getItem(OPENAI_KEY_STORAGE) || ""; }
-  function setOpenAiKey(k) { localStorage.setItem(OPENAI_KEY_STORAGE, k); }
-  function clearOpenAiKey() { localStorage.removeItem(OPENAI_KEY_STORAGE); }
-
   /* ---------- profile overrides (settings page name edit) ---------- */
   function applyProfileOverrides() {
     var raw;
@@ -3666,56 +3651,10 @@
     return outer;
   }
 
-  function renderSettingsKeyRow(icon, color, label, sub, getter, setter, clearer, placeholder) {
-    var wrap = el("div", {});
-    var row = el("div", { class: "settings-row" });
-    row.appendChild(el("div", { class: "settings-icon-circle", "data-color": color }, [document.createTextNode(icon)]));
-    var main = el("div", { class: "settings-row-main" });
-    main.appendChild(el("div", { class: "settings-row-label" }, [document.createTextNode(label)]));
-    main.appendChild(el("div", { class: "settings-row-value" }, [document.createTextNode(sub)]));
-    row.appendChild(main);
-    var connected = !!getter();
-    row.appendChild(el("span", { class: "settings-key-status " + (connected ? "connected" : "disconnected") }, [
-      document.createTextNode(connected ? "დაკავშირებულია" : "არაა დაკავშირებული")
-    ]));
-    var editBtn = el("button", { class: "settings-edit-btn", type: "button", title: "რედაქტირება" }, [document.createTextNode("✎")]);
-    row.appendChild(editBtn);
-    wrap.appendChild(row);
-
-    var formWrap = el("div", { style: "display:none;padding:0 0 10px 48px" });
-    var keyRow = el("div", { class: "chat-key-row" });
-    var input = el("input", { type: "password", placeholder: placeholder, autocomplete: "off", spellcheck: "false" });
-    input.value = getter();
-    keyRow.appendChild(attachPasswordToggle(input));
-    formWrap.appendChild(keyRow);
-
-    var actions = el("div", { style: "display:flex;gap:8px;margin-top:8px" });
-    var saveBtn = el("button", { class: "check-btn", type: "button" }, [document.createTextNode("შენახვა")]);
-    saveBtn.addEventListener("click", function () {
-      var v = input.value.trim();
-      if (v) setter(v); else clearer();
-      renderSettingsView();
-    });
-    actions.appendChild(saveBtn);
-    if (connected) {
-      var clearBtn = el("button", { class: "redo-btn", type: "button", style: "color:var(--rust);border-color:var(--rust)" }, [document.createTextNode("წაშლა")]);
-      clearBtn.addEventListener("click", function () { clearer(); renderSettingsView(); });
-      actions.appendChild(clearBtn);
-    }
-    formWrap.appendChild(actions);
-    wrap.appendChild(formWrap);
-
-    editBtn.addEventListener("click", function () {
-      formWrap.style.display = formWrap.style.display === "none" ? "block" : "none";
-    });
-
-    return wrap;
-  }
-
   function renderSettingsAccountSection() {
     var sec = el("div", { class: "settings-section" });
     sec.appendChild(el("h4", {}, [document.createTextNode("ანგარიში")]));
-    sec.appendChild(el("div", { class: "settings-section-sub" }, [document.createTextNode("პროფილის დეტალები და დაკავშირებული API გასაღებები")]));
+    sec.appendChild(el("div", { class: "settings-section-sub" }, [document.createTextNode("პროფილის დეტალები")]));
 
     var loginRow = el("div", { class: "settings-row" });
     loginRow.appendChild(el("div", { class: "settings-icon-circle", "data-color": "green" }, [document.createTextNode("👤")]));
@@ -3754,9 +3693,6 @@
       row.appendChild(main);
       sec.appendChild(row);
     });
-
-    sec.appendChild(renderSettingsKeyRow("🤖", "violet", "Anthropic API გასაღები", "ჩატისთვის", getChatKey, setChatKey, clearChatKey, "sk-ant-api03-..."));
-    sec.appendChild(renderSettingsKeyRow("🎙", "blue", "OpenAI API გასაღები", "ხმით საუბრისთვის (არასავალდებულო)", getOpenAiKey, setOpenAiKey, clearOpenAiKey, "sk-proj-..."));
 
     return sec;
   }
@@ -3899,75 +3835,7 @@
   function renderChatView() {
     var root = document.getElementById("view-chat");
     root.innerHTML = "";
-
-    if (!getChatKey()) {
-      renderChatKeyForm(root, { mode: "setup" });
-      return;
-    }
-    if (chatSettingsOpen) {
-      renderChatKeyForm(root, { mode: "settings" });
-      return;
-    }
     renderChatMain(root);
-  }
-
-  function renderChatKeyForm(root, opts) {
-    var isSettings = opts.mode === "settings";
-    var box = el("div", { class: "chat-setup" });
-    box.appendChild(el("h2", {}, [document.createTextNode(isSettings ? "API გასაღებების მართვა" : "API გასაღების დაყენება")]));
-    box.appendChild(el("p", {
-      html: "ეს ტაბი პირდაპირ შენს ბრაუზერში მუშაობს. საჭიროა შენი პირადი Anthropic API " +
-        "გასაღები (<a href='https://console.anthropic.com' target='_blank' rel='noopener'>console.anthropic.com</a>-დან) — ჩატისთვის. " +
-        "OpenAI გასაღები (<a href='https://platform.openai.com/api-keys' target='_blank' rel='noopener'>platform.openai.com</a>-დან) " +
-        "საჭიროა მხოლოდ <strong>ხმით საუბრისთვის</strong> (მიკროფონი) — თუ ეს არ გჭირდება, ცარიელი დატოვე. " +
-        "ორივე გასაღები ინახება <strong>მხოლოდ ამ ბრაუზერში</strong> — არსად არ იგზავნება, გარდა შესაბამის სერვერზე პირდაპირ."
-    }));
-
-    box.appendChild(el("label", { for: "chatApiKeyInput" }, [document.createTextNode("Anthropic API გასაღები (ჩატისთვის)")]));
-    var row1 = el("div", { class: "chat-key-row" });
-    var input1 = el("input", { type: "password", id: "chatApiKeyInput", placeholder: "sk-ant-api03-...", autocomplete: "off", spellcheck: "false" });
-    input1.value = getChatKey();
-    row1.appendChild(attachPasswordToggle(input1));
-    box.appendChild(row1);
-
-    box.appendChild(el("label", { for: "chatOpenAiKeyInput" }, [document.createTextNode("OpenAI API გასაღები (ხმით საუბრისთვის — არასავალდებულო)")]));
-    var row2 = el("div", { class: "chat-key-row" });
-    var input2 = el("input", { type: "password", id: "chatOpenAiKeyInput", placeholder: "sk-proj-...", autocomplete: "off", spellcheck: "false" });
-    input2.value = getOpenAiKey();
-    row2.appendChild(attachPasswordToggle(input2));
-    box.appendChild(row2);
-
-    var btnRow = el("div", { style: "display:flex;gap:10px;flex-wrap:wrap;margin-top:16px" });
-    var saveBtn = el("button", { class: "check-btn", type: "button" }, [document.createTextNode(isSettings ? "შენახვა" : "შენახვა და დაწყება")]);
-    saveBtn.addEventListener("click", function () {
-      var v1 = input1.value.trim();
-      if (!v1) { input1.focus(); return; }
-      setChatKey(v1);
-      var v2 = input2.value.trim();
-      if (v2) setOpenAiKey(v2); else clearOpenAiKey();
-      chatSettingsOpen = false;
-      renderChatView();
-    });
-    btnRow.appendChild(saveBtn);
-
-    if (isSettings) {
-      var cancelBtn = el("button", { class: "redo-btn", type: "button" }, [document.createTextNode("გაუქმება")]);
-      cancelBtn.addEventListener("click", function () { chatSettingsOpen = false; renderChatView(); });
-      btnRow.appendChild(cancelBtn);
-
-      var clearBtn = el("button", { class: "redo-btn", type: "button", style: "color:var(--rust);border-color:var(--rust)" }, [document.createTextNode("ორივე გასაღების წაშლა")]);
-      clearBtn.addEventListener("click", function () {
-        if (!confirm("წავშალო ორივე API გასაღები და ჩატის ისტორია?")) return;
-        clearChatKey(); clearOpenAiKey();
-        chatHistory = []; chatStarted = false; chatSettingsOpen = false;
-        renderChatView();
-      });
-      btnRow.appendChild(clearBtn);
-    }
-
-    box.appendChild(btnRow);
-    box.appendChild(el("div", { class: "chat-hint" }, [document.createTextNode("რჩევა: არასდროს გაუზიარო ეს გასაღებები არავის.")]));
-    root.appendChild(box);
   }
 
   function renderChatMain(root) {
@@ -3985,12 +3853,6 @@
     } else {
       topbar.appendChild(el("span", {}));
     }
-    var settingsBtn = el("button", { class: "chat-icon-btn", type: "button", title: "API გასაღებების მართვა" }, [document.createTextNode("⚙")]);
-    settingsBtn.addEventListener("click", function () {
-      chatSettingsOpen = true;
-      renderChatView();
-    });
-    topbar.appendChild(settingsBtn);
     root.appendChild(topbar);
 
     if (!scopedUnit) {
@@ -4123,31 +3985,28 @@
     addChatTyping();
     if (voiceModeOn) setVoiceStatus("processing");
 
-    fetch(CHAT_API_URL, {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        "x-api-key": getChatKey(),
-        "anthropic-version": "2023-06-01",
-        "anthropic-dangerous-direct-browser-access": "true"
-      },
-      body: JSON.stringify({
-        model: CHAT_MODEL,
-        max_tokens: 700,
-        system: buildSystemPrompt(),
-        messages: chatHistory,
-        output_config: {
-          effort: "medium",
-          format: { type: "json_schema", schema: CHAT_OUTPUT_SCHEMA }
-        }
-      })
+    edgeFunctionHeaders({ "content-type": "application/json" }).then(function (headers) {
+      return fetch(ANTHROPIC_CHAT_FUNCTION_URL, {
+        method: "POST",
+        headers: headers,
+        body: JSON.stringify({
+          model: CHAT_MODEL,
+          max_tokens: 700,
+          system: buildSystemPrompt(),
+          messages: chatHistory,
+          output_config: {
+            effort: "medium",
+            format: { type: "json_schema", schema: CHAT_OUTPUT_SCHEMA }
+          }
+        })
+      });
     }).then(function (res) {
       return res.json().then(function (data) { return { ok: res.ok, status: res.status, data: data }; });
     }).then(function (result) {
       removeChatTyping();
       if (!result.ok) {
         if (result.status === 401) {
-          showChatError("API გასაღები არასწორია ან ვადაგასულია. გთხოვ შეამოწმე ⚙ მენიუში.");
+          showChatError("სესია ვადაგასულია — გთხოვ თავიდან შედი ანგარიშზე.");
         } else if (result.status === 429) {
           showChatError("მოთხოვნები ძალიან ხშირია (rate limit) — მოიცადე ცოტა ხანი და სცადე ისევ.");
         } else {
@@ -4269,10 +4128,6 @@
 
   function enterVoiceMode() {
     hideChatError();
-    if (!getOpenAiKey()) {
-      showChatError("ხმოვანი დიალოგისთვის საჭიროა OpenAI API გასაღები — დაამატე ⚙ მენიუში.");
-      return;
-    }
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || !window.MediaRecorder) {
       showChatError("ეს ბრაუზერი მიკროფონის ჩაწერას ვერ უჭერს მხარს.");
       return;
@@ -4478,17 +4333,15 @@
     form.append("model", "whisper-1");
     form.append("language", "en");
 
-    fetch(WHISPER_API_URL, {
-      method: "POST",
-      headers: { "Authorization": "Bearer " + getOpenAiKey() },
-      body: form
+    edgeFunctionHeaders({}).then(function (headers) {
+      return fetch(WHISPER_FUNCTION_URL, { method: "POST", headers: headers, body: form });
     }).then(function (res) {
       return res.json().then(function (data) { return { ok: res.ok, status: res.status, data: data }; });
     }).then(function (result) {
       if (!voiceModeOn) return;
       if (!result.ok) {
         var msg = result.data && result.data.error && result.data.error.message ? result.data.error.message : "ტრანსკრიფცია ვერ შესრულდა";
-        if (result.status === 401) msg = "OpenAI გასაღები არასწორია — შეამოწმე ⚙ მენიუში.";
+        if (result.status === 429) msg = "დღიური ლიმიტი ამოიწურა (50 მოთხოვნა/დღეში) — სცადე ხვალ.";
         showChatError("Whisper შეცდომა: " + msg);
         exitVoiceMode();
         return;
@@ -4688,45 +4541,39 @@
 
     analyzeBtn.addEventListener("click", function () {
       if (!currentImageBase64) return;
-      if (!getChatKey()) {
-        statusBox.textContent = "საჭიროა Anthropic API გასაღები — შეიყვანე ⚙ Settings გვერდზე.";
-        return;
-      }
       analyzeBtn.setAttribute("disabled", "disabled");
       statusBox.textContent = "იტვირთება და აანალიზებს სურათს...";
       resultBox.innerHTML = "";
 
-      fetch(CHAT_API_URL, {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-          "x-api-key": getChatKey(),
-          "anthropic-version": "2023-06-01",
-          "anthropic-dangerous-direct-browser-access": "true"
-        },
-        body: JSON.stringify({
-          model: CHAT_MODEL,
-          max_tokens: 4000,
-          system: ADMIN_SYSTEM_PROMPT,
-          messages: [{
-            role: "user",
-            content: [
-              { type: "image", source: { type: "base64", media_type: currentImageMediaType, data: currentImageBase64 } },
-              { type: "text", text: "გააანალიზე ეს სურათი და დააბრუნე სტრუქტურირებული JSON, ზუსტად მოცემული სქემის მიხედვით." }
-            ]
-          }],
-          output_config: {
-            effort: "medium",
-            format: { type: "json_schema", schema: ADMIN_OUTPUT_SCHEMA }
-          }
-        })
+      edgeFunctionHeaders({ "content-type": "application/json" }).then(function (headers) {
+        return fetch(ANTHROPIC_CHAT_FUNCTION_URL, {
+          method: "POST",
+          headers: headers,
+          body: JSON.stringify({
+            model: CHAT_MODEL,
+            max_tokens: 4000,
+            system: ADMIN_SYSTEM_PROMPT,
+            messages: [{
+              role: "user",
+              content: [
+                { type: "image", source: { type: "base64", media_type: currentImageMediaType, data: currentImageBase64 } },
+                { type: "text", text: "გააანალიზე ეს სურათი და დააბრუნე სტრუქტურირებული JSON, ზუსტად მოცემული სქემის მიხედვით." }
+              ]
+            }],
+            output_config: {
+              effort: "medium",
+              format: { type: "json_schema", schema: ADMIN_OUTPUT_SCHEMA }
+            }
+          })
+        });
       }).then(function (res) {
         return res.json().then(function (data) { return { ok: res.ok, status: res.status, data: data }; });
       }).then(function (result) {
         analyzeBtn.removeAttribute("disabled");
         if (!result.ok) {
           var msg = result.data && result.data.error && result.data.error.message ? result.data.error.message : "უცნობი შეცდომა (სტატუსი " + result.status + ")";
-          if (result.status === 401) msg = "API გასაღები არასწორია ან ვადაგასულია — შეამოწმე ⚙ Settings გვერდზე.";
+          if (result.status === 401) msg = "სესია ვადაგასულია — შედი თავიდან.";
+          if (result.status === 429) msg = "დღიური ლიმიტი ამოიწურა (50 მოთხოვნა/დღეში) — სცადე ხვალ.";
           statusBox.textContent = "შეცდომა: " + msg;
           return;
         }
