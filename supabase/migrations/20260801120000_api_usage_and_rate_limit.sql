@@ -1,4 +1,3 @@
--- Run this in the Supabase SQL editor (Project -> SQL Editor -> New query).
 -- Sets up server-side rate-limit bookkeeping for the anthropic-chat and
 -- whisper-transcribe Edge Functions. Nothing here is ever reachable from the
 -- browser directly -- only the Edge Functions (using the service_role key)
@@ -58,9 +57,3 @@ revoke execute on function public.increment_api_usage(uuid, text, date, integer)
 revoke execute on function public.increment_api_usage(uuid, text, date, integer) from anon;
 revoke execute on function public.increment_api_usage(uuid, text, date, integer) from authenticated;
 grant execute on function public.increment_api_usage(uuid, text, date, integer) to service_role;
-
--- Verify afterwards:
-select table_name, row_security from information_schema.tables
-  where table_schema = 'public' and table_name = 'api_usage';
-select routine_name, security_type from information_schema.routines
-  where routine_name = 'increment_api_usage';
