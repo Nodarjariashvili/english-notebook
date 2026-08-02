@@ -3,8 +3,9 @@
 // - The real Anthropic API key lives only in this function's environment
 //   (ANTHROPIC_API_KEY secret) -- it never reaches the browser.
 // - Rejects any request that isn't from a signed-in Supabase user.
-// - Enforces a 50-requests-per-day-per-user cap (shared code path used by
-//   both the chat tab and the admin photo-analysis panel).
+// - Enforces a per-day-per-user cap (shared code path used by both the chat
+//   tab and the admin photo-analysis panel) -- 50/day on the free plan,
+//   500/day for an active/on_trial row in public.subscriptions (Premium).
 // - Forwards the request body to Anthropic unchanged and returns Anthropic's
 //   response body unchanged, so the existing client-side response parsing
 //   (result.content[0].text, etc.) needs no changes. Custom error responses
@@ -15,7 +16,9 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
-const DAILY_LIMIT = 50;
+const FREE_DAILY_LIMIT = 50;
+const PREMIUM_DAILY_LIMIT = 500;
+const ACTIVE_SUBSCRIPTION_STATUSES = new Set(["active", "on_trial"]);
 const FUNCTION_NAME = "anthropic-chat";
 
 const CORS_HEADERS = {
@@ -57,20 +60,28 @@ Deno.serve(async (req) => {
   }
   const userId = userData.user.id;
 
-  // service-role client -- bypasses RLS, used only for server-side rate-limit bookkeeping
+  // service-role client -- bypasses RLS, used for subscription lookup + rate-limit bookkeeping
   const adminClient = createClient(supabaseUrl, supabaseServiceKey);
+
+  const { data: subRow } = await adminClient
+    .from("subscriptions")
+    .select("status")
+    .eq("user_id", userId)
+    .maybeSingle();
+  const dailyLimit = subRow && ACTIVE_SUBSCRIPTION_STATUSES.has(subRow.status) ? PREMIUM_DAILY_LIMIT : FREE_DAILY_LIMIT;
+
   const today = new Date().toISOString().slice(0, 10);
   const { data: usageResult, error: usageErr } = await adminClient.rpc("increment_api_usage", {
     p_user_id: userId,
     p_function_name: FUNCTION_NAME,
     p_day: today,
-    p_limit: DAILY_LIMIT,
+    p_limit: dailyLimit,
   });
   if (usageErr) {
     return errorResponse(500, "api_error", "Rate limit check failed.");
   }
   if (usageResult === -1) {
-    return errorResponse(429, "rate_limit_error", "Daily request limit reached (50/day). Try again tomorrow.");
+    return errorResponse(429, "rate_limit_error", "Daily request limit reached. Try again tomorrow, or upgrade for a higher limit.");
   }
 
   const anthropicKey = Deno.env.get("ANTHROPIC_API_KEY");

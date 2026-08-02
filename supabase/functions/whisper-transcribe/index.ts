@@ -9,7 +9,9 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const WHISPER_API_URL = "https://api.openai.com/v1/audio/transcriptions";
-const DAILY_LIMIT = 50;
+const FREE_DAILY_LIMIT = 50;
+const PREMIUM_DAILY_LIMIT = 500;
+const ACTIVE_SUBSCRIPTION_STATUSES = new Set(["active", "on_trial"]);
 const FUNCTION_NAME = "whisper-transcribe";
 
 const CORS_HEADERS = {
@@ -51,18 +53,26 @@ Deno.serve(async (req) => {
   const userId = userData.user.id;
 
   const adminClient = createClient(supabaseUrl, supabaseServiceKey);
+
+  const { data: subRow } = await adminClient
+    .from("subscriptions")
+    .select("status")
+    .eq("user_id", userId)
+    .maybeSingle();
+  const dailyLimit = subRow && ACTIVE_SUBSCRIPTION_STATUSES.has(subRow.status) ? PREMIUM_DAILY_LIMIT : FREE_DAILY_LIMIT;
+
   const today = new Date().toISOString().slice(0, 10);
   const { data: usageResult, error: usageErr } = await adminClient.rpc("increment_api_usage", {
     p_user_id: userId,
     p_function_name: FUNCTION_NAME,
     p_day: today,
-    p_limit: DAILY_LIMIT,
+    p_limit: dailyLimit,
   });
   if (usageErr) {
     return errorResponse(500, "Rate limit check failed.");
   }
   if (usageResult === -1) {
-    return errorResponse(429, "Daily request limit reached (50/day). Try again tomorrow.");
+    return errorResponse(429, "Daily request limit reached. Try again tomorrow, or upgrade for a higher limit.");
   }
 
   const openaiKey = Deno.env.get("OPENAI_API_KEY");

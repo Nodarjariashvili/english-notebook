@@ -15,6 +15,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@400;600;700;800&family=Caveat:wght@600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="https://app.lemonsqueezy.com/js/lemon.js" defer></script>
 <style>
   :root {
     --paper: oklch(96% 0.02 340);
@@ -3005,7 +3006,7 @@
     }).then(function (result) {
       if (!result.ok) {
         var msg = result.data && result.data.error && result.data.error.message ? result.data.error.message : "ტრანსკრიფცია ვერ შესრულდა";
-        if (result.status === 429) msg = "დღიური ლიმიტი ამოიწურა (50 მოთხოვნა/დღეში) — სცადე ხვალ.";
+        if (result.status === 429) msg = "დღიური ლიმიტი ამოიწურა — სცადე ხვალ, ან განაახლე Premium-ზე მაღალი ლიმიტისთვის.";
         cb(null, "Whisper შეცდომა: " + msg);
         return;
       }
@@ -3583,6 +3584,7 @@
 
     page.appendChild(renderSettingsProfileBlock());
     page.appendChild(renderSettingsAccountSection());
+    page.appendChild(renderSettingsPremiumSection());
     page.appendChild(renderSettingsLearningSection());
     page.appendChild(renderSettingsPrefsSection());
 
@@ -3693,6 +3695,48 @@
       row.appendChild(main);
       sec.appendChild(row);
     });
+
+    return sec;
+  }
+
+  function renderSettingsPremiumSection() {
+    var sec = el("div", { class: "settings-section" });
+    sec.appendChild(el("h4", {}, [document.createTextNode("გამოწერა")]));
+
+    var row = el("div", { class: "settings-row" });
+    var premium = isPremiumUser();
+    row.appendChild(el("div", { class: "settings-icon-circle", "data-color": premium ? "orange" : "blue" }, [
+      document.createTextNode(premium ? "⭐" : "🔓")
+    ]));
+    var main = el("div", { class: "settings-row-main" });
+
+    if (premium) {
+      var variantId = subscriptionStatus.variant_id;
+      var planLabel = (variantId && LEMONSQUEEZY_VARIANT_LABELS[variantId]) || "Premium";
+      main.appendChild(el("div", { class: "settings-row-label" }, [document.createTextNode(planLabel + " — აქტიური")]));
+      var dateText = "";
+      if (subscriptionStatus.renews_at) {
+        dateText = "განახლდება: " + new Date(subscriptionStatus.renews_at).toLocaleDateString("ka-GE");
+      } else if (subscriptionStatus.ends_at) {
+        dateText = "მოქმედებს: " + new Date(subscriptionStatus.ends_at).toLocaleDateString("ka-GE") + "-მდე";
+      }
+      if (dateText) main.appendChild(el("div", { class: "settings-row-value" }, [document.createTextNode(dateText)]));
+      row.appendChild(main);
+      sec.appendChild(row);
+    } else {
+      main.appendChild(el("div", { class: "settings-row-label" }, [document.createTextNode("უფასო გეგმა")]));
+      row.appendChild(main);
+      sec.appendChild(row);
+
+      var btnRow = el("div", { style: "display:flex;gap:8px;flex-wrap:wrap;margin-top:10px" });
+      var monthlyBtn = el("button", { class: "check-btn", type: "button" }, [document.createTextNode("Premium — თვიური")]);
+      monthlyBtn.addEventListener("click", function () { openLemonSqueezyCheckout("monthly"); });
+      var yearlyBtn = el("button", { class: "check-btn", type: "button" }, [document.createTextNode("Premium — წლიური")]);
+      yearlyBtn.addEventListener("click", function () { openLemonSqueezyCheckout("yearly"); });
+      btnRow.appendChild(monthlyBtn);
+      btnRow.appendChild(yearlyBtn);
+      sec.appendChild(btnRow);
+    }
 
     return sec;
   }
@@ -4341,7 +4385,7 @@
       if (!voiceModeOn) return;
       if (!result.ok) {
         var msg = result.data && result.data.error && result.data.error.message ? result.data.error.message : "ტრანსკრიფცია ვერ შესრულდა";
-        if (result.status === 429) msg = "დღიური ლიმიტი ამოიწურა (50 მოთხოვნა/დღეში) — სცადე ხვალ.";
+        if (result.status === 429) msg = "დღიური ლიმიტი ამოიწურა — სცადე ხვალ, ან განაახლე Premium-ზე მაღალი ლიმიტისთვის.";
         showChatError("Whisper შეცდომა: " + msg);
         exitVoiceMode();
         return;
@@ -4573,7 +4617,7 @@
         if (!result.ok) {
           var msg = result.data && result.data.error && result.data.error.message ? result.data.error.message : "უცნობი შეცდომა (სტატუსი " + result.status + ")";
           if (result.status === 401) msg = "სესია ვადაგასულია — შედი თავიდან.";
-          if (result.status === 429) msg = "დღიური ლიმიტი ამოიწურა (50 მოთხოვნა/დღეში) — სცადე ხვალ.";
+          if (result.status === 429) msg = "დღიური ლიმიტი ამოიწურა — სცადე ხვალ, ან განაახლე Premium-ზე მაღალი ლიმიტისთვის.";
           statusBox.textContent = "შეცდომა: " + msg;
           return;
         }
@@ -4660,6 +4704,46 @@
     }
   }
 
+  /* ---------- premium subscription (LemonSqueezy) ---------- */
+  var subscriptionStatus = null; /* null = free, or the raw row from public.subscriptions */
+  var ACTIVE_SUBSCRIPTION_STATUSES = { active: true, on_trial: true };
+  function isPremiumUser() {
+    return !!(subscriptionStatus && ACTIVE_SUBSCRIPTION_STATUSES[subscriptionStatus.status]);
+  }
+
+  function loadSubscriptionStatus() {
+    if (!currentAuthUser) return Promise.resolve(null);
+    return supabaseClient.from("subscriptions").select("*").eq("user_id", currentAuthUser.id).maybeSingle()
+      .then(function (res) { return (res.error || !res.data) ? null : res.data; })
+      .catch(function () { return null; });
+  }
+
+  /* Fill these in from the LemonSqueezy dashboard before the Upgrade buttons will work:
+     Products -> [your product] -> each Variant -> "Copy checkout URL" (for the URLs below)
+     and the numeric Variant ID shown on that same variant's page (for the labels below). */
+  var LEMONSQUEEZY_CHECKOUT_URLS = {
+    monthly: "", /* e.g. "https://your-store.lemonsqueezy.com/buy/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" */
+    yearly: ""
+  };
+  var LEMONSQUEEZY_VARIANT_LABELS = {
+    /* "123456": "თვიური", "789012": "წლიური" -- fill in with the real numeric Variant IDs */
+  };
+
+  function openLemonSqueezyCheckout(plan) {
+    var baseUrl = LEMONSQUEEZY_CHECKOUT_URLS[plan];
+    if (!baseUrl) {
+      alert("Checkout URL არ არის კონფიგურირებული — იხილე LEMONSQUEEZY_CHECKOUT_URLS კოდში.");
+      return;
+    }
+    var sep = baseUrl.indexOf("?") === -1 ? "?" : "&";
+    var url = baseUrl + sep + "checkout[custom][user_id]=" + encodeURIComponent(currentAuthUser.id);
+    if (window.LemonSqueezy && window.LemonSqueezy.Url) {
+      window.LemonSqueezy.Url.Open(url);
+    } else {
+      window.open(url, "_blank");
+    }
+  }
+
   function startAppOnce(goToAdmin) {
     if (appStarted) return;
     appStarted = true;
@@ -4680,6 +4764,7 @@
     document.getElementById("notebook").style.display = "";
     var wantsAdmin = location.hash === "#admin";
     if (wantsAdmin && !isAdminUser) location.hash = ""; /* not authorized -- silently fall back to the normal app */
+    loadSubscriptionStatus().then(function (sub) { subscriptionStatus = sub; });
     if (appStarted) {
       if (wantsAdmin && isAdminUser) showAdminDirectly();
       return; /* already running -- state is already loaded and kept in sync via saveState() */
@@ -4693,6 +4778,7 @@
   function showGate(mode) {
     currentAuthUser = null;
     isAdminUser = false;
+    subscriptionStatus = null;
     updateAdminBadge();
     document.getElementById("notebook").style.display = "none";
     var root = document.getElementById("auth-gate-root");
