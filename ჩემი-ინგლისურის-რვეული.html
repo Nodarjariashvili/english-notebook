@@ -274,9 +274,10 @@
   /* ---------- settings page ---------- */
   .settings-page { max-width: 620px; margin: 0 auto; }
   .settings-profile-card {
-    display: flex; align-items: center; gap: 16px; background: var(--paper);
-    border: 1px solid var(--border); border-radius: 22px; padding: 20px; margin: 18px 0 22px;
+    background: var(--paper); border: 1px solid var(--border); border-radius: 22px;
+    padding: 20px; margin: 18px 0 22px;
   }
+  .settings-profile-header { display: flex; align-items: center; gap: 16px; }
   .settings-profile-card .avatar { width: 56px; height: 56px; font-size: 1.15rem; }
   .settings-profile-name-row { display: flex; align-items: center; gap: 8px; }
   .settings-profile-name-row h3 { font-size: 1.1rem; }
@@ -293,7 +294,10 @@
     background: var(--surface); color: var(--ink); font-size: 0.88rem;
   }
   .settings-edit-form input:focus { border-color: var(--brand); }
+  .settings-edit-form input.field-invalid { border-color: var(--rust); }
   .settings-edit-actions { grid-column: 1 / -1; display: flex; gap: 8px; margin-top: 4px; }
+  .settings-profile-info-rows { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--border); }
+  .settings-profile-info-rows .settings-row { padding: 8px 0; }
 
   .settings-section {
     background: var(--paper); border: 1px solid var(--border); border-radius: 22px;
@@ -3675,10 +3679,13 @@
   }
 
   function renderSettingsProfileBlock() {
-    var outer = el("div", {});
+    /* single unified card: avatar+name header, edit form, and the age/city/job
+       rows all live inside ONE bordered card (Instagram/LinkedIn/Notion-style),
+       instead of the header and info rows being visually separate blocks. */
+    var outer = el("div", { class: "settings-profile-card" });
     var initials = (PROFILE.nameEn[0] + PROFILE.surnameEn[0]).toUpperCase();
-    var card = el("div", { class: "settings-profile-card" });
-    card.appendChild(el("div", { class: "avatar" }, [document.createTextNode(initials)]));
+    var header = el("div", { class: "settings-profile-header" });
+    header.appendChild(el("div", { class: "avatar" }, [document.createTextNode(initials)]));
 
     var right = el("div", { style: "flex:1;min-width:0" });
     var nameRow = el("div", { class: "settings-profile-name-row" });
@@ -3702,51 +3709,102 @@
     var fNameEn = field("Name (English)", "setNameEn", PROFILE.nameEn);
     var fSurname = field("გვარი (ქართულად)", "setSurnameKa", PROFILE.surname);
     var fSurnameEn = field("Surname (English)", "setSurnameEn", PROFILE.surnameEn);
-    var fAge = field("ასაკი", "setAge", PROFILE.age, "number");
+    var fAge = field("ასაკი", "setAge", PROFILE.age, "text");
+    fAge.input.setAttribute("inputmode", "numeric");
+    fAge.input.setAttribute("pattern", "[0-9]*");
+    fAge.input.addEventListener("input", function () {
+      fAge.input.value = fAge.input.value.replace(/[^0-9]/g, "");
+    });
     var fCity = field("ქალაქი (ქართულად)", "setCityKa", PROFILE.city);
     var fCityEn = field("City (English)", "setCityEn", PROFILE.cityEn);
     var fJob = field("პროფესია (ქართულად)", "setJobKa", PROFILE.job);
     var fJobEn = field("Job (English)", "setJobEn", PROFILE.jobEn);
-    [fName, fNameEn, fSurname, fSurnameEn, fAge, fCity, fCityEn, fJob, fJobEn].forEach(function (f) {
+    var allFields = [fName, fNameEn, fSurname, fSurnameEn, fAge, fCity, fCityEn, fJob, fJobEn];
+    allFields.forEach(function (f) {
       form.appendChild(f.wrap);
+      f.input.addEventListener("input", function () { f.input.classList.remove("field-invalid"); });
     });
 
-    var saveStatus = el("div", { class: "settings-row-value", style: "display:none;color:var(--rust);margin-top:6px" });
+    var saveStatus = el("div", { class: "settings-row-value", style: "display:none;margin-top:6px" });
+
+    function resetFormValues() {
+      fName.input.value = PROFILE.name;
+      fNameEn.input.value = PROFILE.nameEn;
+      fSurname.input.value = PROFILE.surname;
+      fSurnameEn.input.value = PROFILE.surnameEn;
+      fAge.input.value = PROFILE.age;
+      fCity.input.value = PROFILE.city;
+      fCityEn.input.value = PROFILE.cityEn;
+      fJob.input.value = PROFILE.job;
+      fJobEn.input.value = PROFILE.jobEn;
+      allFields.forEach(function (f) { f.input.classList.remove("field-invalid"); });
+      saveStatus.style.display = "none";
+    }
+
+    function validate() {
+      var ok = true;
+      [fName, fNameEn, fSurname, fSurnameEn, fCity, fCityEn, fJob, fJobEn].forEach(function (f) {
+        var empty = !f.input.value.trim();
+        f.input.classList.toggle("field-invalid", empty);
+        if (empty) ok = false;
+      });
+      var ageVal = fAge.input.value.trim();
+      var ageValid = /^[0-9]+$/.test(ageVal) && parseInt(ageVal, 10) > 0;
+      fAge.input.classList.toggle("field-invalid", !ageValid);
+      if (!ageValid) ok = false;
+      return ok;
+    }
 
     var actions = el("div", { class: "settings-edit-actions" });
     var saveBtn = el("button", { class: "check-btn", type: "button" }, [document.createTextNode("შენახვა")]);
+    var cancelBtn = el("button", { class: "redo-btn", type: "button" }, [document.createTextNode("გაუქმება")]);
     saveBtn.addEventListener("click", function () {
+      saveStatus.style.display = "none";
+      if (!validate()) {
+        saveStatus.style.color = "var(--rust)";
+        saveStatus.textContent = "შეავსე ყველა ველი — ასაკი მხოლოდ რიცხვი უნდა იყოს.";
+        saveStatus.style.display = "";
+        return;
+      }
       var over = {
-        name: fName.input.value.trim() || PROFILE.name,
-        nameEn: fNameEn.input.value.trim() || PROFILE.nameEn,
-        surname: fSurname.input.value.trim() || PROFILE.surname,
-        surnameEn: fSurnameEn.input.value.trim() || PROFILE.surnameEn,
-        age: parseInt(fAge.input.value, 10) || PROFILE.age,
-        city: fCity.input.value.trim() || PROFILE.city,
-        cityEn: fCityEn.input.value.trim() || PROFILE.cityEn,
-        job: fJob.input.value.trim() || PROFILE.job,
-        jobEn: fJobEn.input.value.trim() || PROFILE.jobEn
+        name: fName.input.value.trim(),
+        nameEn: fNameEn.input.value.trim(),
+        surname: fSurname.input.value.trim(),
+        surnameEn: fSurnameEn.input.value.trim(),
+        age: parseInt(fAge.input.value, 10),
+        city: fCity.input.value.trim(),
+        cityEn: fCityEn.input.value.trim(),
+        job: fJob.input.value.trim(),
+        jobEn: fJobEn.input.value.trim()
       };
       saveBtn.setAttribute("disabled", "disabled");
-      saveStatus.style.display = "none";
+      cancelBtn.setAttribute("disabled", "disabled");
       saveProfileToSupabase(over).then(function (res) {
-        saveBtn.removeAttribute("disabled");
         if (res.error) {
+          saveBtn.removeAttribute("disabled");
+          cancelBtn.removeAttribute("disabled");
+          saveStatus.style.color = "var(--rust)";
           saveStatus.textContent = "შენახვა ვერ მოხერხდა: " + res.error.message;
           saveStatus.style.display = "";
           return;
         }
         PROFILE_FIELDS.forEach(function (k) { PROFILE[k] = over[k]; });
-        renderSettingsView();
-        renderTabs();
+        saveStatus.style.color = "var(--green)";
+        saveStatus.textContent = "შენახულია ✓";
+        saveStatus.style.display = "";
+        setTimeout(function () {
+          renderSettingsView();
+          renderTabs();
+        }, 2000);
       }).catch(function (err) {
         saveBtn.removeAttribute("disabled");
+        cancelBtn.removeAttribute("disabled");
+        saveStatus.style.color = "var(--rust)";
         saveStatus.textContent = "კავშირის შეცდომა: " + err.message;
         saveStatus.style.display = "";
       });
     });
-    var cancelBtn = el("button", { class: "redo-btn", type: "button" }, [document.createTextNode("გაუქმება")]);
-    cancelBtn.addEventListener("click", function () { formWrap.style.display = "none"; });
+    cancelBtn.addEventListener("click", function () { resetFormValues(); formWrap.style.display = "none"; });
     actions.appendChild(saveBtn); actions.appendChild(cancelBtn);
     form.appendChild(actions);
     form.appendChild(saveStatus);
@@ -3757,12 +3815,12 @@
       formWrap.style.display = formWrap.style.display === "none" ? "block" : "none";
     });
 
-    card.appendChild(right);
-    outer.appendChild(card);
+    header.appendChild(right);
+    outer.appendChild(header);
 
-    /* age/city/job read-only rows -- moved here from the old Account section so the
-       whole profile (name + age + city + job) is edited together as one thing */
-    var infoRows = el("div", { style: "margin-top:10px" });
+    /* age/city/job read-only rows -- part of the SAME card as the header above,
+       separated only by a divider, so the whole profile reads as one block */
+    var infoRows = el("div", { class: "settings-profile-info-rows" });
     [
       ["🎂", "green", "ასაკი", String(PROFILE.age)],
       ["📍", "blue", "ქალაქი", PROFILE.city + " (" + PROFILE.cityEn + ")"],
