@@ -908,8 +908,7 @@
     city: "თბილისი", cityEn: "Tbilisi",
     job: "უსაფრთხოების თანამშრომელი", jobEn: "security officer"
   };
-  var PROFILE_STORAGE = "nonaEnglishNotebook.profile";
-  applyProfileOverrides();
+  var PROFILE_STORAGE = "nonaEnglishNotebook.profile"; /* legacy per-device key, read once as migration seed data -- see loadProfileFromSupabase() */
 
   var SETTINGS_STORAGE = "nonaEnglishNotebook.settings";
   var SETTINGS_DEFAULTS = { level: "beginner", soundEffects: true, autoSpeak: false, reminders: true };
@@ -3568,19 +3567,55 @@
     ]
   };
 
-  /* ---------- profile overrides (settings page name edit) ---------- */
-  function applyProfileOverrides() {
-    var raw;
-    try { raw = localStorage.getItem(PROFILE_STORAGE); } catch (e) { return; }
-    if (!raw) return;
-    var over;
-    try { over = JSON.parse(raw); } catch (e) { return; }
-    ["name", "nameEn", "surname", "surnameEn"].forEach(function (k) {
-      if (over[k]) PROFILE[k] = over[k];
-    });
+  /* ---------- profile (Settings -> Edit Profile), synced via Supabase ---------- */
+  var PROFILE_FIELDS = ["name", "nameEn", "surname", "surnameEn", "age", "city", "cityEn", "job", "jobEn"];
+
+  function profileRowToLocal(row) {
+    return {
+      name: row.name, nameEn: row.name_en, surname: row.surname, surnameEn: row.surname_en,
+      age: row.age, city: row.city, cityEn: row.city_en, job: row.job, jobEn: row.job_en
+    };
   }
-  function saveProfileOverrides(over) {
-    try { localStorage.setItem(PROFILE_STORAGE, JSON.stringify(over)); } catch (e) {}
+  function localProfileToRow(over) {
+    return {
+      user_id: currentAuthUser.id,
+      name: over.name, name_en: over.nameEn, surname: over.surname, surname_en: over.surnameEn,
+      age: over.age, city: over.city, city_en: over.cityEn, job: over.job, job_en: over.jobEn,
+      updated_at: new Date().toISOString()
+    };
+  }
+  function readLegacyLocalProfileOverride() {
+    var raw;
+    try { raw = localStorage.getItem(PROFILE_STORAGE); } catch (e) { return null; }
+    if (!raw) return null;
+    try { return JSON.parse(raw); } catch (e) { return null; }
+  }
+
+  /* Loads the signed-in user's profile row. If none exists yet (first login
+     since this migration), seeds it from any legacy per-device localStorage
+     override, falling back to the current (hardcoded default) PROFILE
+     values, and writes that as their first real row so it's there next time. */
+  function loadProfileFromSupabase() {
+    if (!currentAuthUser) return Promise.resolve();
+    return supabaseClient.from("profiles").select("*").eq("user_id", currentAuthUser.id).maybeSingle()
+      .then(function (res) {
+        if (res.data) {
+          var row = profileRowToLocal(res.data);
+          PROFILE_FIELDS.forEach(function (k) { if (row[k] !== null && row[k] !== undefined) PROFILE[k] = row[k]; });
+          return;
+        }
+        var legacy = readLegacyLocalProfileOverride();
+        var seed = {};
+        PROFILE_FIELDS.forEach(function (k) { seed[k] = (legacy && legacy[k] !== undefined) ? legacy[k] : PROFILE[k]; });
+        PROFILE_FIELDS.forEach(function (k) { PROFILE[k] = seed[k]; });
+        return supabaseClient.from("profiles").upsert(localProfileToRow(seed), { onConflict: "user_id" });
+      })
+      .catch(function () { /* leave PROFILE at its current (default) values */ });
+  }
+
+  function saveProfileToSupabase(over) {
+    if (!currentAuthUser) return Promise.reject(new Error("Not signed in"));
+    return supabaseClient.from("profiles").upsert(localProfileToRow(over), { onConflict: "user_id" });
   }
 
   /* ---------- app settings (settings page) ---------- */
@@ -3648,16 +3683,16 @@
     var right = el("div", { style: "flex:1;min-width:0" });
     var nameRow = el("div", { class: "settings-profile-name-row" });
     nameRow.appendChild(el("h3", {}, [document.createTextNode(PROFILE.name + " " + PROFILE.surname)]));
-    var editBtn = el("button", { class: "settings-edit-btn", type: "button", title: "სახელის რედაქტირება" }, [document.createTextNode("✎")]);
+    var editBtn = el("button", { class: "settings-edit-btn", type: "button", title: "პროფილის რედაქტირება" }, [document.createTextNode("✎")]);
     nameRow.appendChild(editBtn);
     right.appendChild(nameRow);
     right.appendChild(el("div", { class: "settings-row-value" }, [document.createTextNode(PROFILE.nameEn + " " + PROFILE.surnameEn)]));
 
     var formWrap = el("div", { style: "display:none" });
-    function field(labelText, id, value) {
+    function field(labelText, id, value, type) {
       var wrap = el("div", {});
       wrap.appendChild(el("label", { for: id }, [document.createTextNode(labelText)]));
-      var input = el("input", { type: "text", id: id });
+      var input = el("input", { type: type || "text", id: id });
       input.value = value;
       wrap.appendChild(input);
       return { wrap: wrap, input: input };
@@ -3667,8 +3702,16 @@
     var fNameEn = field("Name (English)", "setNameEn", PROFILE.nameEn);
     var fSurname = field("გვარი (ქართულად)", "setSurnameKa", PROFILE.surname);
     var fSurnameEn = field("Surname (English)", "setSurnameEn", PROFILE.surnameEn);
-    form.appendChild(fName.wrap); form.appendChild(fNameEn.wrap);
-    form.appendChild(fSurname.wrap); form.appendChild(fSurnameEn.wrap);
+    var fAge = field("ასაკი", "setAge", PROFILE.age, "number");
+    var fCity = field("ქალაქი (ქართულად)", "setCityKa", PROFILE.city);
+    var fCityEn = field("City (English)", "setCityEn", PROFILE.cityEn);
+    var fJob = field("პროფესია (ქართულად)", "setJobKa", PROFILE.job);
+    var fJobEn = field("Job (English)", "setJobEn", PROFILE.jobEn);
+    [fName, fNameEn, fSurname, fSurnameEn, fAge, fCity, fCityEn, fJob, fJobEn].forEach(function (f) {
+      form.appendChild(f.wrap);
+    });
+
+    var saveStatus = el("div", { class: "settings-row-value", style: "display:none;color:var(--rust);margin-top:6px" });
 
     var actions = el("div", { class: "settings-edit-actions" });
     var saveBtn = el("button", { class: "check-btn", type: "button" }, [document.createTextNode("შენახვა")]);
@@ -3677,18 +3720,36 @@
         name: fName.input.value.trim() || PROFILE.name,
         nameEn: fNameEn.input.value.trim() || PROFILE.nameEn,
         surname: fSurname.input.value.trim() || PROFILE.surname,
-        surnameEn: fSurnameEn.input.value.trim() || PROFILE.surnameEn
+        surnameEn: fSurnameEn.input.value.trim() || PROFILE.surnameEn,
+        age: parseInt(fAge.input.value, 10) || PROFILE.age,
+        city: fCity.input.value.trim() || PROFILE.city,
+        cityEn: fCityEn.input.value.trim() || PROFILE.cityEn,
+        job: fJob.input.value.trim() || PROFILE.job,
+        jobEn: fJobEn.input.value.trim() || PROFILE.jobEn
       };
-      PROFILE.name = over.name; PROFILE.nameEn = over.nameEn;
-      PROFILE.surname = over.surname; PROFILE.surnameEn = over.surnameEn;
-      saveProfileOverrides(over);
-      renderSettingsView();
-      renderTabs();
+      saveBtn.setAttribute("disabled", "disabled");
+      saveStatus.style.display = "none";
+      saveProfileToSupabase(over).then(function (res) {
+        saveBtn.removeAttribute("disabled");
+        if (res.error) {
+          saveStatus.textContent = "შენახვა ვერ მოხერხდა: " + res.error.message;
+          saveStatus.style.display = "";
+          return;
+        }
+        PROFILE_FIELDS.forEach(function (k) { PROFILE[k] = over[k]; });
+        renderSettingsView();
+        renderTabs();
+      }).catch(function (err) {
+        saveBtn.removeAttribute("disabled");
+        saveStatus.textContent = "კავშირის შეცდომა: " + err.message;
+        saveStatus.style.display = "";
+      });
     });
     var cancelBtn = el("button", { class: "redo-btn", type: "button" }, [document.createTextNode("გაუქმება")]);
     cancelBtn.addEventListener("click", function () { formWrap.style.display = "none"; });
     actions.appendChild(saveBtn); actions.appendChild(cancelBtn);
     form.appendChild(actions);
+    form.appendChild(saveStatus);
     formWrap.appendChild(form);
     right.appendChild(formWrap);
 
@@ -3698,13 +3759,32 @@
 
     card.appendChild(right);
     outer.appendChild(card);
+
+    /* age/city/job read-only rows -- moved here from the old Account section so the
+       whole profile (name + age + city + job) is edited together as one thing */
+    var infoRows = el("div", { style: "margin-top:10px" });
+    [
+      ["🎂", "green", "ასაკი", String(PROFILE.age)],
+      ["📍", "blue", "ქალაქი", PROFILE.city + " (" + PROFILE.cityEn + ")"],
+      ["💼", "orange", "პროფესია", PROFILE.job]
+    ].forEach(function (r) {
+      var row = el("div", { class: "settings-row" });
+      row.appendChild(el("div", { class: "settings-icon-circle", "data-color": r[1] }, [document.createTextNode(r[0])]));
+      var main = el("div", { class: "settings-row-main" });
+      main.appendChild(el("div", { class: "settings-row-label" }, [document.createTextNode(r[2])]));
+      main.appendChild(el("div", { class: "settings-row-value" }, [document.createTextNode(r[3])]));
+      row.appendChild(main);
+      infoRows.appendChild(row);
+    });
+    outer.appendChild(infoRows);
+
     return outer;
   }
 
   function renderSettingsAccountSection() {
     var sec = el("div", { class: "settings-section" });
     sec.appendChild(el("h4", {}, [document.createTextNode("ანგარიში")]));
-    sec.appendChild(el("div", { class: "settings-section-sub" }, [document.createTextNode("პროფილის დეტალები")]));
+    sec.appendChild(el("div", { class: "settings-section-sub" }, [document.createTextNode("შესვლის ინფორმაცია")]));
 
     var loginRow = el("div", { class: "settings-row" });
     loginRow.appendChild(el("div", { class: "settings-icon-circle", "data-color": "green" }, [document.createTextNode("👤")]));
@@ -3729,20 +3809,6 @@
       adminRow.appendChild(adminBtn);
       sec.appendChild(adminRow);
     }
-
-    [
-      ["🎂", "green", "ასაკი", String(PROFILE.age)],
-      ["📍", "blue", "ქალაქი", PROFILE.city + " (" + PROFILE.cityEn + ")"],
-      ["💼", "orange", "პროფესია", PROFILE.job]
-    ].forEach(function (r) {
-      var row = el("div", { class: "settings-row" });
-      row.appendChild(el("div", { class: "settings-icon-circle", "data-color": r[1] }, [document.createTextNode(r[0])]));
-      var main = el("div", { class: "settings-row-main" });
-      main.appendChild(el("div", { class: "settings-row-label" }, [document.createTextNode(r[2])]));
-      main.appendChild(el("div", { class: "settings-row-value" }, [document.createTextNode(r[3])]));
-      row.appendChild(main);
-      sec.appendChild(row);
-    });
 
     return sec;
   }
@@ -4815,11 +4881,12 @@
     if (wantsAdmin && !isAdminUser) location.hash = ""; /* not authorized -- silently fall back to the normal app */
     loadSubscriptionStatus().then(function (sub) { subscriptionStatus = sub; });
     if (appStarted) {
+      loadProfileFromSupabase(); /* refreshes PROFILE in the background; already-rendered views just keep their current values until next render */
       if (wantsAdmin && isAdminUser) showAdminDirectly();
       return; /* already running -- state is already loaded and kept in sync via saveState() */
     }
-    loadState().then(function (loadedState) {
-      state = loadedState;
+    Promise.all([loadState(), loadProfileFromSupabase()]).then(function (results) {
+      state = results[0];
       startAppOnce(wantsAdmin && isAdminUser);
     });
   }
