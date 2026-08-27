@@ -3954,7 +3954,82 @@
       sec.appendChild(adminRow);
     }
 
+    sec.appendChild(renderPasswordChangeBlock());
+
     return sec;
+  }
+
+  function renderPasswordChangeBlock() {
+    var wrap = el("div", { style: "margin-top:16px;padding-top:16px;border-top:1px solid var(--border)" });
+    wrap.appendChild(el("div", { class: "settings-row-label" }, [document.createTextNode("პაროლის შეცვლა")]));
+
+    function pwField(labelText, id) {
+      var w = el("div", {});
+      w.appendChild(el("label", { for: id }, [document.createTextNode(labelText)]));
+      var input = el("input", { type: "password", id: id, minlength: "6", autocomplete: "new-password" });
+      w.appendChild(attachPasswordToggle(input));
+      return { wrap: w, input: input };
+    }
+
+    var form = el("div", { class: "settings-edit-form" });
+    var fNewPw = pwField("ახალი პაროლი", "setNewPassword");
+    var fConfirmPw = pwField("გაიმეორეთ პაროლი", "setConfirmPassword");
+    form.appendChild(fNewPw.wrap);
+    form.appendChild(fConfirmPw.wrap);
+    [fNewPw, fConfirmPw].forEach(function (f) {
+      f.input.addEventListener("input", function () { f.input.classList.remove("field-invalid"); });
+    });
+
+    var pwStatus = el("div", { class: "settings-row-value", style: "display:none;margin-top:6px" });
+
+    var actions = el("div", { class: "settings-edit-actions" });
+    var updateBtn = el("button", { class: "check-btn", type: "button" }, [document.createTextNode("პაროლის განახლება")]);
+    actions.appendChild(updateBtn);
+    form.appendChild(actions);
+    form.appendChild(pwStatus);
+    wrap.appendChild(form);
+
+    updateBtn.addEventListener("click", function () {
+      pwStatus.style.display = "none";
+      var pw = fNewPw.input.value;
+      var pw2 = fConfirmPw.input.value;
+      var ok = true;
+      if (pw.length < 6) { fNewPw.input.classList.add("field-invalid"); ok = false; }
+      if (pw2.length < 6) { fConfirmPw.input.classList.add("field-invalid"); ok = false; }
+      if (ok && pw !== pw2) {
+        fNewPw.input.classList.add("field-invalid");
+        fConfirmPw.input.classList.add("field-invalid");
+        ok = false;
+      }
+      if (!ok) {
+        pwStatus.style.color = "var(--rust)";
+        pwStatus.textContent = "პაროლები არ ემთხვევა ან მოკლეა — მინიმუმ 6 სიმბოლო საჭიროა.";
+        pwStatus.style.display = "";
+        return;
+      }
+      updateBtn.setAttribute("disabled", "disabled");
+      supabaseClient.auth.updateUser({ password: pw }).then(function (res) {
+        updateBtn.removeAttribute("disabled");
+        if (res.error) {
+          pwStatus.style.color = "var(--rust)";
+          pwStatus.textContent = "განახლება ვერ მოხერხდა: " + res.error.message;
+          pwStatus.style.display = "";
+          return;
+        }
+        fNewPw.input.value = "";
+        fConfirmPw.input.value = "";
+        pwStatus.style.color = "var(--green)";
+        pwStatus.textContent = "პაროლი განახლდა ✓";
+        pwStatus.style.display = "";
+      }).catch(function (err) {
+        updateBtn.removeAttribute("disabled");
+        pwStatus.style.color = "var(--rust)";
+        pwStatus.textContent = "კავშირის შეცდომა: " + err.message;
+        pwStatus.style.display = "";
+      });
+    });
+
+    return wrap;
   }
 
   function renderSettingsPremiumSection() {
