@@ -3961,7 +3961,38 @@
 
   function renderPasswordChangeBlock() {
     var wrap = el("div", { style: "margin-top:16px;padding-top:16px;border-top:1px solid var(--border)" });
-    wrap.appendChild(el("div", { class: "settings-row-label" }, [document.createTextNode("პაროლის შეცვლა")]));
+
+    /* collapsed by default -- a clickable row (same icon+label+value shape as
+       the admin row above it) that toggles the form below open/closed */
+    var header = el("div", {
+      class: "settings-row",
+      style: "cursor:pointer;border-bottom:none;padding-bottom:0",
+      tabindex: "0",
+      role: "button",
+      "aria-expanded": "false"
+    });
+    header.appendChild(el("div", { class: "settings-icon-circle", "data-color": "blue" }, [document.createTextNode("🔑")]));
+    var headerMain = el("div", { class: "settings-row-main" });
+    headerMain.appendChild(el("div", { class: "settings-row-label" }, [document.createTextNode("პაროლის შეცვლა")]));
+    headerMain.appendChild(el("div", { class: "settings-row-value" }, [document.createTextNode("ახალი პაროლის დაყენება")]));
+    header.appendChild(headerMain);
+    var chevron = el("span", { style: "font-size:0.8rem;color:var(--ink-faint);flex:0 0 auto" }, [document.createTextNode("▾")]);
+    header.appendChild(chevron);
+    wrap.appendChild(header);
+
+    var content = el("div", { style: "display:none;margin-top:8px" });
+    wrap.appendChild(content);
+
+    function toggleOpen() {
+      var isOpen = content.style.display !== "none";
+      content.style.display = isOpen ? "none" : "";
+      header.setAttribute("aria-expanded", isOpen ? "false" : "true");
+      chevron.textContent = isOpen ? "▾" : "▴";
+    }
+    header.addEventListener("click", toggleOpen);
+    header.addEventListener("keydown", function (e) {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggleOpen(); }
+    });
 
     function pwField(labelText, id) {
       var w = el("div", {});
@@ -3987,7 +4018,7 @@
     actions.appendChild(updateBtn);
     form.appendChild(actions);
     form.appendChild(pwStatus);
-    wrap.appendChild(form);
+    content.appendChild(form);
 
     updateBtn.addEventListener("click", function () {
       pwStatus.style.display = "none";
