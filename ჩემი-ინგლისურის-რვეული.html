@@ -1889,6 +1889,46 @@
 
   var state = { cards: {}, quiz: {}, activity: {} };
 
+  /* ---------- card-record helpers (Spaced Repetition groundwork) ----------
+     state.cards[deckId][mode][idx] used to be a plain "green"/"gold"/"rust"
+     string. It's now { lastResult, attempts, correctCount, lastAttemptDate }
+     so a future scheduler has data to read -- attempts/correctCount/
+     lastAttemptDate aren't consumed by anything yet. cardLastResult() reads
+     either shape (so mastery/color code doesn't care which one it sees, and
+     doesn't need to assume migration already ran); applyCardResult() always
+     writes the new shape, carrying forward any existing attempts/correctCount. */
+  function cardLastResult(rec) {
+    if (rec == null) return rec;
+    return typeof rec === "object" ? rec.lastResult : rec;
+  }
+  function migrateCardRecord(rec) {
+    if (rec == null || typeof rec !== "string") return rec;
+    return { lastResult: rec, attempts: 1, correctCount: rec === "green" ? 1 : 0, lastAttemptDate: null };
+  }
+  function migrateCardsFormat(cardsObj) {
+    if (!cardsObj) return cardsObj;
+    Object.keys(cardsObj).forEach(function (deckId) {
+      var modes = cardsObj[deckId] || {};
+      Object.keys(modes).forEach(function (mode) {
+        var ratings = modes[mode] || {};
+        Object.keys(ratings).forEach(function (idx) {
+          ratings[idx] = migrateCardRecord(ratings[idx]);
+        });
+      });
+    });
+    return cardsObj;
+  }
+  function applyCardResult(prevRec, lastResult) {
+    var attempts = (prevRec && typeof prevRec === "object" && prevRec.attempts) || 0;
+    var correctCount = (prevRec && typeof prevRec === "object" && prevRec.correctCount) || 0;
+    return {
+      lastResult: lastResult,
+      attempts: attempts + 1,
+      correctCount: correctCount + (lastResult === "green" ? 1 : 0),
+      lastAttemptDate: new Date().toISOString()
+    };
+  }
+
   function loadStateFromLocalStorage() {
     var s;
     try {
@@ -1908,6 +1948,7 @@
       }
       if (isOldFlat) s.cards[deckId] = { flip: rec };
     });
+    s.cards = migrateCardsFormat(s.cards);
     return s;
   }
 
@@ -1923,7 +1964,7 @@
         if (res.error) return loadStateFromLocalStorage();
         if (res.data) {
           return {
-            cards: res.data.cards || {},
+            cards: migrateCardsFormat(res.data.cards || {}),
             quiz: res.data.quiz || {},
             activity: res.data.activity || {}
           };
@@ -2264,7 +2305,7 @@
     var ratings = (state.cards[deck.id] || {})[mode || "flip"] || {};
     var total = deck.cards.length, rated = 0, green = 0;
     for (var i = 0; i < total; i++) {
-      var lvl = ratings[i];
+      var lvl = cardLastResult(ratings[i]);
       if (lvl) { rated++; if (lvl === "green") green++; }
     }
     var pct = total ? green / total : 0;
@@ -2752,7 +2793,7 @@
       root.appendChild(el("p", { style: "color:var(--ink-soft);margin:0 0 12px;font-size:0.85rem" }, [document.createTextNode("აირჩიე სიტყვა სიიდან:")]));
       root.appendChild(renderItemPickerGrid(deck.cards.length, function (i) {
         var ratings = (state.cards[deck.id] || {}).flip || {};
-        var lvl = ratings[i];
+        var lvl = cardLastResult(ratings[i]);
         if (!lvl) return "none";
         if (lvl === "green") return "correct";
         if (lvl === "gold") return "partial";
@@ -2801,14 +2842,14 @@
     var rateRow = el("div", { class: "rate-row" });
     [["rust", "არ ვიცი"], ["gold", "თითქმის"], ["green", "ვიცი"]].forEach(function (pair) {
       var level = pair[0], label = pair[1];
-      var chosen = ratings[idx] === level;
+      var chosen = cardLastResult(ratings[idx]) === level;
       var b = el("button", { class: "rate-btn" + (chosen ? " chosen" : ""), type: "button", "data-level": level }, [
         el("span", { class: "swatch" }), document.createTextNode(label)
       ]);
       b.addEventListener("click", function () {
         state.cards[deck.id] = state.cards[deck.id] || {};
         state.cards[deck.id].flip = state.cards[deck.id].flip || {};
-        state.cards[deck.id].flip[idx] = level;
+        state.cards[deck.id].flip[idx] = applyCardResult(state.cards[deck.id].flip[idx], level);
         saveState();
         renderCardsView();
         renderTabs();
@@ -2847,7 +2888,7 @@
   function markPracticeResult(deck, idx, ok, mode) {
     state.cards[deck.id] = state.cards[deck.id] || {};
     state.cards[deck.id][mode] = state.cards[deck.id][mode] || {};
-    state.cards[deck.id][mode][idx] = ok ? "green" : "rust";
+    state.cards[deck.id][mode][idx] = applyCardResult(state.cards[deck.id][mode][idx], ok ? "green" : "rust");
     saveState();
     renderTabs();
   }
@@ -2881,7 +2922,7 @@
     root.appendChild(el("p", { style: "color:var(--ink-soft);margin:0 0 12px;font-size:0.85rem" }, [document.createTextNode("აირჩიე სავარჯიშო სიიდან:")]));
     root.appendChild(renderItemPickerGrid(deck.cards.length, function (i) {
       var ratings = (state.cards[deck.id] || {})[mode] || {};
-      var lvl = ratings[i];
+      var lvl = cardLastResult(ratings[i]);
       if (!lvl) return "none";
       return lvl === "green" ? "correct" : "wrong";
     }, function (idx) { openPracticeItem(idx); }));
