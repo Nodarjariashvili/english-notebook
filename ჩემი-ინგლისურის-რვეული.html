@@ -1001,6 +1001,8 @@
   var PROFILE_STORAGE = "nonaEnglishNotebook.profile"; /* legacy per-device key, read once as migration seed data -- see loadProfileFromSupabase() */
 
   var SETTINGS_STORAGE = "nonaEnglishNotebook.settings";
+  var MISTAKE_STATS_STORAGE = "nonaEnglishNotebook.mistakeStats";
+  var MISTAKE_CATEGORIES = ["grammar", "vocabulary", "pronunciation", "other"];
   var SETTINGS_DEFAULTS = { level: "beginner", soundEffects: true, autoSpeak: false, reminders: true };
   var LEVEL_META = {
     beginner: { label: "დამწყები (A1-A2)", prompt: "an elementary (A1-A2)" },
@@ -3557,9 +3559,10 @@
       reply: { type: "string", description: "Natural English conversational reply." },
       has_correction: { type: "boolean", description: "True if the learner's last message had a mistake." },
       corrected: { type: "string", description: "The corrected English phrase, or empty string." },
-      explanation: { type: "string", description: "One short sentence in Georgian explaining the correction, or empty string." }
+      explanation: { type: "string", description: "One short sentence in Georgian explaining the correction, or empty string." },
+      mistake_category: { type: "string", enum: ["grammar", "vocabulary", "pronunciation", "other"], description: "Category of the mistake when has_correction is true; \"other\" when has_correction is false (ignored in that case)." }
     },
-    required: ["reply", "has_correction", "corrected", "explanation"],
+    required: ["reply", "has_correction", "corrected", "explanation", "mistake_category"],
     additionalProperties: false
   };
 
@@ -3763,6 +3766,25 @@
   }
   function saveSettings() {
     try { localStorage.setItem(SETTINGS_STORAGE, JSON.stringify(appSettings)); } catch (e) {}
+  }
+
+  /* ---------- chat mistake categorization (pedagogical groundwork) ----------
+     Per-device tally only, not yet surfaced in any UI -- collected so a future
+     "what do you struggle with" view or SRS scheduler has data to read. */
+  function loadMistakeStats() {
+    var raw;
+    try { raw = localStorage.getItem(MISTAKE_STATS_STORAGE); } catch (e) { raw = null; }
+    var parsed = {};
+    if (raw) { try { parsed = JSON.parse(raw); } catch (e) { parsed = {}; } }
+    var out = {};
+    MISTAKE_CATEGORIES.forEach(function (c) { out[c] = parsed[c] > 0 ? parsed[c] : 0; });
+    return out;
+  }
+  function recordMistakeCategory(category) {
+    if (MISTAKE_CATEGORIES.indexOf(category) === -1) category = "other";
+    var stats = loadMistakeStats();
+    stats[category] += 1;
+    try { localStorage.setItem(MISTAKE_STATS_STORAGE, JSON.stringify(stats)); } catch (e) {}
   }
   function playDing() {
     if (!appSettings.soundEffects) return;
@@ -4268,8 +4290,8 @@
     var tail = [
       "1. Reply naturally and warmly in ENGLISH ONLY, continuing the conversation, asking a simple follow-up question, short sentences, common A1-A2 words. Keep it brief (2-4 sentences).",
       "2. Separately, check her most recent message for English grammar or vocabulary mistakes.",
-      "   - If there IS a mistake: set has_correction to true, give the corrected English phrase in 'corrected', and a very short explanation IN GEORGIAN (one sentence) in 'explanation'.",
-      "   - If her message has no mistakes: set has_correction to false and leave 'corrected'/'explanation' as empty strings.",
+      "   - If there IS a mistake: set has_correction to true, give the corrected English phrase in 'corrected', a very short explanation IN GEORGIAN (one sentence) in 'explanation', and classify it in 'mistake_category' as one of: grammar, vocabulary, pronunciation, other.",
+      "   - If her message has no mistakes: set has_correction to false, leave 'corrected'/'explanation' as empty strings, and set 'mistake_category' to \"other\".",
       "3. Never blend the correction into the reply — keep them completely separate."
     ];
     return lines.concat(tail).join("\n");
@@ -4478,6 +4500,7 @@
         return;
       }
       var parsed = JSON.parse(textBlock.text);
+      if (parsed.has_correction) recordMistakeCategory(parsed.mistake_category);
       addChatBubble("assistant", parsed.reply, parsed);
       chatHistory.push({ role: "assistant", content: parsed.reply });
       if (sendBtn) sendBtn.disabled = false;
