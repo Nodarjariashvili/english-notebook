@@ -3138,14 +3138,14 @@
     form.append("file", blob, "answer." + ext);
     form.append("model", "whisper-1");
     form.append("language", "en");
-    edgeFunctionHeaders({}).then(function (headers) {
-      return fetch(WHISPER_FUNCTION_URL, { method: "POST", headers: headers, body: form });
-    }).then(function (res) {
+    postToEdgeFunction(WHISPER_FUNCTION_URL, {}, form).then(function (res) {
       return res.json().then(function (data) { return { ok: res.ok, status: res.status, data: data }; });
     }).then(function (result) {
       if (!result.ok) {
         var msg = result.data && result.data.error && result.data.error.message ? result.data.error.message : "ტრანსკრიფცია ვერ შესრულდა";
         if (result.status === 429) msg = "დღიური ლიმიტი ამოიწურა — სცადე ხვალ, ან განაახლე Premium-ზე მაღალი ლიმიტისთვის.";
+        if (result.status === 401) msg = "სესია ვადაგასულია — გთხოვ თავიდან შედი ანგარიშზე.";
+        console.error("transcribePracticeAnswer: Whisper error", result.status, result.data);
         cb(null, "Whisper შეცდომა: " + msg);
         return;
       }
@@ -3537,6 +3537,39 @@
       for (var k in extra) headers[k] = extra[k];
       return headers;
     });
+  }
+
+  /* getSession() is supposed to transparently refresh an expired access token
+     before returning it, but on a mobile PWA that gets suspended in the
+     background for a while (iOS in particular), the SDK's own refresh timer
+     can miss its window -- the very first request after the app comes back
+     to the foreground has been seen going out with a token that's already
+     past its exp claim, and the edge function correctly bounces it with 401.
+     Rather than surface that as a dead end ("სესია ვადაგასულია" with no way
+     forward but a manual re-login), retry exactly once: force a real
+     refreshSession() call (bypassing whatever the SDK thought was still
+     valid) and resend with the new token. Only a still-invalid refresh_token
+     (a genuinely expired session) falls through to the caller's 401
+     handling now. */
+  function postToEdgeFunction(url, extra, body) {
+    function attempt(hasRetried) {
+      return edgeFunctionHeaders(extra).then(function (headers) {
+        return fetch(url, { method: "POST", headers: headers, body: body });
+      }).then(function (res) {
+        if (res.status === 401 && !hasRetried) {
+          console.warn("postToEdgeFunction: got 401, forcing refreshSession() and retrying once:", url);
+          return supabaseClient.auth.refreshSession().then(function (refreshRes) {
+            if (refreshRes.error || !refreshRes.data.session) {
+              console.error("postToEdgeFunction: refreshSession() failed -- session is genuinely expired", refreshRes.error);
+              return res; /* no valid refresh_token left -- surface the original 401 as-is */
+            }
+            return attempt(true);
+          });
+        }
+        return res;
+      });
+    }
+    return attempt(false);
   }
 
   var CHAT_MODEL = "claude-opus-4-8";
@@ -4456,22 +4489,16 @@
     addChatTyping();
     if (voiceModeOn) setVoiceStatus("processing");
 
-    edgeFunctionHeaders({ "content-type": "application/json" }).then(function (headers) {
-      return fetch(ANTHROPIC_CHAT_FUNCTION_URL, {
-        method: "POST",
-        headers: headers,
-        body: JSON.stringify({
-          model: CHAT_MODEL,
-          max_tokens: 700,
-          system: buildSystemPrompt(),
-          messages: chatHistory,
-          output_config: {
-            effort: "medium",
-            format: { type: "json_schema", schema: CHAT_OUTPUT_SCHEMA }
-          }
-        })
-      });
-    }).then(function (res) {
+    postToEdgeFunction(ANTHROPIC_CHAT_FUNCTION_URL, { "content-type": "application/json" }, JSON.stringify({
+      model: CHAT_MODEL,
+      max_tokens: 700,
+      system: buildSystemPrompt(),
+      messages: chatHistory,
+      output_config: {
+        effort: "medium",
+        format: { type: "json_schema", schema: CHAT_OUTPUT_SCHEMA }
+      }
+    })).then(function (res) {
       return res.json().then(function (data) { return { ok: res.ok, status: res.status, data: data }; });
     }).then(function (result) {
       removeChatTyping();
@@ -4481,6 +4508,7 @@
         } else if (result.status === 429) {
           showChatError("მოთხოვნები ძალიან ხშირია (rate limit) — მოიცადე ცოტა ხანი და სცადე ისევ.");
         } else {
+          console.error("sendChatMessage: anthropic-chat error", result.status, result.data);
           showChatError("შეცდომა: " + (result.data && result.data.error && result.data.error.message ? result.data.error.message : "უცნობი შეცდომა"));
         }
         chatHistory.pop();
@@ -4513,6 +4541,7 @@
       }
     }).catch(function (err) {
       removeChatTyping();
+      console.error("sendChatMessage: request failed", err);
       showChatError("კავშირის შეცდომა: " + err.message);
       chatHistory.pop();
       if (sendBtn) sendBtn.disabled = false;
@@ -4594,6 +4623,49 @@
      browser from re-prompting for microphone access on every turn. */
   var voiceStream = null;
 
+  /* getUserMedia() is known to silently hang forever — never resolving,
+     never rejecting — in some browser contexts (notably iOS Safari when
+     the app is running as a home-screen/standalone PWA). Without a
+     timeout that looks exactly like "does nothing when started": the
+     status flips to "listening" and then nothing ever happens, with no
+     error to explain why. Racing it against a timer turns that silent
+     hang into a visible, actionable error. */
+  function getUserMediaWithTimeout(constraints, ms) {
+    return new Promise(function (resolve, reject) {
+      var settled = false;
+      var timer = setTimeout(function () {
+        if (settled) return;
+        settled = true;
+        reject(new Error("timeout"));
+      }, ms);
+      navigator.mediaDevices.getUserMedia(constraints).then(function (stream) {
+        if (settled) { stream.getTracks().forEach(function (t) { t.stop(); }); return; }
+        settled = true;
+        clearTimeout(timer);
+        resolve(stream);
+      }, function (err) {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        reject(err);
+      });
+    });
+  }
+
+  function isStandalonePwa() {
+    return (window.navigator.standalone === true) ||
+      (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches);
+  }
+
+  function micErrorMessage(err) {
+    if (err && err.message === "timeout") {
+      return isStandalonePwa()
+        ? "მიკროფონი არ პასუხობს — Home Screen-ზე დამატებულ აპებში ეს ცნობილი iOS-ის ბაგია. სცადე გახსნა უბრალო Safari-ის tab-ში (არა Home Screen-ის აიქონიდან)."
+        : "მიკროფონმა არ უპასუხა — სცადე გვერდის განახლება, ან შემდეგში ბრაუზერის მიკროფონის წვდომა გადაამოწმე პარამეტრებში.";
+    }
+    return "მიკროფონზე წვდომა ვერ მოხერხდა: " + (err && err.message ? err.message : String(err));
+  }
+
   function toggleVoiceMode() {
     if (voiceModeOn) exitVoiceMode(); else enterVoiceMode();
   }
@@ -4607,12 +4679,13 @@
     voiceModeOn = true;
     updateMicButton();
     setVoiceStatus("listening");
-    navigator.mediaDevices.getUserMedia({ audio: true }).then(function (stream) {
+    getUserMediaWithTimeout({ audio: true }, 10000).then(function (stream) {
       if (!voiceModeOn) { stream.getTracks().forEach(function (t) { t.stop(); }); return; }
       voiceStream = stream;
       beginRecordingTurn();
     }).catch(function (err) {
-      showChatError("მიკროფონზე წვდომა ვერ მოხერხდა: " + err.message);
+      console.error("enterVoiceMode: getUserMedia failed", err);
+      showChatError(micErrorMessage(err));
       voiceModeOn = false;
       updateMicButton();
       hideVoiceStatus();
@@ -4646,12 +4719,13 @@
       return;
     }
     /* Mic track ended unexpectedly (e.g. device unplugged) — re-acquire once. */
-    navigator.mediaDevices.getUserMedia({ audio: true }).then(function (stream) {
+    getUserMediaWithTimeout({ audio: true }, 10000).then(function (stream) {
       if (!voiceModeOn) { stream.getTracks().forEach(function (t) { t.stop(); }); return; }
       voiceStream = stream;
       beginRecordingTurn();
     }).catch(function (err) {
-      showChatError("მიკროფონზე წვდომა ვერ მოხერხდა: " + err.message);
+      console.error("resumeListening: getUserMedia failed", err);
+      showChatError(micErrorMessage(err));
       exitVoiceMode();
     });
   }
@@ -4697,6 +4771,7 @@
 
   function beginRecordingTurn() {
     if (!voiceStream) {
+      console.error("beginRecordingTurn: no voiceStream");
       showChatError("მიკროფონის ნაკადი ვერ მოიძებნა.");
       exitVoiceMode();
       return;
@@ -4705,6 +4780,7 @@
     try {
       mediaRecorder = mimeType ? new MediaRecorder(voiceStream, { mimeType: mimeType }) : new MediaRecorder(voiceStream);
     } catch (e) {
+      console.error("beginRecordingTurn: MediaRecorder construction failed", e);
       showChatError("ჩაწერის დაწყება ვერ მოხერხდა: " + e.message);
       exitVoiceMode();
       return;
@@ -4805,15 +4881,15 @@
     form.append("model", "whisper-1");
     form.append("language", "en");
 
-    edgeFunctionHeaders({}).then(function (headers) {
-      return fetch(WHISPER_FUNCTION_URL, { method: "POST", headers: headers, body: form });
-    }).then(function (res) {
+    postToEdgeFunction(WHISPER_FUNCTION_URL, {}, form).then(function (res) {
       return res.json().then(function (data) { return { ok: res.ok, status: res.status, data: data }; });
     }).then(function (result) {
       if (!voiceModeOn) return;
       if (!result.ok) {
         var msg = result.data && result.data.error && result.data.error.message ? result.data.error.message : "ტრანსკრიფცია ვერ შესრულდა";
         if (result.status === 429) msg = "დღიური ლიმიტი ამოიწურა — სცადე ხვალ, ან განაახლე Premium-ზე მაღალი ლიმიტისთვის.";
+        if (result.status === 401) msg = "სესია ვადაგასულია — გთხოვ თავიდან შედი ანგარიშზე.";
+        console.error("handleVoiceTurn: Whisper error", result.status, result.data);
         showChatError("Whisper შეცდომა: " + msg);
         exitVoiceMode();
         return;
@@ -4823,6 +4899,7 @@
       sendChatMessage(text);
     }).catch(function (err) {
       if (!voiceModeOn) return;
+      console.error("handleVoiceTurn: request failed", err);
       showChatError("კავშირის შეცდომა (Whisper): " + err.message);
       exitVoiceMode();
     });
