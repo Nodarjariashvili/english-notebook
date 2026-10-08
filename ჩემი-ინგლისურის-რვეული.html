@@ -3043,7 +3043,7 @@
      whose Georgian overlaps is accepted, and all of them are shown as the
      correct answer. Items of any other shape are returned unchanged. */
   function georgianMeanings(text) {
-    return String(text || "").split("/").map(normalize).filter(function (part) { return part; });
+    return String(text || "").split("/").map(function (part) { return normalize(part.trim()); }).filter(function (part) { return part; });
   }
 
   function reversedTranslateItem(topic, item) {
