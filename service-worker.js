@@ -1,4 +1,4 @@
-var CACHE_NAME = "notebook-cache-v27";
+var CACHE_NAME = "notebook-cache-v28";
 var CACHED_FILES = [
   "./",
   "./index.html",
@@ -41,6 +41,39 @@ self.addEventListener("fetch", function (event) {
   event.respondWith(
     caches.match(event.request).then(function (cached) {
       return cached || fetch(event.request);
+    })
+  );
+});
+
+/* ---------- quiz push notifications ----------
+   The send-quiz-push Edge Function sends { title, body, url }. Tapping the
+   notification brings the app to the front on its daily quiz: an already
+   open window is told to switch to the quiz, otherwise a new one is opened
+   at the #quiz address. */
+self.addEventListener("push", function (event) {
+  var data = {};
+  try { data = event.data ? event.data.json() : {}; } catch (e) {}
+  event.waitUntil(
+    self.registration.showNotification(data.title || "ინგლისურის ტესტი", {
+      body: data.body || "5 მოკლე კითხვა გელოდება.",
+      icon: "./icon-192.png",
+      badge: "./icon-192.png",
+      tag: "daily-quiz",
+      data: { url: data.url || "./index.html#quiz" }
+    })
+  );
+});
+
+self.addEventListener("notificationclick", function (event) {
+  event.notification.close();
+  var target = new URL((event.notification.data && event.notification.data.url) || "./index.html#quiz", self.registration.scope).href;
+  event.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then(function (windows) {
+      if (windows.length) {
+        windows[0].postMessage({ type: "open-quiz" });
+        return windows[0].focus();
+      }
+      return self.clients.openWindow(target);
     })
   );
 });

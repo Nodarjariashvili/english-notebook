@@ -975,6 +975,7 @@
         <section id="view-reference" class="view"></section>
         <section id="view-chat" class="view"></section>
         <section id="view-settings" class="view"></section>
+        <section id="view-quiz" class="view"></section>
         <section id="view-admin" class="view"></section>
       </div>
     </div>
@@ -2471,6 +2472,7 @@
     if (id === "reference") renderReferenceView();
     if (id === "chat") renderChatView();
     if (id === "settings") renderSettingsView();
+    if (id === "quiz") renderDailyQuizView();
   }
 
   function currentUnitObj() {
@@ -2535,6 +2537,10 @@
         document.createTextNode("👋 დღეს ჯერ არ ისწავლე რამე — დაიწყე თუნდაც ერთი თავით!")
       ]));
     }
+
+    var quizCta = el("button", { class: "check-btn", type: "button", style: "display:block;margin:0 0 16px" }, [document.createTextNode("📝 დღის ტესტი — 5 კითხვა")]);
+    quizCta.addEventListener("click", openDailyQuiz);
+    root.appendChild(quizCta);
 
     var hero = el("div", { class: "home-hero" });
     var heroCard = el("div", { class: "hero-card" }, [
@@ -3609,6 +3615,224 @@
     next.addEventListener("click", function () { quizPos[topic.id] = pos + 1; renderGrammarView(); });
   }
 
+  /* ---------- daily quiz (opened from the home button or a push notification) ----------
+     Five one-attempt multiple-choice questions drawn from every unit up to
+     the furthest one the learner has practised, weakest cards first. Results
+     are recorded through markPracticeResult() as "mc" attempts, so the quiz
+     feeds the same progress the unit pages show. */
+  var DAILY_QUIZ_LENGTH = 5;
+  var dailyQuiz = null;
+
+  function quizCoveredDecks() {
+    var lastPractised = 0;
+    UNITS.forEach(function (u, i) {
+      var practised = unitDecks(u).some(function (d) { return state.cards[d.id] && Object.keys(state.cards[d.id]).length; });
+      if (practised) lastPractised = i;
+    });
+    var decks = [];
+    UNITS.slice(0, lastPractised + 1).forEach(function (u) {
+      unitDecks(u).forEach(function (d) { if (decks.indexOf(d) === -1) decks.push(d); });
+    });
+    return decks;
+  }
+
+  /* 0 = got it wrong last time in some mode, 1 = "almost", 2 = never tried, 3 = known */
+  function quizCardWeakness(deck, idx) {
+    var modes = state.cards[deck.id] || {};
+    var seen = false, weakest = 3;
+    Object.keys(modes).forEach(function (mode) {
+      var result = cardLastResult((modes[mode] || {})[idx]);
+      if (!result) return;
+      seen = true;
+      if (result === "rust") weakest = Math.min(weakest, 0);
+      else if (result === "gold") weakest = Math.min(weakest, 1);
+    });
+    return seen ? weakest : 2;
+  }
+
+  function buildDailyQuiz() {
+    var pool = [];
+    quizCoveredDecks().forEach(function (deck) {
+      deck.cards.forEach(function (card, idx) {
+        if (card.en && card.ka) pool.push({ deck: deck, idx: idx, card: card, weakness: quizCardWeakness(deck, idx) });
+      });
+    });
+    var ordered = shuffleArr(pool).sort(function (a, b) { return a.weakness - b.weakness; });
+    var questions = ordered.slice(0, DAILY_QUIZ_LENGTH).map(function (q, n) {
+      var toGeorgian = n % 2 === 0;
+      var side = toGeorgian ? "ka" : "en";
+      var wrong = [];
+      shuffleArr(pool).forEach(function (other) {
+        if (wrong.length >= 3 || other.card[side] === q.card[side]) return;
+        if (wrong.some(function (w) { return w[side] === other.card[side]; })) return;
+        wrong.push(other.card);
+      });
+      return { deck: q.deck, idx: q.idx, card: q.card, toGeorgian: toGeorgian, options: shuffleArr([q.card].concat(wrong)) };
+    });
+    return { questions: shuffleArr(questions), pos: 0, score: 0 };
+  }
+
+  function openDailyQuiz() {
+    dailyQuiz = buildDailyQuiz();
+    if (location.hash === "#quiz") { try { history.replaceState(null, "", location.pathname + location.search); } catch (e) {} }
+    switchView("quiz");
+  }
+
+  function renderDailyQuizView() {
+    var root = document.getElementById("view-quiz");
+    root.innerHTML = "";
+    if (!dailyQuiz) dailyQuiz = buildDailyQuiz();
+
+    var back = el("button", { class: "back-link", type: "button" }, [document.createTextNode("← მთავარზე დაბრუნება")]);
+    back.addEventListener("click", function () { dailyQuiz = null; switchView("home"); });
+    root.appendChild(back);
+    root.appendChild(el("h2", { style: "margin:16px 0" }, [document.createTextNode("დღის ტესტი")]));
+
+    var box = el("div", { class: "practice-box" });
+    root.appendChild(box);
+    var total = dailyQuiz.questions.length;
+
+    if (!total) {
+      box.appendChild(el("p", {}, [document.createTextNode("ჯერ სიტყვები არ არის გასამეორებელი — დაიწყე Unit 1-ის ბარათებით.")]));
+      return;
+    }
+
+    if (dailyQuiz.pos >= total) {
+      var verdict = dailyQuiz.score === total ? "🎉 ბრწყინვალეა!" : (dailyQuiz.score >= total - 2 ? "👏 კარგია!" : "💪 გაიმეორე და კიდევ სცადე.");
+      box.appendChild(el("div", { class: "practice-prompt-en" }, [document.createTextNode(dailyQuiz.score + " / " + total)]));
+      box.appendChild(el("p", {}, [document.createTextNode(verdict)]));
+      var again = el("button", { class: "check-btn", type: "button" }, [document.createTextNode("კიდევ ერთი ტესტი")]);
+      again.addEventListener("click", openDailyQuiz);
+      box.appendChild(again);
+      return;
+    }
+
+    var q = dailyQuiz.questions[dailyQuiz.pos];
+    var answerSide = q.toGeorgian ? "ka" : "en";
+    box.appendChild(el("div", { class: "practice-progress" }, [document.createTextNode((dailyQuiz.pos + 1) + " / " + total)]));
+    box.appendChild(el("div", { class: "bar", "data-state": "green" }, [el("span", { style: "width:" + Math.round((dailyQuiz.pos / total) * 100) + "%" })]));
+    box.appendChild(el("div", { class: "practice-progress" }, [document.createTextNode(q.toGeorgian ? "რას ნიშნავს ქართულად?" : "როგორ არის ინგლისურად?")]));
+    box.appendChild(el("div", { class: q.toGeorgian ? "practice-prompt-en" : "practice-prompt-ka" }, [document.createTextNode(q.toGeorgian ? q.card.en : q.card.ka)]));
+
+    var feedback = el("div", { class: "practice-status" });
+    var next = el("button", { class: "check-btn", type: "button", style: "display:none;margin-top:12px" }, [document.createTextNode(dailyQuiz.pos + 1 < total ? "შემდეგი →" : "შედეგის ნახვა")]);
+    next.addEventListener("click", function () { dailyQuiz.pos++; renderDailyQuizView(); });
+
+    var answered = false;
+    var optWrap = el("div", { class: "mc-options" });
+    q.options.forEach(function (opt) {
+      var optBtn = el("button", { class: "mc-option", type: "button" }, [document.createTextNode(opt[answerSide])]);
+      optBtn.addEventListener("click", function () {
+        if (answered) return;
+        answered = true;
+        var ok = opt === q.card;
+        optBtn.classList.add(ok ? "correct" : "wrong");
+        if (ok) { dailyQuiz.score++; burstConfettiEl(optBtn); }
+        else {
+          Array.prototype.forEach.call(optWrap.children, function (b, i) { if (q.options[i] === q.card) b.classList.add("correct"); });
+          feedback.textContent = "სწორი პასუხია: " + q.card[answerSide] + (q.toGeorgian ? "" : " — " + q.card.ka);
+        }
+        markPracticeResult(q.deck, q.idx, ok, "mc");
+        if (appSettings.exerciseSpeak) speakPracticeText(q.card.en, "en-US");
+        next.style.display = "";
+      });
+      optWrap.appendChild(optBtn);
+    });
+    box.appendChild(optWrap);
+    box.appendChild(feedback);
+    box.appendChild(next);
+  }
+
+  /* ---------- quiz push notifications ----------
+     Subscribes this device to Web Push and stores the subscription in
+     public.push_subscriptions; the send-quiz-push Edge Function then pushes
+     "your quiz is ready" several times a day. On iPhone this only exists
+     when the app runs from the Home Screen icon (not in a Safari tab). */
+  var VAPID_PUBLIC_KEY = "BEf6jQgC2NcOFHoPbh4tiXA_poVy7SRUSLcxX9NnojZ0jmHn_aadhtNzDIDLA1tfcfI2EtJhxL_yZ9_D8ofkg8E";
+
+  function quizPushSupported() {
+    return "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
+  }
+
+  function vapidKeyBytes() {
+    var b64 = (VAPID_PUBLIC_KEY + "===".slice((VAPID_PUBLIC_KEY.length + 3) % 4)).replace(/-/g, "+").replace(/_/g, "/");
+    var raw = atob(b64);
+    var bytes = new Uint8Array(raw.length);
+    for (var i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
+    return bytes;
+  }
+
+  /* must be called straight from a tap: the permission prompt needs it */
+  function enableQuizPush() {
+    return Notification.requestPermission().then(function (permission) {
+      if (permission !== "granted") throw new Error("შეტყობინებები მოწყობილობის პარამეტრებში გამორთულია.");
+      return navigator.serviceWorker.ready;
+    }).then(function (reg) {
+      return reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: vapidKeyBytes() });
+    }).then(function (sub) {
+      var json = sub.toJSON();
+      return supabaseClient.from("push_subscriptions").upsert({
+        endpoint: json.endpoint,
+        user_id: currentAuthUser.id,
+        p256dh: json.keys.p256dh,
+        auth: json.keys.auth,
+        user_agent: navigator.userAgent.slice(0, 200)
+      }, { onConflict: "endpoint" });
+    }).then(function (res) {
+      if (res.error) throw new Error(res.error.message);
+    });
+  }
+
+  function disableQuizPush() {
+    return navigator.serviceWorker.ready.then(function (reg) {
+      return reg.pushManager.getSubscription();
+    }).then(function (sub) {
+      if (!sub) return;
+      return supabaseClient.from("push_subscriptions").delete().eq("endpoint", sub.endpoint).then(function () {
+        return sub.unsubscribe();
+      });
+    });
+  }
+
+  function renderQuizPushRow() {
+    var row = el("div", { class: "settings-row" });
+    row.appendChild(el("div", { class: "settings-icon-circle", "data-color": "orange" }, [document.createTextNode("📱")]));
+    var main = el("div", { class: "settings-row-main" });
+    main.appendChild(el("div", { class: "settings-row-label" }, [document.createTextNode("ტესტის შეტყობინებები")]));
+    var sub = el("div", { class: "settings-row-value" }, [document.createTextNode("დღეში 5-ჯერ: 9, 12, 15, 18 და 21 საათზე")]);
+    main.appendChild(sub);
+    row.appendChild(main);
+
+    var switchLabel = el("label", { class: "toggle-switch" });
+    var input = el("input", { type: "checkbox" });
+    switchLabel.appendChild(input);
+    switchLabel.appendChild(el("span", { class: "toggle-track" }));
+    row.appendChild(switchLabel);
+
+    if (!quizPushSupported()) {
+      input.disabled = true;
+      sub.textContent = "iPhone-ზე ჯერ დაამატე აპლიკაცია მთავარ ეკრანზე და იქიდან გახსენი.";
+      return row;
+    }
+
+    navigator.serviceWorker.ready.then(function (reg) { return reg.pushManager.getSubscription(); }).then(function (existing) {
+      input.checked = !!existing && Notification.permission === "granted";
+    }).catch(function () {});
+
+    input.addEventListener("change", function () {
+      var turnOn = input.checked;
+      input.disabled = true;
+      (turnOn ? enableQuizPush() : disableQuizPush()).then(function () {
+        sub.textContent = turnOn ? "ჩართულია — დღეში 5-ჯერ: 9, 12, 15, 18 და 21 საათზე" : "გამორთულია";
+      }).catch(function (err) {
+        console.error("quiz push toggle failed", err);
+        input.checked = !turnOn;
+        sub.textContent = "ვერ მოხერხდა: " + err.message;
+      }).then(function () { input.disabled = false; });
+    });
+    return row;
+  }
+
   /* ---------- reference ---------- */
   function renderReferenceView() {
     var root = document.getElementById("view-reference");
@@ -4455,6 +4679,7 @@
     sec.appendChild(renderSettingsToggleRow("🔊", "blue", "ავტომატური ხმოვანი წაკითხვა", "ჩატის პასუხების ავტომატური წარმოთქმა", "autoSpeak"));
     sec.appendChild(renderSettingsToggleRow("🗣️", "violet", "სავარჯიშოებში ხმა", "სწორი პასუხის ავტომატური წარმოთქმა გრამატიკის/დიალოგის სავარჯიშოებში", "exerciseSpeak"));
     sec.appendChild(renderSettingsToggleRow("⏰", "orange", "შეხსენებები", "შეხსენება მთავარ გვერდზე, თუ დღეს არ ისწავლე", "reminders"));
+    sec.appendChild(renderQuizPushRow());
     return sec;
   }
 
@@ -5521,7 +5746,9 @@
       switchView("settings");
     });
     initTheme();
-    if (goToAdmin) { showAdminDirectly(); } else { switchView("home"); }
+    if (goToAdmin) { showAdminDirectly(); }
+    else if (location.hash === "#quiz") { openDailyQuiz(); } /* opened from a quiz push notification */
+    else { switchView("home"); }
   }
 
   function showApp(user) {
@@ -5676,6 +5903,10 @@
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("./service-worker.js").catch(function (err) {
       console.error("Service worker registration failed:", err.message);
+    });
+    /* a quiz notification was tapped while the app was already open */
+    navigator.serviceWorker.addEventListener("message", function (event) {
+      if (event.data && event.data.type === "open-quiz" && appStarted && currentAuthUser) openDailyQuiz();
     });
   }
 
