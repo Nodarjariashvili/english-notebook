@@ -597,6 +597,10 @@
   .answer-row { display: flex; gap: 10px; flex-wrap: wrap; }
   .answer-input { flex: 1 1 220px; padding: 11px 14px; border-radius: 12px; border: 1.5px solid var(--border); background: var(--surface); color: var(--ink); font-size: 1rem; font-family: inherit; }
   .answer-input:focus { border-color: var(--brand); }
+  /* the typed answer itself turns green or red once it is checked; opacity and
+     -webkit-text-fill-color keep the colour on a disabled field (iOS greys it out) */
+  .answer-input.is-correct { border-color: var(--green); background: var(--green-soft); color: var(--green-ink); -webkit-text-fill-color: var(--green-ink); opacity: 1; }
+  .answer-input.is-wrong { border-color: var(--rust); background: var(--rust-soft); color: var(--rust); -webkit-text-fill-color: var(--rust); opacity: 1; }
   .check-btn {
     border: none; background: var(--brand-gradient); color: #fff; padding: 12px 22px; border-radius: 11px;
     font-weight: 700; cursor: pointer; font-size: 0.92rem; box-shadow: 0 4px 0 var(--brand-ink);
@@ -3080,6 +3084,11 @@
       .replace(/[.,!?;:'"]/g, "").replace(/\s+/g, " ").trim();
   }
 
+  function markAnswerInput(input, ok) {
+    input.classList.remove("is-correct", "is-wrong");
+    input.classList.add(ok ? "is-correct" : "is-wrong");
+  }
+
   function answerMatches(item, typed) {
     var clean = item.looseMatch ? looseEnglish : normalize;
     return [item.answer].concat(item.accept || []).map(clean).indexOf(clean(typed)) !== -1;
@@ -3355,6 +3364,7 @@
         (ok ? "<span class='hand'>ზუსტად ასეა!</span>" : "<span class='hand'>თითქმის!</span><span class='correct-answer'>სწორი პასუხია: " + item.en + "</span>") +
         "</span>";
       input.disabled = true; checkBtn.disabled = true;
+      markAnswerInput(input, ok);
       if (ok) {
         speakPracticeText(item.en, "en-US", function () { practicePos++; renderCardsView(); });
       } else {
@@ -3659,6 +3669,7 @@
       /* the check button itself becomes the "next" button -- one button, one
          place to tap, instead of a second button appearing further down */
       input.disabled = true; skip.style.display = "none";
+      if (!revealed) markAnswerInput(input, ok);
       answerShown = true;
       checkBtn.textContent = "შემდეგი →";
       if (!revealed) recordResult(ok);
@@ -4000,6 +4011,7 @@
       checked = true;
       input.disabled = true;
       var ok = answerMatches(item, input.value);
+      markAnswerInput(input, ok);
       var fullSentence = fillBlankSentence(item.prompt, item.answer);
       if (ok) {
         feedback.style.color = "var(--green-ink)";
