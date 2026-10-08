@@ -107,6 +107,15 @@ Deno.serve(async (req) => {
     body: bodyText,
   });
 
+  // A 401 from Anthropic means this function's own ANTHROPIC_API_KEY was
+  // rejected. Passing it through as a 401 made the app report "session
+  // expired" and send the user to log in again, which cannot fix it -- so
+  // it is reported as a server-side problem instead.
+  if (anthropicRes.status === 401) {
+    console.error("anthropic-chat: Anthropic rejected ANTHROPIC_API_KEY", await anthropicRes.text());
+    return errorResponse(502, "api_error", "The server's Anthropic API key was rejected (ANTHROPIC_API_KEY).");
+  }
+
   const responseBody = await anthropicRes.text();
   return new Response(responseBody, {
     status: anthropicRes.status,

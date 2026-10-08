@@ -4094,6 +4094,9 @@
     return attempt(false);
   }
 
+  /* anthropic-chat answers 502 when Anthropic rejects the server's own API
+     key -- nothing the signed-in user can fix by logging in again */
+  var AI_KEY_REJECTED_MESSAGE = "AI სერვისის გასაღები (API key) არასწორია ან გაუქმებულია — საჭიროა ახალი გასაღების ჩაწერა Supabase-ში.";
   var CHAT_MODEL = "claude-sonnet-5";
   /* speech-to-text model sent through whisper-transcribe (the function just
      forwards the multipart form, so the model is chosen here) */
@@ -4954,6 +4957,8 @@
           showChatError("სესია ვადაგასულია — გთხოვ თავიდან შედი ანგარიშზე.");
         } else if (result.status === 429) {
           showChatError("მოთხოვნები ძალიან ხშირია (rate limit) — მოიცადე ცოტა ხანი და სცადე ისევ.");
+        } else if (result.status === 502) {
+          showChatError(AI_KEY_REJECTED_MESSAGE);
         } else {
           console.error("sendChatMessage: anthropic-chat error", result.status, result.data);
           showChatError("შეცდომა: " + (result.data && result.data.error && result.data.error.message ? result.data.error.message : "უცნობი შეცდომა"));
@@ -5590,6 +5595,7 @@
           var msg = data && data.error && data.error.message ? data.error.message : "სერვერმა პასუხი არ დააბრუნა (სტატუსი " + res.status + ")";
           if (res.status === 401) msg = "სესია ვადაგასულია — შედი თავიდან.";
           if (res.status === 429) msg = "დღიური ლიმიტი ამოიწურა — გააგრძელე ხვალ.";
+          if (res.status === 502) msg = AI_KEY_REJECTED_MESSAGE;
           if (res.status === 504 || res.status === 546) msg = "წაკითხვას ძალიან დიდი დრო დასჭირდა და შეწყდა — სცადე თავიდან.";
           throw new Error(msg);
         }
