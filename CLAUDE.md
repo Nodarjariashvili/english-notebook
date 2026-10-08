@@ -4,8 +4,14 @@ Georgian users' English-learning PWA. Always reply to the user in Georgian scrip
 
 ## Status (updated 2026-09-26)
 
+**Content rule (decided by the user 2026-10-08): only material from the textbook**
+- The source is the user's textbook "Speaking Tags" (compiled by Aleksandre Lomadze), photographed as `IMG_*.HEIC` in this folder (git-ignored). Read them with Python `pillow_heif` + PIL. Do not add vocabulary, dialogues, readings or exercises that are not on those pages; an earlier nine-unit version had invented filler and it was removed.
+- `UNITS` follows the book one to one: U1 greetings/introduction (pp. 22-29), U2 family/friends/relationships (30-37), U3 routines, likes and dislikes (38-48), U4 jobs (49-55), U5 personality (56-63), U6 shopping (64-71), U7 food (72-...).
+- Photographed pages: 22-48 complete, then only 50, 51, 54, 57, 58, 59, 61, 69, 70, 73, 74, 75, 78. So U4-U7 have no dialogue/reading topics yet (U6 has vocabulary only) and show a "not added yet" note in those sections; every unit still shows the same four sections and seven progress tiles (the user wants identical structure in all units).
+- Book material in the photos that is NOT in the app yet: U1 personal profile (p. 29 A); U2 formal/informal introduction phrases (p. 33), Megan's email exercise (p. 31), wrap-up A and B (p. 37); U3 wrap-up A and B (p. 48), likes "check the items" practice (p. 42); U4 articles B practice (p. 51); U5 qualifiers and matching practice (pp. 58-59), conjunctions B practice (p. 57); U6 reading questions (pp. 69-70, the text itself starts on the missing p. 68); U7 quantifiers B items 6-8 check, listening pages are audio-only.
+
 **Done**
-- 9 Units, 3 exercise modes, voice conversation mode, Settings, progress sync
+- 7 Units (see "Content rule" below), 3 exercise modes, voice conversation mode, Settings, progress sync
 - "Calm Focus" design + PWA (works offline)
 - Supabase: auth, RLS, admin/user roles, cross-device progress
 - API keys moved to Supabase Edge Functions (with rate limiting)
