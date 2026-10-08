@@ -1,4 +1,4 @@
-var CACHE_NAME = "notebook-cache-v28";
+var CACHE_NAME = "notebook-cache-v29";
 var CACHED_FILES = [
   "./",
   "./index.html",
@@ -55,7 +55,7 @@ self.addEventListener("push", function (event) {
   try { data = event.data ? event.data.json() : {}; } catch (e) {}
   event.waitUntil(
     self.registration.showNotification(data.title || "ინგლისურის ტესტი", {
-      body: data.body || "5 მოკლე კითხვა გელოდება.",
+      body: data.body || "ტესტი გელოდება.",
       icon: "./icon-192.png",
       badge: "./icon-192.png",
       tag: "daily-quiz",

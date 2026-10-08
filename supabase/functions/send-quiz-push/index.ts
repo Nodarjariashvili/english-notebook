@@ -1,6 +1,6 @@
 // Supabase Edge Function: sends a "your quiz is ready" Web Push to every
 // device in public.push_subscriptions. Tapping the notification opens the
-// app on its 5-question daily quiz (#quiz).
+// app on its daily quiz (#quiz).
 //
 // Not called by users: pg_cron calls it at the top of each quiz hour (see
 // the quiz_push_schedule migration). The call carries no credential, so JWT
@@ -28,10 +28,10 @@ const LOCAL_UTC_OFFSET_HOURS = 4;
 const QUIZ_HOURS_LOCAL = [9, 12, 15, 18, 21];
 
 const MESSAGES = [
-  "5 მოკლე კითხვა გელოდება — 2 წუთი დაგჭირდება.",
-  "დროა გაიმეორო! 5 კითხვა შენი ნასწავლი მასალიდან.",
+  "20 მოკლე კითხვა გელოდება — რამდენიმე წუთი დაგჭირდება.",
+  "დროა გაიმეორო! 20 კითხვა შენი ნასწავლი მასალიდან.",
   "პატარა ტესტი მზადაა — ნახე, რა გახსოვს.",
-  "2 წუთი ინგლისურისთვის: 5 კითხვა გელოდება.",
+  "რამდენიმე წუთი ინგლისურისთვის: 20 კითხვა გელოდება.",
   "გაიმეორე დღევანდელი სიტყვები — ტესტი მზადაა.",
 ];
 

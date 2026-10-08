@@ -2538,7 +2538,7 @@
       ]));
     }
 
-    var quizCta = el("button", { class: "check-btn", type: "button", style: "display:block;margin:0 0 16px" }, [document.createTextNode("📝 დღის ტესტი — 5 კითხვა")]);
+    var quizCta = el("button", { class: "check-btn", type: "button", style: "display:block;margin:0 0 16px" }, [document.createTextNode("📝 დღის ტესტი — " + DAILY_QUIZ_LENGTH + " კითხვა")]);
     quizCta.addEventListener("click", openDailyQuiz);
     root.appendChild(quizCta);
 
@@ -3616,11 +3616,11 @@
   }
 
   /* ---------- daily quiz (opened from the home button or a push notification) ----------
-     Five one-attempt multiple-choice questions drawn from every unit up to
+     Twenty one-attempt multiple-choice questions drawn from every unit up to
      the furthest one the learner has practised, weakest cards first. Results
      are recorded through markPracticeResult() as "mc" attempts, so the quiz
      feeds the same progress the unit pages show. */
-  var DAILY_QUIZ_LENGTH = 5;
+  var DAILY_QUIZ_LENGTH = 20;
   var dailyQuiz = null;
 
   function quizCoveredDecks() {
@@ -3686,9 +3686,9 @@
     var back = el("button", { class: "back-link", type: "button" }, [document.createTextNode("← მთავარზე დაბრუნება")]);
     back.addEventListener("click", function () { dailyQuiz = null; switchView("home"); });
     root.appendChild(back);
-    root.appendChild(el("h2", { style: "margin:16px 0" }, [document.createTextNode("დღის ტესტი")]));
+    root.appendChild(el("h2", {}, [document.createTextNode("დღის ტესტი")]));
 
-    var box = el("div", { class: "practice-box" });
+    var box = el("div", { class: "quiz-box" });
     root.appendChild(box);
     var total = dailyQuiz.questions.length;
 
@@ -3698,8 +3698,8 @@
     }
 
     if (dailyQuiz.pos >= total) {
-      var verdict = dailyQuiz.score === total ? "🎉 ბრწყინვალეა!" : (dailyQuiz.score >= total - 2 ? "👏 კარგია!" : "💪 გაიმეორე და კიდევ სცადე.");
-      box.appendChild(el("div", { class: "practice-prompt-en" }, [document.createTextNode(dailyQuiz.score + " / " + total)]));
+      var verdict = dailyQuiz.score === total ? "🎉 ბრწყინვალეა!" : (dailyQuiz.score >= total * 0.7 ? "👏 კარგია!" : "💪 გაიმეორე და კიდევ სცადე.");
+      box.appendChild(el("div", { class: "quiz-prompt" }, [el("strong", {}, [document.createTextNode("შედეგი: " + dailyQuiz.score + " / " + total)])]));
       box.appendChild(el("p", {}, [document.createTextNode(verdict)]));
       var again = el("button", { class: "check-btn", type: "button" }, [document.createTextNode("კიდევ ერთი ტესტი")]);
       again.addEventListener("click", openDailyQuiz);
@@ -3711,11 +3711,13 @@
     var answerSide = q.toGeorgian ? "ka" : "en";
     box.appendChild(el("div", { class: "practice-progress" }, [document.createTextNode((dailyQuiz.pos + 1) + " / " + total)]));
     box.appendChild(el("div", { class: "bar", "data-state": "green" }, [el("span", { style: "width:" + Math.round((dailyQuiz.pos / total) * 100) + "%" })]));
-    box.appendChild(el("div", { class: "practice-progress" }, [document.createTextNode(q.toGeorgian ? "რას ნიშნავს ქართულად?" : "როგორ არის ინგლისურად?")]));
-    box.appendChild(el("div", { class: q.toGeorgian ? "practice-prompt-en" : "practice-prompt-ka" }, [document.createTextNode(q.toGeorgian ? q.card.en : q.card.ka)]));
+    var promptEl = el("div", { class: "quiz-prompt" });
+    promptEl.appendChild(el("div", {}, [document.createTextNode(q.toGeorgian ? "რას ნიშნავს ქართულად?" : "როგორ არის ინგლისურად?")]));
+    promptEl.appendChild(el("strong", {}, [document.createTextNode(q.toGeorgian ? q.card.en : q.card.ka)]));
+    box.appendChild(promptEl);
 
-    var feedback = el("div", { class: "practice-status" });
-    var next = el("button", { class: "check-btn", type: "button", style: "display:none;margin-top:12px" }, [document.createTextNode(dailyQuiz.pos + 1 < total ? "შემდეგი →" : "შედეგის ნახვა")]);
+    var feedback = el("div", { style: "font-size:0.9rem;font-weight:600;color:var(--rust);min-height:1.3em;margin:8px 0" });
+    var next = el("button", { class: "next-btn", type: "button" }, [document.createTextNode(dailyQuiz.pos + 1 < total ? "შემდეგი →" : "შედეგის ნახვა")]);
     next.addEventListener("click", function () { dailyQuiz.pos++; renderDailyQuizView(); });
 
     var answered = false;
@@ -3734,7 +3736,7 @@
         }
         markPracticeResult(q.deck, q.idx, ok, "mc");
         if (appSettings.exerciseSpeak) speakPracticeText(q.card.en, "en-US");
-        next.style.display = "";
+        next.classList.add("show");
       });
       optWrap.appendChild(optBtn);
     });
