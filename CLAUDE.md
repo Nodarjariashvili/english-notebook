@@ -27,7 +27,7 @@ Georgian users' English-learning PWA. Always reply to the user in Georgian scrip
 - Card records extended (attempts / correctCount / history)
 - Mistake categorization (grammar / vocabulary / pronunciation), logged by AI in localStorage
 
-**BLOCKER found 2026-10-08: the Supabase secret `ANTHROPIC_API_KEY` is invalid**
+**Resolved 2026-10-08: the Supabase secret `ANTHROPIC_API_KEY` had expired** (the old key was created with a 30-day expiry and ran out on 2026-08-21; the user created a new non-expiring key `english-app` and set it, and a test call through `anthropic-chat` returned 200). Kept here because it explains the history:
 - Verified from the signed-in app: the user's Supabase session is valid, `anthropic-chat` accepts it, and Anthropic itself answers 401 "API key is invalid". Every AI feature that goes through `anthropic-chat` (chat, voice chat replies, page reader) fails until the user creates a new key at console.anthropic.com and stores it with `npx supabase secrets set ANTHROPIC_API_KEY=...` (their job: never ask for the key in chat). OpenAI-based functions (transcription, TTS) use a different key and are not affected.
 - This was the real cause of the long-running "სესია ვადაგასულია" message: the proxy passed Anthropic's 401 through and the app read every 401 as an expired session. The retry-on-401 work described below was aimed at the wrong cause (it is harmless and stays). The proxy now answers 502 for a rejected key and the app shows `AI_KEY_REJECTED_MESSAGE`.
 
