@@ -3540,9 +3540,7 @@
 
     var footer = el("div", { class: "quiz-footer" });
     var skip = el("button", { class: "skip-btn", type: "button" }, [document.createTextNode("პასუხის ნახვა")]);
-    var next = el("button", { class: "next-btn", type: "button" }, [document.createTextNode("შემდეგი →")]);
     footer.appendChild(skip);
-    footer.appendChild(next);
     box.appendChild(footer);
     root.appendChild(box);
 
@@ -3602,14 +3600,20 @@
         : "<span class='hand'>თითქმის!</span><span class='correct-answer'>სწორი პასუხია: " + (item.answer) + "</span>";
       feedback.innerHTML = markWithConfetti(ok) + "<span class='msg'>" + msgHtml + "</span>";
       appendSentenceSpeakRow(ok, revealed);
-      input.disabled = true; checkBtn.disabled = true; skip.style.display = "none";
-      next.classList.add("show");
+      /* the check button itself becomes the "next" button -- one button, one
+         place to tap, instead of a second button appearing further down */
+      input.disabled = true; skip.style.display = "none";
+      answerShown = true;
+      checkBtn.textContent = "შემდეგი →";
       if (!revealed) recordResult(ok);
 
       if (appSettings.exerciseSpeak) speakPracticeSequence(correctionSpeech(ok, revealed));
     }
 
+    var answerShown = false;
+    function goToNextItem() { quizPos[topic.id] = pos + 1; renderGrammarView(); }
     checkBtn.addEventListener("click", function () {
+      if (answerShown) { goToNextItem(); return; }
       if (!input.value.trim()) { input.focus(); return; }
       var accepted = [item.answer].concat(item.accept || []).map(normalize);
       var ok = accepted.indexOf(normalize(input.value)) !== -1;
@@ -3617,7 +3621,6 @@
     });
     input.addEventListener("keydown", function (e) { if (e.key === "Enter") checkBtn.click(); });
     skip.addEventListener("click", function () { showFeedback(false, true); });
-    next.addEventListener("click", function () { quizPos[topic.id] = pos + 1; renderGrammarView(); });
   }
 
   /* ---------- daily quiz (opened from the home button or a push notification) ----------
