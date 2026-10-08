@@ -1906,7 +1906,7 @@
      logic, state management, and UI rendering — not lesson content.
      ============================================================ */
 
-  var state = { cards: {}, quiz: {}, activity: {} };
+  var state = { cards: {}, quiz: {}, activity: {}, daily: {} };
 
   /* ---------- card-record helpers (Spaced Repetition groundwork) ----------
      state.cards[deckId][mode][idx] used to be a plain "green"/"gold"/"rust"
@@ -1957,6 +1957,7 @@
     if (!s.cards) s.cards = {};
     if (!s.quiz) s.quiz = {};
     if (!s.activity) s.activity = {};
+    if (!s.daily) s.daily = {};
     /* migrate pre-existing flat {idx: level} per-deck records (before practice
        modes tracked separately) into the "flip" sub-record. */
     Object.keys(s.cards).forEach(function (deckId) {
@@ -1985,7 +1986,8 @@
           return {
             cards: migrateCardsFormat(res.data.cards || {}),
             quiz: res.data.quiz || {},
-            activity: res.data.activity || {}
+            activity: res.data.activity || {},
+            daily: res.data.daily || {}
           };
         }
         /* no row yet for this user (first time with this table) -- seed from
@@ -2026,6 +2028,7 @@
           cards: state.cards,
           quiz: state.quiz,
           activity: state.activity,
+          daily: state.daily || {},
           updated_at: new Date().toISOString()
         }, { onConflict: "user_id" }).then(function (res) {
           if (res.error) console.error("Supabase progress sync failed:", res.error.message);
@@ -2538,9 +2541,11 @@
       ]));
     }
 
-    var quizCta = el("button", { class: "check-btn", type: "button", style: "display:block;margin:0 0 16px" }, [document.createTextNode("📝 დღის ტესტი — " + DAILY_QUIZ_LENGTH + " კითხვა")]);
+    var quizCta = el("button", { class: "check-btn", type: "button", }, [document.createTextNode("📝 დღის ტესტი — " + DAILY_QUIZ_LENGTH + " კითხვა")]);
     quizCta.addEventListener("click", openDailyQuiz);
-    root.appendChild(quizCta);
+    var analysisCta = el("button", { class: "next-btn show", type: "button" }, [document.createTextNode("📊 ჩემი ანალიზი")]);
+    analysisCta.addEventListener("click", openDailyAnalysis);
+    root.appendChild(el("div", { style: "display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:0 0 16px" }, [quizCta, analysisCta]));
 
     var hero = el("div", { class: "home-hero" });
     var heroCard = el("div", { class: "hero-card" }, [
@@ -3624,66 +3629,215 @@
   }
 
   /* ---------- daily quiz (opened from the home button or a push notification) ----------
-     Twenty one-attempt multiple-choice questions drawn from every unit up to
-     the furthest one the learner has practised, weakest cards first. Results
-     are recorded through markPracticeResult() as "mc" attempts, so the quiz
-     feeds the same progress the unit pages show. */
+     Twenty questions drawn from everything in the units the learner has
+     reached: vocabulary cards (multiple choice) plus the grammar and
+     dialogue exercise items (typed answer). Reading items are left out --
+     they need their passage on screen.
+
+     The quiz keeps its own history per item in state.daily.items:
+       n = times asked, w = times wrong, c = correct answers in a row,
+       ok = last answer, t = when it was last asked.
+     pickDailyQuizItems() uses it so the same things don't come up every
+     time: a mistake comes back in a later quiz the same day, a correct
+     answer rests for a growing interval (half a day, 1, 3, 7, 14, 30 days),
+     and items never asked here start from how they went in the unit pages.
+     Answers also feed the normal progress (card "mc" results, state.quiz). */
   var DAILY_QUIZ_LENGTH = 20;
+  var DAILY_TYPED_MAX = 8; /* typing is slower than tapping an option */
+  var DAILY_REST_DAYS = [0.5, 1, 3, 7, 14, 30];
   var dailyQuiz = null;
 
-  function quizCoveredDecks() {
-    var lastPractised = 0;
-    UNITS.forEach(function (u, i) {
-      var practised = unitDecks(u).some(function (d) { return state.cards[d.id] && Object.keys(state.cards[d.id]).length; });
-      if (practised) lastPractised = i;
-    });
-    var decks = [];
-    UNITS.slice(0, lastPractised + 1).forEach(function (u) {
-      unitDecks(u).forEach(function (d) { if (decks.indexOf(d) === -1) decks.push(d); });
-    });
-    return decks;
+  function dailyStats() {
+    if (!state.daily) state.daily = {};
+    if (!state.daily.items) state.daily.items = {};
+    return state.daily.items;
   }
 
-  /* 0 = got it wrong last time in some mode, 1 = "almost", 2 = never tried, 3 = known */
-  function quizCardWeakness(deck, idx) {
-    var modes = state.cards[deck.id] || {};
-    var seen = false, weakest = 3;
-    Object.keys(modes).forEach(function (mode) {
-      var result = cardLastResult((modes[mode] || {})[idx]);
-      if (!result) return;
-      seen = true;
-      if (result === "rust") weakest = Math.min(weakest, 0);
-      else if (result === "gold") weakest = Math.min(weakest, 1);
+  function quizCoveredUnits() {
+    var lastPractised = 0;
+    UNITS.forEach(function (u, i) {
+      var cardsDone = unitDecks(u).some(function (d) { return state.cards[d.id] && Object.keys(state.cards[d.id]).length; });
+      var exercisesDone = unitGrammarTopics(u).some(function (g) { return state.quiz[g.id]; });
+      if (cardsDone || exercisesDone) lastPractised = i;
     });
-    return seen ? weakest : 2;
+    return UNITS.slice(0, lastPractised + 1);
+  }
+
+  function dailyQuizPool() {
+    var pool = [], seen = {};
+    quizCoveredUnits().forEach(function (unit) {
+      unitDecks(unit).forEach(function (deck) {
+        deck.cards.forEach(function (card, idx) {
+          var key = "c:" + deck.id + ":" + idx;
+          if (!card.en || !card.ka || seen[key]) return;
+          seen[key] = true;
+          pool.push({ key: key, type: "card", deck: deck, idx: idx, card: card });
+        });
+      });
+      unitGrammarTopics(unit).forEach(function (topic) {
+        if (topic.kind === "reading" || !topic.items) return;
+        topic.items.forEach(function (item, pos) {
+          var key = "q:" + topic.id + ":" + pos;
+          if (!item.prompt || !item.answer || seen[key]) return;
+          seen[key] = true;
+          pool.push({ key: key, type: "typed", topic: topic, pos: pos, item: item });
+        });
+      });
+    });
+    return pool;
+  }
+
+  /* how the item went in the unit pages, for items the daily quiz hasn't asked yet */
+  function dailyStartingScore(q) {
+    if (q.type === "card") {
+      var modes = state.cards[q.deck.id] || {};
+      var seen = false, worst = 3;
+      Object.keys(modes).forEach(function (mode) {
+        var result = cardLastResult((modes[mode] || {})[q.idx]);
+        if (!result) return;
+        seen = true;
+        if (result === "rust") worst = Math.min(worst, 0);
+        else if (result === "gold") worst = Math.min(worst, 1);
+      });
+      if (!seen) return 50;
+      return worst === 0 ? 90 : (worst === 1 ? 75 : 35);
+    }
+    var answer = ((state.quiz[q.topic.id] || {}).answers || {})[q.pos];
+    return answer === false ? 90 : (answer === true ? 35 : 50);
+  }
+
+  /* higher = ask sooner; -1 = resting, only used to fill a short quiz */
+  function dailyPriority(q, now) {
+    var st = dailyStats()[q.key];
+    if (!st) return dailyStartingScore(q);
+    var hours = (now - Date.parse(st.t)) / 3600000;
+    if (st.ok === false) return hours >= 2 ? 100 : -1;
+    var restDays = DAILY_REST_DAYS[Math.min(Math.max(st.c, 1), DAILY_REST_DAYS.length) - 1];
+    if (hours < restDays * 24) return -1;
+    return 60 + Math.min(hours / 24 / restDays, 3) * 5;
+  }
+
+  function pickDailyQuizItems() {
+    var now = Date.now();
+    var ranked = shuffleArr(dailyQuizPool()).map(function (q) {
+      return { q: q, score: dailyPriority(q, now) };
+    }).sort(function (a, b) { return b.score - a.score; });
+
+    var picked = [], typedCount = 0;
+    function take(onlyDue) {
+      ranked.forEach(function (r) {
+        if (picked.length >= DAILY_QUIZ_LENGTH || picked.indexOf(r.q) !== -1) return;
+        if (onlyDue && r.score < 0) return;
+        if (r.q.type === "typed") {
+          if (typedCount >= DAILY_TYPED_MAX) return;
+          typedCount++;
+        }
+        picked.push(r.q);
+      });
+    }
+    take(true);
+    take(false); /* everything due is used up -- fill with resting items */
+    return picked;
   }
 
   function buildDailyQuiz() {
-    var pool = [];
-    quizCoveredDecks().forEach(function (deck) {
-      deck.cards.forEach(function (card, idx) {
-        if (card.en && card.ka) pool.push({ deck: deck, idx: idx, card: card, weakness: quizCardWeakness(deck, idx) });
-      });
-    });
-    var ordered = shuffleArr(pool).sort(function (a, b) { return a.weakness - b.weakness; });
-    var questions = ordered.slice(0, DAILY_QUIZ_LENGTH).map(function (q, n) {
+    var cardPool = dailyQuizPool().filter(function (q) { return q.type === "card"; });
+    var questions = pickDailyQuizItems().map(function (q, n) {
+      if (q.type !== "card") return q;
       var toGeorgian = n % 2 === 0;
       var side = toGeorgian ? "ka" : "en";
       var wrong = [];
-      shuffleArr(pool).forEach(function (other) {
+      shuffleArr(cardPool).forEach(function (other) {
         if (wrong.length >= 3 || other.card[side] === q.card[side]) return;
         if (wrong.some(function (w) { return w[side] === other.card[side]; })) return;
         wrong.push(other.card);
       });
-      return { deck: q.deck, idx: q.idx, card: q.card, toGeorgian: toGeorgian, options: shuffleArr([q.card].concat(wrong)) };
+      return { key: q.key, type: "card", deck: q.deck, idx: q.idx, card: q.card, toGeorgian: toGeorgian, options: shuffleArr([q.card].concat(wrong)) };
     });
-    return { questions: shuffleArr(questions), pos: 0, score: 0 };
+    return { questions: shuffleArr(questions), pos: 0, score: 0, mistakes: [] };
+  }
+
+  function dailyItemLabel(q) {
+    if (q.type === "card") return q.card.en + " — " + q.card.ka;
+    return fillBlankSentence(q.item.prompt, q.item.answer) + (q.item.prompt.indexOf("___") === -1 ? " — " + q.item.answer : "");
+  }
+
+  function recordDailyAnswer(q, ok) {
+    var stats = dailyStats();
+    var st = stats[q.key] || { n: 0, w: 0, c: 0 };
+    st.n++;
+    if (ok) { st.c++; } else { st.w++; st.c = 0; }
+    st.ok = ok;
+    st.t = new Date().toISOString();
+    stats[q.key] = st;
+    if (ok) dailyQuiz.score++; else dailyQuiz.mistakes.push(q);
+
+    if (q.type === "card") {
+      markPracticeResult(q.deck, q.idx, ok, "mc"); /* saves state */
+    } else {
+      state.quiz[q.topic.id] = state.quiz[q.topic.id] || { answers: {} };
+      state.quiz[q.topic.id].answers[q.pos] = ok;
+      saveState();
+      renderTabs();
+    }
   }
 
   function openDailyQuiz() {
     dailyQuiz = buildDailyQuiz();
     if (location.hash === "#quiz") { try { history.replaceState(null, "", location.pathname + location.search); } catch (e) {} }
     switchView("quiz");
+  }
+
+  function openDailyAnalysis() {
+    dailyQuiz = { analysisOnly: true };
+    switchView("quiz");
+  }
+
+  /* right answer: move on by itself after a moment; a wrong one waits for
+     the learner to read the correction and tap Next */
+  function dailyAdvanceSoon(delayMs) {
+    var quizAtAnswer = dailyQuiz, posAtAnswer = dailyQuiz.pos;
+    setTimeout(function () {
+      if (dailyQuiz !== quizAtAnswer || dailyQuiz.pos !== posAtAnswer || currentView !== "quiz") return;
+      dailyQuiz.pos++;
+      renderDailyQuizView();
+    }, delayMs);
+  }
+
+  function renderDailyAnalysis(box) {
+    var pool = dailyQuizPool();
+    var stats = dailyStats();
+    var asked = 0, learned = 0, weak = [];
+    pool.forEach(function (q) {
+      var st = stats[q.key];
+      if (!st) return;
+      asked++;
+      if (st.ok && st.c >= 2) learned++;
+      if (st.w > 0 && !(st.ok && st.c >= 2)) weak.push({ q: q, st: st });
+    });
+    weak.sort(function (a, b) { return b.st.w - a.st.w; });
+
+    box.appendChild(el("div", { class: "eyebrow", style: "margin-top:18px" }, [document.createTextNode("ანალიზი")]));
+    var units = quizCoveredUnits();
+    box.appendChild(el("p", { style: "margin:6px 0;font-size:0.92rem" }, [document.createTextNode(
+      "მასალა: " + units[0].short + (units.length > 1 ? " – " + units[units.length - 1].short : "") +
+      " · სულ " + pool.length + " სავარჯიშო · გავლილი " + asked + " · ნასწავლი " + learned
+    )]));
+    if (!asked) {
+      box.appendChild(el("p", { style: "margin:6px 0;font-size:0.92rem;color:var(--ink-soft)" }, [document.createTextNode("ანალიზი გამოჩნდება პირველი ტესტის შემდეგ.")]));
+      return;
+    }
+    if (!weak.length) {
+      box.appendChild(el("p", { style: "margin:6px 0;font-size:0.92rem;color:var(--green-ink)" }, [document.createTextNode("ამჟამად სუსტი ადგილები არ გაქვს 👏")]));
+      return;
+    }
+    box.appendChild(el("p", { style: "margin:10px 0 4px;font-size:0.92rem;font-weight:600" }, [document.createTextNode("ყველაზე ხშირად გეშლება:")]));
+    var list = el("ul", { style: "margin:0;padding-left:20px;font-size:0.92rem;line-height:1.6" });
+    weak.slice(0, 8).forEach(function (w) {
+      list.appendChild(el("li", {}, [document.createTextNode(dailyItemLabel(w.q) + "  (" + w.st.w + "×)")]));
+    });
+    box.appendChild(list);
+    box.appendChild(el("p", { style: "margin:10px 0 0;font-size:0.85rem;color:var(--ink-soft)" }, [document.createTextNode("ეს სავარჯიშოები შემდეგ ტესტებში უფრო ხშირად შეგხვდება, სანამ ორჯერ ზედიზედ სწორად არ უპასუხებ.")]));
   }
 
   function renderDailyQuizView() {
@@ -3694,14 +3848,22 @@
     var back = el("button", { class: "back-link", type: "button" }, [document.createTextNode("← მთავარზე დაბრუნება")]);
     back.addEventListener("click", function () { dailyQuiz = null; switchView("home"); });
     root.appendChild(back);
-    root.appendChild(el("h2", {}, [document.createTextNode("დღის ტესტი")]));
+    root.appendChild(el("h2", {}, [document.createTextNode(dailyQuiz.analysisOnly ? "ჩემი ანალიზი" : "დღის ტესტი")]));
 
     var box = el("div", { class: "quiz-box" });
     root.appendChild(box);
-    var total = dailyQuiz.questions.length;
 
+    if (dailyQuiz.analysisOnly) {
+      renderDailyAnalysis(box);
+      var start = el("button", { class: "check-btn", type: "button", style: "margin-top:16px" }, [document.createTextNode("📝 ტესტის დაწყება")]);
+      start.addEventListener("click", openDailyQuiz);
+      box.appendChild(start);
+      return;
+    }
+
+    var total = dailyQuiz.questions.length;
     if (!total) {
-      box.appendChild(el("p", {}, [document.createTextNode("ჯერ სიტყვები არ არის გასამეორებელი — დაიწყე Unit 1-ის ბარათებით.")]));
+      box.appendChild(el("p", {}, [document.createTextNode("ჯერ სავარჯიშოები არ არის გასამეორებელი — დაიწყე Unit 1-ის ბარათებით.")]));
       return;
     }
 
@@ -3709,59 +3871,102 @@
       var verdict = dailyQuiz.score === total ? "🎉 ბრწყინვალეა!" : (dailyQuiz.score >= total * 0.7 ? "👏 კარგია!" : "💪 გაიმეორე და კიდევ სცადე.");
       box.appendChild(el("div", { class: "quiz-prompt" }, [el("strong", {}, [document.createTextNode("შედეგი: " + dailyQuiz.score + " / " + total)])]));
       box.appendChild(el("p", {}, [document.createTextNode(verdict)]));
-      var again = el("button", { class: "check-btn", type: "button" }, [document.createTextNode("კიდევ ერთი ტესტი")]);
+      if (dailyQuiz.mistakes.length) {
+        box.appendChild(el("p", { style: "margin:10px 0 4px;font-size:0.92rem;font-weight:600" }, [document.createTextNode("ამ ტესტში შეგეშალა:")]));
+        var missed = el("ul", { style: "margin:0;padding-left:20px;font-size:0.92rem;line-height:1.6" });
+        dailyQuiz.mistakes.forEach(function (q) { missed.appendChild(el("li", {}, [document.createTextNode(dailyItemLabel(q))])); });
+        box.appendChild(missed);
+      }
+      renderDailyAnalysis(box);
+      var again = el("button", { class: "check-btn", type: "button", style: "margin-top:16px" }, [document.createTextNode("კიდევ ერთი ტესტი")]);
       again.addEventListener("click", openDailyQuiz);
       box.appendChild(again);
       return;
     }
 
     var q = dailyQuiz.questions[dailyQuiz.pos];
-    var answerSide = q.toGeorgian ? "ka" : "en";
     box.appendChild(el("div", { class: "practice-progress" }, [document.createTextNode((dailyQuiz.pos + 1) + " / " + total)]));
     box.appendChild(el("div", { class: "bar", "data-state": "green" }, [el("span", { style: "width:" + Math.round((dailyQuiz.pos / total) * 100) + "%" })]));
-    var promptEl = el("div", { class: "quiz-prompt" });
-    promptEl.appendChild(el("div", {}, [document.createTextNode(q.toGeorgian ? "რას ნიშნავს ქართულად?" : "როგორ არის ინგლისურად?")]));
-    promptEl.appendChild(el("strong", {}, [document.createTextNode(q.toGeorgian ? q.card.en : q.card.ka)]));
-    box.appendChild(promptEl);
 
     var feedback = el("div", { style: "font-size:0.9rem;font-weight:600;color:var(--rust);min-height:1.3em;margin:8px 0" });
-    var next = el("button", { class: "check-btn", type: "button", style: "display:none;margin-top:10px" }, [document.createTextNode(dailyQuiz.pos + 1 < total ? "შემდეგი →" : "შედეგის ნახვა")]);
-    next.addEventListener("click", function () { dailyQuiz.pos++; renderDailyQuizView(); });
+    var lastLabel = dailyQuiz.pos + 1 < total ? "შემდეგი →" : "შედეგის ნახვა";
+    function goNext() { dailyQuiz.pos++; renderDailyQuizView(); }
 
-    var answered = false;
-    var optWrap = el("div", { class: "mc-options" });
-    q.options.forEach(function (opt) {
-      var optBtn = el("button", { class: "mc-option", type: "button" }, [document.createTextNode(opt[answerSide])]);
-      optBtn.addEventListener("click", function () {
-        if (answered) return;
-        answered = true;
-        var ok = opt === q.card;
-        optBtn.classList.add(ok ? "correct" : "wrong");
-        if (ok) { dailyQuiz.score++; burstConfettiEl(optBtn); }
-        else {
-          Array.prototype.forEach.call(optWrap.children, function (b, i) { if (q.options[i] === q.card) b.classList.add("correct"); });
-          feedback.textContent = "სწორი პასუხია: " + q.card[answerSide] + (q.toGeorgian ? "" : " — " + q.card.ka);
-        }
-        markPracticeResult(q.deck, q.idx, ok, "mc");
-        if (appSettings.exerciseSpeak) speakPracticeText(q.card.en, "en-US");
-        if (ok) {
-          /* right answer: move on by itself after a moment; a wrong one
-             waits for the learner to read the correction and tap Next */
-          var quizAtAnswer = dailyQuiz;
-          setTimeout(function () {
-            if (dailyQuiz !== quizAtAnswer || currentView !== "quiz") return;
-            dailyQuiz.pos++;
-            renderDailyQuizView();
-          }, 900);
-        } else {
-          next.style.display = "";
-        }
+    if (q.type === "card") {
+      var answerSide = q.toGeorgian ? "ka" : "en";
+      var promptEl = el("div", { class: "quiz-prompt" });
+      promptEl.appendChild(el("div", {}, [document.createTextNode(q.toGeorgian ? "რას ნიშნავს ქართულად?" : "როგორ არის ინგლისურად?")]));
+      promptEl.appendChild(el("strong", {}, [document.createTextNode(q.toGeorgian ? q.card.en : q.card.ka)]));
+      box.appendChild(promptEl);
+
+      var next = el("button", { class: "check-btn", type: "button", style: "display:none;margin-top:10px" }, [document.createTextNode(lastLabel)]);
+      next.addEventListener("click", goNext);
+
+      var answered = false;
+      var optWrap = el("div", { class: "mc-options" });
+      q.options.forEach(function (opt) {
+        var optBtn = el("button", { class: "mc-option", type: "button" }, [document.createTextNode(opt[answerSide])]);
+        optBtn.addEventListener("click", function () {
+          if (answered) return;
+          answered = true;
+          var ok = opt === q.card;
+          optBtn.classList.add(ok ? "correct" : "wrong");
+          if (ok) { burstConfettiEl(optBtn); }
+          else {
+            Array.prototype.forEach.call(optWrap.children, function (b, i) { if (q.options[i] === q.card) b.classList.add("correct"); });
+            feedback.textContent = "სწორი პასუხია: " + q.card[answerSide] + (q.toGeorgian ? "" : " — " + q.card.ka);
+          }
+          recordDailyAnswer(q, ok);
+          if (appSettings.exerciseSpeak) speakPracticeText(q.card.en, "en-US");
+          if (ok) dailyAdvanceSoon(900); else next.style.display = "";
+        });
+        optWrap.appendChild(optBtn);
       });
-      optWrap.appendChild(optBtn);
-    });
-    box.appendChild(optWrap);
+      box.appendChild(optWrap);
+      box.appendChild(feedback);
+      box.appendChild(next);
+      return;
+    }
+
+    /* grammar / dialogue item: typed answer, checked the same way as in the unit pages */
+    var item = q.item;
+    var typedPrompt = el("div", { class: "quiz-prompt" });
+    typedPrompt.appendChild(el("div", { html: item.instruction }));
+    typedPrompt.appendChild(el("strong", {}, [document.createTextNode(item.prompt)]));
+    box.appendChild(typedPrompt);
+
+    var answerRow = el("div", { class: "answer-row" });
+    var input = el("input", { class: "answer-input", type: "text", autocomplete: "off", spellcheck: "false", placeholder: "დაწერე პასუხი..." });
+    var checkBtn = el("button", { class: "check-btn", type: "button" }, [document.createTextNode("შემოწმება")]);
+    answerRow.appendChild(input);
+    answerRow.appendChild(checkBtn);
+    box.appendChild(answerRow);
     box.appendChild(feedback);
-    box.appendChild(next);
+
+    var checked = false;
+    checkBtn.addEventListener("click", function () {
+      if (checked) { goNext(); return; }
+      if (!input.value.trim()) { input.focus(); return; }
+      checked = true;
+      input.disabled = true;
+      var accepted = [item.answer].concat(item.accept || []).map(normalize);
+      var ok = accepted.indexOf(normalize(input.value)) !== -1;
+      var fullSentence = fillBlankSentence(item.prompt, item.answer);
+      if (ok) {
+        feedback.style.color = "var(--green-ink)";
+        feedback.textContent = "ზუსტად ასეა!";
+      } else {
+        feedback.textContent = "სწორი პასუხია: " + item.answer;
+      }
+      recordDailyAnswer(q, ok);
+      if (appSettings.exerciseSpeak) {
+        var toSpeak = !textIsGeorgian(fullSentence) ? fullSentence : (!textIsGeorgian(item.prompt) ? item.prompt : "");
+        if (toSpeak) speakPracticeText(toSpeak, "en-US");
+      }
+      checkBtn.textContent = lastLabel;
+      if (ok) dailyAdvanceSoon(1500);
+    });
+    input.addEventListener("keydown", function (e) { if (e.key === "Enter") checkBtn.click(); });
   }
 
   /* ---------- quiz push notifications ----------
