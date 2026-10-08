@@ -3735,7 +3735,18 @@
         }
         markPracticeResult(q.deck, q.idx, ok, "mc");
         if (appSettings.exerciseSpeak) speakPracticeText(q.card.en, "en-US");
-        next.style.display = "";
+        if (ok) {
+          /* right answer: move on by itself after a moment; a wrong one
+             waits for the learner to read the correction and tap Next */
+          var quizAtAnswer = dailyQuiz;
+          setTimeout(function () {
+            if (dailyQuiz !== quizAtAnswer || currentView !== "quiz") return;
+            dailyQuiz.pos++;
+            renderDailyQuizView();
+          }, 900);
+        } else {
+          next.style.display = "";
+        }
       });
       optWrap.appendChild(optBtn);
     });
