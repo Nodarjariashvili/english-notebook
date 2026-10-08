@@ -2373,7 +2373,12 @@
   }
 
   function unitDecks(unit) { return DECKS.filter(function (d) { return unit.deckIds.indexOf(d.id) !== -1; }); }
-  function unitGrammarTopics(unit) { return GRAMMAR.filter(function (g) { return unit.grammarIds.indexOf(g.id) !== -1; }); }
+  /* in the unit's own order (grammarIds), so the first topic of a section is the one the unit lists first */
+  function unitGrammarTopics(unit) {
+    return unit.grammarIds.map(function (id) {
+      return GRAMMAR.filter(function (g) { return g.id === id; })[0];
+    }).filter(function (g) { return g; });
+  }
   function unitTopicsByKind(unit, kind) { return unitGrammarTopics(unit).filter(function (g) { return g.kind === kind; }); }
 
   function unitMastery(unit) {
@@ -2755,12 +2760,16 @@
     grammarSub = null;
     document.getElementById("view-cards").classList.toggle("active", key === "lex");
     document.getElementById("view-grammar").classList.toggle("active", key === "grammar" || key === "dialogue" || key === "reading");
+    /* Every section of every unit opens the same way Unit 1's do: straight
+       into its first word set / topic (heading + exercise list). A unit with
+       more than one set or topic reaches the others through the back link,
+       exactly like Unit 1's dialogues. */
     if (key === "lex") {
       var decks = unitDecks(unit);
-      if (decks.length === 1) { openDeckFlip(decks[0].id); renderGrammarView(); renderHome(); return; }
+      if (decks.length) { openDeckFlip(decks[0].id); renderGrammarView(); renderHome(); return; }
     } else if (key === "grammar" || key === "dialogue" || key === "reading") {
       var topics = unitTopicsByKind(unit, key);
-      if (topics.length === 1 || (key === "dialogue" && topics.length > 1)) { openTopic(topics[0].id); renderCardsView(); renderHome(); return; }
+      if (topics.length) { openTopic(topics[0].id); renderCardsView(); renderHome(); return; }
     }
     renderCardsView();
     renderGrammarView();
@@ -3488,7 +3497,7 @@
     var back = el("button", { class: "back-link", type: "button" }, [document.createTextNode("← თემებთან დაბრუნება")]);
     back.addEventListener("click", function () { grammarSub = null; renderGrammarView(); });
     root.appendChild(back);
-    root.appendChild(el("h2", { class: topic.commenters ? "topic-heading-accent" : topic.sections ? "topic-heading-warm" : (topic.kind === "grammar" && topic.note) ? "topic-heading-violet" : "" }, [document.createTextNode(topic.ka)]));
+    root.appendChild(el("h2", { class: topic.kind === "grammar" ? "topic-heading-warm" : topic.kind === "reading" ? "topic-heading-accent" : "" }, [document.createTextNode(topic.ka)]));
     if (topic.commenters) {
       var commentersWrap = el("div", { class: "commenters-wrap" });
       topic.commenters.forEach(function (c) {
