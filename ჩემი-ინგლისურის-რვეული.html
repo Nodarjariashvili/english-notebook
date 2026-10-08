@@ -3034,6 +3034,57 @@
     return /[Ⴀ-ჿ]/.test(s || "");
   }
 
+  /* ---------- dialogue translate items: shown Georgian -> answered in English ----------
+     The lesson data stores these as English prompt + Georgian answer
+     ("თარგმნე ქართულად"). The learner practises them the other way round:
+     the Georgian phrase is shown and the English one has to be typed. Several
+     English phrases in a topic can share one Georgian meaning ("როგორ ხარ?" is
+     How are you? / How are you doing? / What's up?), so every English phrase
+     whose Georgian overlaps is accepted, and all of them are shown as the
+     correct answer. Items of any other shape are returned unchanged. */
+  function georgianMeanings(text) {
+    return String(text || "").split("/").map(normalize).filter(function (part) { return part; });
+  }
+
+  function reversedTranslateItem(topic, item) {
+    var isTranslate = topic.kind === "dialogue" && item.prompt.indexOf("___") === -1;
+    if (!isTranslate || textIsGeorgian(item.prompt) || !textIsGeorgian(item.answer)) return item;
+    var meanings = georgianMeanings(item.answer);
+    var english = [item.prompt];
+    topic.items.forEach(function (other) {
+      if (other === item || other.prompt.indexOf("___") !== -1 || textIsGeorgian(other.prompt)) return;
+      var shared = georgianMeanings(other.answer).some(function (m) { return meanings.indexOf(m) !== -1; });
+      if (shared && english.indexOf(other.prompt) === -1) english.push(other.prompt);
+    });
+    return {
+      prompt: item.answer,
+      instruction: "თარგმნე ინგლისურად.",
+      answer: item.prompt,
+      accept: english.slice(1),
+      answerAll: english.join(" / "),
+      looseMatch: true
+    };
+  }
+
+  /* for typed English phrases: ignore punctuation and treat common short
+     forms as their long forms, so "I'm good" matches "I am good" */
+  function looseEnglish(text) {
+    return normalize(text)
+      /* short forms typed without the apostrophe, as phone keyboards often do */
+      .replace(/\b(ca|wo|do|does|did|is|are|was|were|could|would|should|have|has)nt\b/g, "$1n't")
+      .replace(/\bim\b/g, "i'm").replace(/\b(what|how|that|there|who|where)s\b/g, "$1's")
+      .replace(/\bcan't\b/g, "can not").replace(/\bcannot\b/g, "can not").replace(/\bwon't\b/g, "will not")
+      .replace(/n't\b/g, " not").replace(/\bi'm\b/g, "i am").replace(/'re\b/g, " are")
+      .replace(/\b(what|how|it|that|he|she|there|who|where)'s\b/g, "$1 is")
+      .replace(/'ve\b/g, " have").replace(/'ll\b/g, " will")
+      .replace(/[.,!?;:'"]/g, "").replace(/\s+/g, " ").trim();
+  }
+
+  function answerMatches(item, typed) {
+    var clean = item.looseMatch ? looseEnglish : normalize;
+    return [item.answer].concat(item.accept || []).map(clean).indexOf(clean(typed)) !== -1;
+  }
+
   /* ---------- quiz items (grammar / dialogue / reading): fill-in-the-blank sentence ----------
      item.prompt holds one or more "___" markers; item.answer is what belongs
      there. Builds the complete, correct English sentence by replacing the
@@ -3491,7 +3542,7 @@
       return;
     }
 
-    var item = topic.items[pos];
+    var item = reversedTranslateItem(topic, topic.items[pos]);
     var box = el("div", { class: "quiz-box" });
     box.appendChild(el("div", { class: "quiz-progress" }, [document.createTextNode((pos + 1) + " / " + topic.items.length)]));
 
@@ -3602,7 +3653,7 @@
       feedback.className = "feedback show " + (ok ? "correct" : "wrong");
       var msgHtml = ok
         ? "<span class='hand'>ზუსტად ასეა!</span>"
-        : "<span class='hand'>თითქმის!</span><span class='correct-answer'>სწორი პასუხია: " + (item.answer) + "</span>";
+        : "<span class='hand'>თითქმის!</span><span class='correct-answer'>სწორი პასუხია: " + (item.answerAll || item.answer) + "</span>";
       feedback.innerHTML = markWithConfetti(ok) + "<span class='msg'>" + msgHtml + "</span>";
       appendSentenceSpeakRow(ok, revealed);
       /* the check button itself becomes the "next" button -- one button, one
@@ -3620,8 +3671,7 @@
     checkBtn.addEventListener("click", function () {
       if (answerShown) { goToNextItem(); return; }
       if (!input.value.trim()) { input.focus(); return; }
-      var accepted = [item.answer].concat(item.accept || []).map(normalize);
-      var ok = accepted.indexOf(normalize(input.value)) !== -1;
+      var ok = answerMatches(item, input.value);
       showFeedback(ok, false);
     });
     input.addEventListener("keydown", function (e) { if (e.key === "Enter") checkBtn.click(); });
@@ -3929,7 +3979,7 @@
     }
 
     /* grammar / dialogue item: typed answer, checked the same way as in the unit pages */
-    var item = q.item;
+    var item = reversedTranslateItem(q.topic, q.item);
     var typedPrompt = el("div", { class: "quiz-prompt" });
     typedPrompt.appendChild(el("div", { html: item.instruction }));
     typedPrompt.appendChild(el("strong", {}, [document.createTextNode(item.prompt)]));
@@ -3949,18 +3999,17 @@
       if (!input.value.trim()) { input.focus(); return; }
       checked = true;
       input.disabled = true;
-      var accepted = [item.answer].concat(item.accept || []).map(normalize);
-      var ok = accepted.indexOf(normalize(input.value)) !== -1;
+      var ok = answerMatches(item, input.value);
       var fullSentence = fillBlankSentence(item.prompt, item.answer);
       if (ok) {
         feedback.style.color = "var(--green-ink)";
         feedback.textContent = "ზუსტად ასეა!";
       } else {
-        feedback.textContent = "სწორი პასუხია: " + item.answer;
+        feedback.textContent = "სწორი პასუხია: " + (item.answerAll || item.answer);
       }
       recordDailyAnswer(q, ok);
       if (appSettings.exerciseSpeak) {
-        var toSpeak = !textIsGeorgian(fullSentence) ? fullSentence : (!textIsGeorgian(item.prompt) ? item.prompt : "");
+        var toSpeak = !textIsGeorgian(fullSentence) ? fullSentence : (!textIsGeorgian(item.answer) ? item.answer : "");
         if (toSpeak) speakPracticeText(toSpeak, "en-US");
       }
       checkBtn.textContent = lastLabel;
