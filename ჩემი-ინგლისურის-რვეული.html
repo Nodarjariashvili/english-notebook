@@ -6069,8 +6069,13 @@
     var gateRoot = document.getElementById("auth-gate-root");
     gateRoot.style.display = "none";
     gateRoot.innerHTML = "";
+    /* showApp() calls this again on every auth event (a refreshed token, the
+       tab regaining focus). Rebuilding the view then would throw away a page
+       reading that is in progress, so an already open admin view is left alone. */
+    var adminView = document.getElementById("view-admin");
+    if (adminView.classList.contains("active") && adminView.firstChild) return;
     document.querySelectorAll(".view").forEach(function (v) { v.classList.remove("active"); });
-    document.getElementById("view-admin").classList.add("active");
+    adminView.classList.add("active");
     renderAdminView();
   }
 
