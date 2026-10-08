@@ -3717,7 +3717,7 @@
     box.appendChild(promptEl);
 
     var feedback = el("div", { style: "font-size:0.9rem;font-weight:600;color:var(--rust);min-height:1.3em;margin:8px 0" });
-    var next = el("button", { class: "next-btn", type: "button" }, [document.createTextNode(dailyQuiz.pos + 1 < total ? "შემდეგი →" : "შედეგის ნახვა")]);
+    var next = el("button", { class: "check-btn", type: "button", style: "display:none;margin-top:10px" }, [document.createTextNode(dailyQuiz.pos + 1 < total ? "შემდეგი →" : "შედეგის ნახვა")]);
     next.addEventListener("click", function () { dailyQuiz.pos++; renderDailyQuizView(); });
 
     var answered = false;
@@ -3736,7 +3736,7 @@
         }
         markPracticeResult(q.deck, q.idx, ok, "mc");
         if (appSettings.exerciseSpeak) speakPracticeText(q.card.en, "en-US");
-        next.classList.add("show");
+        next.style.display = "";
       });
       optWrap.appendChild(optBtn);
     });
