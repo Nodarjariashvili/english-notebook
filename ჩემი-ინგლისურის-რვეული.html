@@ -5593,11 +5593,15 @@
         try { data = JSON.parse(text); } catch (e) {}
         if (!res.ok || !data) {
           var msg = data && data.error && data.error.message ? data.error.message : "სერვერმა პასუხი არ დააბრუნა (სტატუსი " + res.status + ")";
+          var outOfCredit = /credit balance/i.test(msg);
+          if (outOfCredit) msg = "Anthropic-ის ანგარიშზე თანხა ამოიწურა.";
           if (res.status === 401) msg = "სესია ვადაგასულია — შედი თავიდან.";
           if (res.status === 429) msg = "დღიური ლიმიტი ამოიწურა — გააგრძელე ხვალ.";
           if (res.status === 502) msg = AI_KEY_REJECTED_MESSAGE;
           if (res.status === 504 || res.status === 546) msg = "წაკითხვას ძალიან დიდი დრო დასჭირდა და შეწყდა — სცადე თავიდან.";
-          throw new Error(msg);
+          var failure = new Error(msg);
+          failure.stopsBatch = outOfCredit || res.status === 401 || res.status === 429 || res.status === 502;
+          throw failure;
         }
         if (data.stop_reason === "refusal") throw new Error("მოდელმა ამ გვერდის წაკითხვაზე უარი თქვა.");
         if (data.stop_reason === "max_tokens") throw new Error("გვერდზე ძალიან ბევრი ტექსტია და პასუხი შუაში შეწყდა.");
@@ -5774,11 +5778,20 @@
     var savedBox = el("div", { style: "margin-top:26px" });
     root.appendChild(savedBox);
 
+    var alreadyRead = {}; /* file name -> true, so a photo is never paid for twice */
+
     function refreshSaved() {
-      savedBox.innerHTML = "";
-      supabaseClient.from("page_scans").select("id, file_name, page_number, unit, created_at").order("created_at", { ascending: false }).then(function (res) {
+      return supabaseClient.from("page_scans").select("id, file_name, page_number, unit, input_tokens, output_tokens, created_at").order("created_at", { ascending: false }).then(function (res) {
+        savedBox.innerHTML = "";
+        alreadyRead = {};
         if (res.error || !res.data || !res.data.length) return;
-        savedBox.appendChild(el("h3", { style: "margin:0 0 8px" }, [document.createTextNode("შენახული წაკითხვები")]));
+        var spent = 0;
+        res.data.forEach(function (row) {
+          if (row.file_name) alreadyRead[row.file_name] = true;
+          spent += pageScanCostUsd({ input: row.input_tokens || 0, output: row.output_tokens || 0 });
+        });
+        savedBox.appendChild(el("h3", { style: "margin:0 0 4px" }, [document.createTextNode("შენახული წაკითხვები")]));
+        savedBox.appendChild(el("p", { style: "margin:0 0 8px;font-size:0.88rem;color:var(--ink-soft)" }, [document.createTextNode("სულ წაკითხულია " + res.data.length + " გვერდი · ჯამური ღირებულება ~$" + spent.toFixed(2))]));
         var viewer = el("div", { style: "margin-top:12px" });
         res.data.forEach(function (row) {
           var line = el("div", { style: "display:flex;gap:8px;align-items:center;margin:4px 0" });
@@ -5805,11 +5818,27 @@
 
     /* photos are read one after another, each in its own card */
     function readFiles(files) {
-      var queue = Array.prototype.slice.call(files);
+      var queue = Array.prototype.slice.call(files).sort(function (a, b) { return a.name < b.name ? -1 : a.name > b.name ? 1 : 0; });
+      var total = queue.length, done = 0, skipped = 0, failed = 0, batchCost = 0;
       fileInput.disabled = true;
+      var progress = el("p", { style: "margin:0 0 12px;font-weight:600;font-size:0.92rem" });
+      results.insertBefore(progress, results.firstChild);
+      function report(finalWord) {
+        progress.textContent = (finalWord || "მიმდინარეობს") + ": წაკითხული " + done + " / " + total +
+          (skipped ? " · უკვე წაკითხული იყო " + skipped : "") + (failed ? " · ვერ წაიკითხა " + failed : "") +
+          " · ამ ჯერზე დაიხარჯა ~$" + batchCost.toFixed(2);
+      }
+      function finish(word) {
+        fileInput.disabled = false;
+        fileInput.value = "";
+        report(word);
+        refreshSaved();
+      }
       function next() {
+        report();
         var file = queue.shift();
-        if (!file) { fileInput.disabled = false; fileInput.value = ""; refreshSaved(); return; }
+        if (!file) { finish("დასრულდა"); return; }
+        if (alreadyRead[file.name]) { skipped++; next(); return; }
         var card = el("div", { style: "border:1px solid var(--border);border-radius:16px;padding:16px;margin:0 0 16px;background:var(--paper)" });
         var status = el("p", { style: "margin:0;font-size:0.9rem" }, [document.createTextNode(file.name + " — ფოტოს ვამზადებ…")]);
         card.appendChild(status);
@@ -5820,21 +5849,28 @@
           return readPage(image, function (stage) { status.textContent = file.name + " — " + stage; });
         }).then(function (scan) {
           scan.fileName = file.name;
+          done++;
+          batchCost += pageScanCostUsd(scan.tokens);
+          alreadyRead[file.name] = true;
           renderPageScan(card, scan, image.dataUrl);
           return savePageScan(scan).catch(function (err) {
             card.appendChild(el("p", { style: "color:var(--rust);font-size:0.85rem" }, [document.createTextNode("წაკითხვა მზადაა, მაგრამ შენახვა ვერ მოხერხდა: " + err.message)]));
           });
         }).catch(function (err) {
           console.error("page reader failed", err);
+          failed++;
           status.style.color = "var(--rust)";
           status.textContent = file.name + " — ვერ წავიკითხე: " + err.message;
-        }).then(next);
+          if (err.stopsBatch) { queue = []; finish("შეჩერდა (" + err.message + ")"); return "stopped"; }
+        }).then(function (state) { if (state !== "stopped") next(); });
       }
       next();
     }
 
     fileInput.addEventListener("change", function () {
-      if (fileInput.files.length) readFiles(fileInput.files);
+      if (!fileInput.files.length) return;
+      var files = fileInput.files;
+      refreshSaved().then(function () { readFiles(files); }); /* know what is already read before starting */
     });
   }
 

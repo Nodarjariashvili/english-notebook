@@ -1,4 +1,4 @@
-var CACHE_NAME = "notebook-cache-v44";
+var CACHE_NAME = "notebook-cache-v45";
 var CACHED_FILES = [
   "./",
   "./index.html",

@@ -18,6 +18,10 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
 const FREE_DAILY_LIMIT = 50;
 const PREMIUM_DAILY_LIMIT = 500;
+// The admin's page reader makes two requests per textbook photo, so a book
+// is a few hundred requests in one sitting.
+const ADMIN_DAILY_LIMIT = 2000;
+const ADMIN_EMAILS = new Set(["nonojariashvili@gmail.com"]);
 const ACTIVE_SUBSCRIPTION_STATUSES = new Set(["active", "on_trial"]);
 const FUNCTION_NAME = "anthropic-chat";
 
@@ -68,7 +72,10 @@ Deno.serve(async (req) => {
     .select("status")
     .eq("user_id", userId)
     .maybeSingle();
-  const dailyLimit = subRow && ACTIVE_SUBSCRIPTION_STATUSES.has(subRow.status) ? PREMIUM_DAILY_LIMIT : FREE_DAILY_LIMIT;
+  const isAdmin = ADMIN_EMAILS.has((userData.user.email || "").toLowerCase());
+  const dailyLimit = isAdmin
+    ? ADMIN_DAILY_LIMIT
+    : subRow && ACTIVE_SUBSCRIPTION_STATUSES.has(subRow.status) ? PREMIUM_DAILY_LIMIT : FREE_DAILY_LIMIT;
 
   const today = new Date().toISOString().slice(0, 10);
   const { data: usageResult, error: usageErr } = await adminClient.rpc("increment_api_usage", {
