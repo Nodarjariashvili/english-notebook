@@ -4125,79 +4125,6 @@
     additionalProperties: false
   };
 
-  /* ---------- admin: content import from photo (hidden, not linked from nav) ---------- */
-  var ADMIN_SYSTEM_PROMPT = "შენ ეხმარები ინგლისურის სახელმძღვანელოს გვერდის ფოტოს ციფრულ მასალად გადაქცევაში. წაიკითხე მხოლოდ ის, რაც სურათზე ნამდვილად სჩანს — არაფერი გამოიგონო და არაფერი დაამატო, რაც სურათზე არ წერია. თუ რაიმე ბუნდოვანია, ბუნდოვნად იკითხება ან გაუგებარია, ჩაწერე ეს კონკრეტულად 'notes' ველში და ნუ გამოიცნობ. დაალაგე ნაპოვნი კონტენტი 4 კატეგორიად: (1) lexicon — ცალკეული სიტყვები და მარტივი მისალმებები, თარგმანით; (2) grammar — გრამატიკის წესები და ახსნა-განმარტებები; (3) dialogues — საუბრის/კითხვა-პასუხის ტიპის ფრაზები (ორ ან მეტ სიტყვიანი) და სრული დიალოგები; (4) reading — წასაკითხი ტექსტები/comprehension პასაჟები. თუ რომელიმე კატეგორია სურათზე არ არის წარმოდგენილი, დააბრუნე მისთვის ცარიელი მასივი — არ გამოიგონო შემავსებელი მაგალითები.";
-
-  var ADMIN_OUTPUT_SCHEMA = {
-    type: "object",
-    properties: {
-      lexicon: {
-        type: "array",
-        description: "Individual vocabulary words / short greeting-type phrases visible in the image, with Georgian translation.",
-        items: {
-          type: "object",
-          properties: {
-            en: { type: "string" },
-            ka: { type: "string" },
-            ipa: { type: "string", description: "IPA pronunciation if determinable, else empty string" }
-          },
-          required: ["en", "ka", "ipa"],
-          additionalProperties: false
-        }
-      },
-      grammar: {
-        type: "array",
-        description: "Grammar rules/explanations visible in the image.",
-        items: {
-          type: "object",
-          properties: {
-            title_ka: { type: "string" },
-            note: { type: "string", description: "The grammar explanation, transcribed/summarized in Georgian." }
-          },
-          required: ["title_ka", "note"],
-          additionalProperties: false
-        }
-      },
-      dialogues: {
-        type: "array",
-        description: "Conversational Q&A-type phrases or full dialogue exchanges visible in the image.",
-        items: {
-          type: "object",
-          properties: {
-            title_ka: { type: "string" },
-            lines: {
-              type: "array",
-              items: {
-                type: "object",
-                properties: { en: { type: "string" }, ka: { type: "string" } },
-                required: ["en", "ka"],
-                additionalProperties: false
-              }
-            }
-          },
-          required: ["title_ka", "lines"],
-          additionalProperties: false
-        }
-      },
-      reading: {
-        type: "array",
-        description: "Full reading/comprehension passages visible in the image, transcribed verbatim.",
-        items: {
-          type: "object",
-          properties: {
-            title_ka: { type: "string" },
-            text_en: { type: "string" }
-          },
-          required: ["title_ka", "text_en"],
-          additionalProperties: false
-        }
-      },
-      notes: { type: "string", description: "Anything unclear, unreadable, or ambiguous in the photo that needs the user's manual review. Empty string if nothing." }
-    },
-    required: ["lexicon", "grammar", "dialogues", "reading", "notes"],
-    additionalProperties: false
-  };
-
   var GENERAL_CHAT_CHIPS = [
     ["მისალმება", "Hello! My name is Nono."],
     ["ოჯახი", "I want to talk about my family."],
@@ -5500,7 +5427,109 @@
     });
   }
 
-  /* ---------- admin: content import from photo (hidden view, no nav link — reach via #admin in the address bar) ---------- */
+  /* ---------- page reader (admin view, reached via #admin) ----------
+     Reads one photographed textbook page and shows every PRINTED thing on
+     it, split into blocks in reading order. Handwriting on the page (the
+     learner's pencilled answers and notes) is ignored, nothing is solved,
+     translated or added: the output is a transcription and nothing else.
+
+     Two model calls per page: the first transcribes, the second gets the
+     photo together with that transcription and hunts for anything missed
+     or misread, returning the corrected whole. On top of that the client
+     checks the numbering of every list for gaps. Finished scans are stored
+     in public.page_scans, so looking at one again costs nothing.
+
+     Placing the material into units is deliberately not done here yet. */
+  var PAGE_READER_MODEL = "claude-opus-5";
+  var PAGE_READER_USD_PER_MTOK = { input: 5, output: 25 };
+  var PAGE_IMAGE_MAX_SIDE = 2200;
+  var UNREADABLE_MARK = "[ვერ იკითხება]";
+
+  var PAGE_BLOCK_KINDS = {
+    page_header: "გვერდის თავი", unit_title: "Unit-ის სათაური", section_banner: "განყოფილება",
+    explanation: "ახსნა", note: "შენიშვნა", table: "ცხრილი", vocabulary: "სიტყვები",
+    examples: "მაგალითები", exercise: "სავარჯიშო", word_box: "სიტყვების ჩარჩო",
+    dialogue: "დიალოგი", reading_text: "ტექსტი", caption: "სურათის წარწერა",
+    page_footer: "გვერდის ბოლო", other: "სხვა"
+  };
+
+  var PAGE_BLOCK_SCHEMA = {
+    type: "object",
+    properties: {
+      kind: { type: "string", enum: Object.keys(PAGE_BLOCK_KINDS) },
+      heading: { type: "string", description: "The block's own printed heading or label, e.g. 'GRAMMAR 1 personal pronouns' or 'A PRACTICE'. Empty if it has none." },
+      instruction: { type: "string", description: "The printed task sentence of an exercise. Empty otherwise." },
+      lines: { type: "array", items: { type: "string" }, description: "Every printed line, sentence or numbered/lettered item of the block, one per entry, each with its printed number or letter. Empty when the block is purely a vocabulary list or a table." },
+      vocabulary: {
+        type: "array",
+        items: {
+          type: "object",
+          properties: {
+            en: { type: "string" },
+            ipa: { type: "string", description: "The printed transcription including its slashes; empty if none is printed." },
+            ka: { type: "string", description: "The printed Georgian meaning; empty if none is printed." }
+          },
+          required: ["en", "ipa", "ka"],
+          additionalProperties: false
+        }
+      },
+      table: {
+        type: "array",
+        description: "Rows of a printed table, top to bottom, header row first.",
+        items: {
+          type: "object",
+          properties: { cells: { type: "array", items: { type: "string" } } },
+          required: ["cells"],
+          additionalProperties: false
+        }
+      }
+    },
+    required: ["kind", "heading", "instruction", "lines", "vocabulary", "table"],
+    additionalProperties: false
+  };
+
+  function pageSchema(withChanges) {
+    var properties = {
+      page_number: { type: "string", description: "The printed page number; empty if it is not visible." },
+      unit: { type: "string", description: "The unit as printed, e.g. 'UNIT 4'; empty if the page does not print it." },
+      unit_title: { type: "string", description: "The printed unit title or question; empty if not on this page." },
+      blocks: { type: "array", items: PAGE_BLOCK_SCHEMA },
+      notes: { type: "array", items: { type: "string" }, description: "In Georgian. One entry per problem: printed text that could not be read and where it is, text that continues from or onto another page, anything else the reader of this transcription must know." }
+    };
+    var required = ["page_number", "unit", "unit_title", "blocks", "notes"];
+    if (withChanges) {
+      properties.changes = { type: "array", items: { type: "string" }, description: "In Georgian. One entry per thing you added, removed or corrected compared with the first transcription; empty if it was already complete and exact." };
+      required.push("changes");
+    }
+    return { type: "object", properties: properties, required: required, additionalProperties: false };
+  }
+
+  var PAGE_READER_SYSTEM = [
+    "You transcribe one photographed page of a printed English textbook written for Georgian speakers. The page mixes English, Georgian and phonetic transcriptions between slashes.",
+    "",
+    "Your transcription will be the only record of this page, so it has to contain every printed thing on it, completely and exactly: the running header, the unit number and title, tag lists, section banners, explanations, notes, tables, vocabulary lists, examples, the instruction of every exercise, every numbered or lettered item, option lists (A/B/C), word boxes, dialogues with their speaker names, reading texts, captions and labels printed with pictures, checkbox labels, and the page number.",
+    "",
+    "The book has been written in by hand, and none of that is part of the book. Leave out everything in pen or pencil: answers written into blanks, notes and translations in the margins or between lines, underlining, circles, ticks, crossings-out and arrows. A printed blank that someone filled in is still a blank: write it as ___ . Print an empty ☐ for every printed checkbox, whatever has been drawn in it. Where the print offers alternatives and one has been marked by hand, give all the alternatives as printed, e.g. am/is/are.",
+    "",
+    "Transcribe, and nothing more. Do not answer or complete exercises, do not translate, do not correct spelling or grammar, do not summarise, and do not add words, examples or explanations of your own. Keep the printed wording, spelling, punctuation and capitalisation.",
+    "",
+    "If printed text cannot be read with confidence (shadow, glare, blur, cut off at the edge of the photo, covered by handwriting), put " + UNREADABLE_MARK + " in its place and say in `notes` where it is. Never guess a word.",
+    "",
+    "A strip of the facing page is sometimes visible at the edge of the photo. It is a different page: leave it out. If this page's own text starts or ends in mid-sentence because it continues on another page, say so in `notes`.",
+    "",
+    "Give the page as blocks in reading order, top to bottom. Where a section is printed in two columns, finish its left column before its right. Start a new block whenever the print starts a new unit of content: a banner, an explanation, a table, a vocabulary list, an exercise (one block per exercise, with its instruction and all of its items), a dialogue, a text. In a vocabulary list split each entry into the English, the transcription and the Georgian exactly as printed; when a list is printed as running text, still give one entry per word. Put each exercise item, sentence, dialogue turn or paragraph in its own entry of `lines`, with its printed number, letter or speaker name. Printed underlining that an exercise depends on can be shown as _word_."
+  ].join("\n");
+
+  var PAGE_VERIFY_PROMPT = [
+    "Below is a first transcription of this page. Check it against the photo, region by region from the top of the page to the bottom, and in both columns where there are two.",
+    "",
+    "Look for printed things that are missing, cut short, merged together, misread or out of order: a skipped item in a numbered list, a missing table row or column, a dropped caption or word box, a lost instruction, a transcription or Georgian meaning left off a word, the page number. Look also for the opposite mistake: handwriting that was copied in, a blank that was filled, an exercise that was answered, or anything that is not printed on the page.",
+    "",
+    "Return the whole transcription again, corrected, in the same format, and list every change you made in `changes`. If the first transcription was already complete and exact, return it unchanged with an empty `changes`.",
+    "",
+    "First transcription:"
+  ].join("\n");
+
   var heic2anyLoadPromise = null;
   function loadHeic2Any() {
     if (window.heic2any) return Promise.resolve();
@@ -5509,7 +5538,7 @@
       var s = document.createElement("script");
       s.src = "https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js";
       s.onload = function () { resolve(); };
-      s.onerror = function () { heic2anyLoadPromise = null; reject(new Error("heic2any ბიბლიოთეკის ჩატვირთვა ვერ მოხერხდა — ინტერნეტთან კავშირი შეამოწმე.")); };
+      s.onerror = function () { heic2anyLoadPromise = null; reject(new Error("HEIC ფოტოების გადამყვანის ჩატვირთვა ვერ მოხერხდა — ინტერნეტი შეამოწმე.")); };
       document.head.appendChild(s);
     });
     return heic2anyLoadPromise;
@@ -5519,220 +5548,287 @@
     return /image\/hei[cf]/i.test(file.type || "") || /\.hei[cf]$/i.test(file.name || "");
   }
 
-  function jsStringLiteral(s) {
-    return "\"" + String(s == null ? "" : s).replace(/\\/g, "\\\\").replace(/"/g, "\\\"").replace(/\n/g, "\\n") + "\"";
+  /* Any photo -> an upright JPEG no longer than PAGE_IMAGE_MAX_SIDE on its
+     long side: large enough to read small print, small enough to send. */
+  function preparePageImage(file) {
+    var toBlob = isHeicFile(file)
+      ? loadHeic2Any().then(function () { return window.heic2any({ blob: file, toType: "image/jpeg", quality: 0.92 }); })
+          .then(function (out) { return Array.isArray(out) ? out[0] : out; })
+      : Promise.resolve(file);
+    return toBlob.then(function (blob) {
+      return new Promise(function (resolve, reject) {
+        var url = URL.createObjectURL(blob);
+        var img = new Image();
+        img.onload = function () {
+          var scale = Math.min(1, PAGE_IMAGE_MAX_SIDE / Math.max(img.naturalWidth, img.naturalHeight));
+          var canvas = document.createElement("canvas");
+          canvas.width = Math.round(img.naturalWidth * scale);
+          canvas.height = Math.round(img.naturalHeight * scale);
+          canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+          URL.revokeObjectURL(url);
+          var dataUrl = canvas.toDataURL("image/jpeg", 0.9);
+          resolve({ dataUrl: dataUrl, base64: dataUrl.split(",")[1] });
+        };
+        img.onerror = function () { URL.revokeObjectURL(url); reject(new Error("ფოტო ვერ გაიხსნა.")); };
+        img.src = url;
+      });
+    });
   }
 
-  function adminSlugify(s) {
-    var out = String(s || "").toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
-    return out || "newItem";
-  }
-
-  function buildAdminInsertSnippet(parsed, unitId) {
-    var lines = [];
-    if (parsed.lexicon && parsed.lexicon.length) {
-      lines.push("// === ლექსიკონი — ჩასვი ეს ბარათები " + unitId + "-ის შესაბამის DECKS ჩანაწერის cards: [...] მასივში ===");
-      parsed.lexicon.forEach(function (w) {
-        lines.push("{ en: " + jsStringLiteral(w.en) + ", ipa: " + jsStringLiteral(w.ipa || "") + ", ka: " + jsStringLiteral(w.ka) + " },");
-      });
-      lines.push("");
-    }
-    if (parsed.grammar && parsed.grammar.length) {
-      lines.push("// === გრამატიკა — ჩასვი ეს ჩანაწერები GRAMMAR მასივში, და დაამატე მათი id UNITS." + unitId + ".grammarIds-ში ===");
-      parsed.grammar.forEach(function (g) {
-        lines.push("{ id: " + jsStringLiteral(adminSlugify(g.title_ka)) + ", kind: \"grammar\", ka: " + jsStringLiteral(g.title_ka) + ", en: \"\", note: " + jsStringLiteral(g.note) + ", items: [] },");
-      });
-      lines.push("");
-    }
-    if (parsed.dialogues && parsed.dialogues.length) {
-      lines.push("// === დიალოგები — ჩასვი ეს ჩანაწერები GRAMMAR მასივში, და დაამატე მათი id UNITS." + unitId + ".grammarIds-ში ===");
-      parsed.dialogues.forEach(function (d) {
-        var itemsStr = (d.lines || []).map(function (ln) {
-          return "{ prompt: " + jsStringLiteral(ln.en) + ", instruction: \"თარგმნე ქართულად.\", answer: " + jsStringLiteral(ln.ka) + " }";
-        }).join(", ");
-        lines.push("{ id: " + jsStringLiteral(adminSlugify(d.title_ka)) + ", kind: \"dialogue\", ka: " + jsStringLiteral(d.title_ka) + ", en: \"\", items: [" + itemsStr + "] },");
-      });
-      lines.push("");
-    }
-    if (parsed.reading && parsed.reading.length) {
-      lines.push("// === ტექსტები — ჩასვი ეს ჩანაწერები GRAMMAR მასივში, და დაამატე მათი id UNITS." + unitId + ".grammarIds-ში ===");
-      parsed.reading.forEach(function (r) {
-        lines.push("{ id: " + jsStringLiteral(adminSlugify(r.title_ka)) + ", kind: \"reading\", ka: " + jsStringLiteral(r.title_ka) + ", en: \"\", note: " + jsStringLiteral(r.text_en) + ", items: [] },");
-      });
-      lines.push("");
-    }
-    lines.push("// შენიშვნა: items: [] ცარიელია — სავარჯიშო კითხვები ფოტოზე ჩანს, თუ ცალკეა, ხელით დაამატე.");
-    lines.push("// ნუ დაგავიწყდება ზემოთ ახალი id-ების დამატება UNITS." + unitId + ".deckIds / .grammarIds მასივებში!");
-    return lines.join("\n");
-  }
-
-  function renderAdminResult(container, parsed, unitId) {
-    container.innerHTML = "";
-    if (parsed.notes) {
-      container.appendChild(el("p", { style: "background:var(--gold-soft);border-left:3px solid var(--gold);border-radius:10px;padding:10px 14px;font-size:0.85rem;margin:0 0 14px" }, [
-        document.createTextNode("⚠️ Claude-ის შენიშვნა: " + parsed.notes)
-      ]));
-    }
-    container.appendChild(el("h4", { style: "margin:0 0 8px" }, [document.createTextNode("მიღებული JSON (გადაამოწმე თვალით):")]));
-    var pre = el("pre", { style: "background:var(--paper);border:1px solid var(--border);border-radius:10px;padding:12px;font-size:0.8rem;overflow:auto;max-height:340px" }, [
-      document.createTextNode(JSON.stringify(parsed, null, 2))
-    ]);
-    container.appendChild(pre);
-
-    var insertBtn = el("button", { class: "check-btn", type: "button" }, [document.createTextNode("დამატება Unit-ში")]);
-    container.appendChild(insertBtn);
-
-    var snippetWrap = el("div", { style: "display:none;margin-top:14px" });
-    container.appendChild(snippetWrap);
-
-    insertBtn.addEventListener("click", function () {
-      var snippet = buildAdminInsertSnippet(parsed, unitId);
-      snippetWrap.innerHTML = "";
-      snippetWrap.appendChild(el("p", { style: "font-size:0.85rem;color:var(--ink-soft);margin:0 0 8px" }, [
-        document.createTextNode("ეს გვერდი ვერ წერს პირდაპირ .html ფაილში (ბრაუზერს არ აქვს ამის უფლება) — დააკოპირე ეს კოდი და ჩასვი ხელით DECKS/GRAMMAR მასივებში, ტესტირების და commit-ის შემდეგ, ისევე როგორც აქამდე ყოველთვის ხდებოდა.")
-      ]));
-      var textarea = el("textarea", { readonly: "readonly", style: "width:100%;min-height:200px;font-family:monospace;font-size:0.8rem;padding:10px;border-radius:10px;border:1px solid var(--border);background:var(--paper)" });
-      textarea.value = snippet;
-      snippetWrap.appendChild(textarea);
-      var copyBtn = el("button", { class: "check-btn", type: "button", style: "margin-top:8px" }, [document.createTextNode("კოპირება")]);
-      copyBtn.addEventListener("click", function () {
-        textarea.select();
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-          navigator.clipboard.writeText(textarea.value).then(function () {
-            copyBtn.textContent = "დაკოპირდა ✓";
-            setTimeout(function () { copyBtn.textContent = "კოპირება"; }, 1500);
-          });
-        } else {
-          document.execCommand("copy");
+  function callPageReader(content, schema) {
+    return postToEdgeFunction(ANTHROPIC_CHAT_FUNCTION_URL, { "content-type": "application/json" }, JSON.stringify({
+      model: PAGE_READER_MODEL,
+      max_tokens: 16000,
+      system: PAGE_READER_SYSTEM,
+      messages: [{ role: "user", content: content }],
+      output_config: { format: { type: "json_schema", schema: schema } }
+    })).then(function (res) {
+      return res.text().then(function (text) {
+        var data = null;
+        try { data = JSON.parse(text); } catch (e) {}
+        if (!res.ok || !data) {
+          var msg = data && data.error && data.error.message ? data.error.message : "სერვერმა პასუხი არ დააბრუნა (სტატუსი " + res.status + ")";
+          if (res.status === 401) msg = "სესია ვადაგასულია — შედი თავიდან.";
+          if (res.status === 429) msg = "დღიური ლიმიტი ამოიწურა — გააგრძელე ხვალ.";
+          if (res.status === 504 || res.status === 546) msg = "წაკითხვას ძალიან დიდი დრო დასჭირდა და შეწყდა — სცადე თავიდან.";
+          throw new Error(msg);
         }
+        if (data.stop_reason === "refusal") throw new Error("მოდელმა ამ გვერდის წაკითხვაზე უარი თქვა.");
+        if (data.stop_reason === "max_tokens") throw new Error("გვერდზე ძალიან ბევრი ტექსტია და პასუხი შუაში შეწყდა.");
+        var textBlock = (data.content || []).filter(function (c) { return c.type === "text"; })[0];
+        if (!textBlock) throw new Error("პასუხი ცარიელი მოვიდა.");
+        return { page: JSON.parse(textBlock.text), usage: data.usage || {} };
       });
-      snippetWrap.appendChild(copyBtn);
-      snippetWrap.style.display = "block";
+    });
+  }
+
+  function readPage(image, onStage) {
+    var imageBlock = { type: "image", source: { type: "base64", media_type: "image/jpeg", data: image.base64 } };
+    var tokens = { input: 0, output: 0 };
+    function count(usage) {
+      tokens.input += (usage.input_tokens || 0) + (usage.cache_creation_input_tokens || 0) + (usage.cache_read_input_tokens || 0);
+      tokens.output += usage.output_tokens || 0;
+    }
+    onStage("1/2 — გვერდს ვკითხულობ…");
+    return callPageReader([imageBlock, { type: "text", text: "Transcribe this page." }], pageSchema(false)).then(function (first) {
+      count(first.usage);
+      onStage("2/2 — ვამოწმებ, რამე ხომ არ გამომრჩა…");
+      return callPageReader([imageBlock, { type: "text", text: PAGE_VERIFY_PROMPT + "\n\n" + JSON.stringify(first.page) }], pageSchema(true));
+    }).then(function (second) {
+      count(second.usage);
+      var page = second.page;
+      var changes = page.changes || [];
+      delete page.changes;
+      return { page: page, changes: changes, tokens: tokens };
+    });
+  }
+
+  function pageScanCostUsd(tokens) {
+    return (tokens.input * PAGE_READER_USD_PER_MTOK.input + tokens.output * PAGE_READER_USD_PER_MTOK.output) / 1e6;
+  }
+
+  /* Numbered lists must run without gaps: a jump from 4 to 6 means an item
+     was lost. A list that starts above 1 is only reported as a possible
+     continuation from the previous page. */
+  function pageNumberingWarnings(page) {
+    var warnings = [];
+    page.blocks.forEach(function (block) {
+      var name = block.heading || PAGE_BLOCK_KINDS[block.kind] || block.kind;
+      var run = [];
+      function closeRun() {
+        if (run.length > 1) {
+          if (run[0] > 1) warnings.push("„" + name + "“: ნუმერაცია იწყება " + run[0] + "-დან — შესაძლოა წინა გვერდიდან გრძელდება.");
+          for (var i = 1; i < run.length; i++) {
+            if (run[i] !== run[i - 1] + 1) warnings.push("„" + name + "“: " + run[i - 1] + "-ის შემდეგ მოდის " + run[i] + " — შესაძლოა პუნქტი გამორჩა.");
+          }
+        }
+        run = [];
+      }
+      block.lines.forEach(function (line) {
+        var m = /^\s*(\d{1,2})[.)]\s/.exec(line);
+        if (!m) return;
+        var n = parseInt(m[1], 10);
+        if (run.length && n <= run[run.length - 1]) closeRun(); /* a second list inside the same block */
+        run.push(n);
+      });
+      closeRun();
+    });
+    return warnings;
+  }
+
+  function pageScanStats(page) {
+    var stats = { blocks: page.blocks.length, words: 0, exercises: 0, items: 0, unreadable: 0 };
+    var all = JSON.stringify(page);
+    stats.unreadable = all.split(UNREADABLE_MARK).length - 1;
+    page.blocks.forEach(function (block) {
+      stats.words += block.vocabulary.length;
+      if (block.kind === "exercise") { stats.exercises++; stats.items += block.lines.length; }
+    });
+    return stats;
+  }
+
+  function renderPageBlocks(page) {
+    var wrap = el("div", {});
+    page.blocks.forEach(function (block) {
+      var card = el("div", { style: "border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin:0 0 10px;background:var(--surface)" });
+      card.appendChild(el("div", { class: "eyebrow" }, [document.createTextNode(PAGE_BLOCK_KINDS[block.kind] || block.kind)]));
+      if (block.heading) card.appendChild(el("div", { style: "font-weight:700;margin:4px 0" }, [document.createTextNode(block.heading)]));
+      if (block.instruction) card.appendChild(el("div", { style: "font-style:italic;margin:4px 0;color:var(--ink-soft)" }, [document.createTextNode(block.instruction)]));
+      block.lines.forEach(function (line) {
+        card.appendChild(el("div", { style: "margin:3px 0;white-space:pre-wrap;font-size:0.92rem;line-height:1.5" }, [document.createTextNode(line)]));
+      });
+      function grid(rows) {
+        var table = el("table", { style: "border-collapse:collapse;width:100%;font-size:0.88rem;margin:6px 0" });
+        rows.forEach(function (cells) {
+          var tr = el("tr", {});
+          cells.forEach(function (cell) {
+            tr.appendChild(el("td", { style: "border:1px solid var(--border);padding:5px 8px;vertical-align:top;white-space:pre-wrap" }, [document.createTextNode(cell)]));
+          });
+          table.appendChild(tr);
+        });
+        return table;
+      }
+      if (block.vocabulary.length) card.appendChild(grid(block.vocabulary.map(function (w) { return [w.en, w.ipa, w.ka]; })));
+      if (block.table.length) card.appendChild(grid(block.table.map(function (row) { return row.cells; })));
+      wrap.appendChild(card);
+    });
+    return wrap;
+  }
+
+  /* scan = { page, changes, tokens, fileName }; dataUrl is the photo when it
+     is still in memory (a scan reopened from the saved list has none). */
+  function renderPageScan(container, scan, dataUrl) {
+    container.innerHTML = "";
+    var page = scan.page;
+    var stats = pageScanStats(page);
+    var warnings = pageNumberingWarnings(page);
+
+    var title = "გვერდი " + (page.page_number || "?") + (page.unit ? " · " + page.unit : "") + (page.unit_title ? " — " + page.unit_title : "");
+    container.appendChild(el("h3", { style: "margin:0 0 6px" }, [document.createTextNode(title)]));
+    var summary = "ნაწილი: " + stats.blocks + " · სიტყვა: " + stats.words + " · სავარჯიშო: " + stats.exercises + " (" + stats.items + " პუნქტი) · ვერ წაიკითხა: " + stats.unreadable;
+    if (scan.tokens) summary += " · ღირებულება: ~$" + pageScanCostUsd(scan.tokens).toFixed(3);
+    container.appendChild(el("p", { style: "margin:0 0 10px;font-size:0.85rem;color:var(--ink-soft)" }, [document.createTextNode(summary)]));
+
+    function noteList(heading, items, color) {
+      if (!items.length) return;
+      var box = el("div", { style: "border-left:3px solid var(--" + color + ");background:var(--" + color + "-soft);border-radius:10px;padding:8px 12px;margin:0 0 10px;font-size:0.86rem" });
+      box.appendChild(el("div", { style: "font-weight:700;margin-bottom:2px" }, [document.createTextNode(heading)]));
+      items.forEach(function (text) { box.appendChild(el("div", {}, [document.createTextNode("• " + text)])); });
+      container.appendChild(box);
+    }
+    noteList("⚠️ ნუმერაციის შემოწმება", warnings, "rust");
+    noteList("📝 შენიშვნები გვერდზე", page.notes, "gold");
+    noteList("🔎 მეორე შემოწმებისას გასწორდა", scan.changes || [], "green");
+
+    var layout = el("div", { style: "display:flex;flex-wrap:wrap;gap:14px;align-items:flex-start" });
+    if (dataUrl) {
+      layout.appendChild(el("img", { src: dataUrl, style: "flex:1 1 280px;max-width:420px;width:100%;border-radius:12px;border:1px solid var(--border);position:sticky;top:8px" }));
+    }
+    var blocks = renderPageBlocks(page);
+    blocks.style.flex = "2 1 340px";
+    blocks.style.minWidth = "0";
+    layout.appendChild(blocks);
+    container.appendChild(layout);
+  }
+
+  function savePageScan(scan) {
+    return supabaseClient.from("page_scans").insert({
+      user_id: currentAuthUser.id,
+      file_name: scan.fileName,
+      page_number: scan.page.page_number || "",
+      unit: scan.page.unit || "",
+      result: { page: scan.page, changes: scan.changes },
+      model: PAGE_READER_MODEL,
+      input_tokens: scan.tokens.input,
+      output_tokens: scan.tokens.output
+    }).then(function (res) {
+      if (res.error) throw new Error(res.error.message);
     });
   }
 
   function renderAdminView() {
     var root = document.getElementById("view-admin");
     root.innerHTML = "";
-    root.appendChild(el("h2", {}, [document.createTextNode("🔧 ახალი მასალის დამატება (admin)")]));
-    root.appendChild(el("p", { style: "color:var(--ink-soft);max-width:60ch;margin:6px 0 18px;font-size:0.85rem" }, [
-      document.createTextNode("ატვირთე სახელმძღვანელოს გვერდის ფოტო — Claude წაიკითხავს ტექსტს და დაალაგებს ლექსიკონის/გრამატიკის/დიალოგების/ტექსტების კატეგორიებად. ეს გვერდი მთავარ მენიუში არ ჩანს.")
+
+    var back = el("button", { class: "back-link", type: "button" }, [document.createTextNode("← აპლიკაციაში დაბრუნება")]);
+    back.addEventListener("click", function () { location.hash = ""; location.reload(); });
+    root.appendChild(back);
+
+    root.appendChild(el("h2", {}, [document.createTextNode("📷 გვერდის წამკითხველი")]));
+    root.appendChild(el("p", { style: "color:var(--ink-soft);max-width:70ch;margin:6px 0 16px;font-size:0.88rem" }, [
+      document.createTextNode("ატვირთე სახელმძღვანელოს გვერდის ფოტო (ერთი ან რამდენიმე). პროგრამა წაიკითხავს მხოლოდ დაბეჭდილ ტექსტს — ხელნაწერს არ ითვალისწინებს, სავარჯიშოებს არ ხსნის და არაფერს ამატებს. თითო გვერდი ორჯერ მოწმდება.")
     ]));
 
-    var unitRow = el("div", { style: "margin-bottom:14px" });
-    unitRow.appendChild(el("label", { style: "display:block;font-weight:600;margin-bottom:6px;font-size:0.85rem" }, [document.createTextNode("Unit (სად დაემატება):")]));
-    var select = el("select", { style: "padding:8px 12px;border-radius:10px;border:1px solid var(--border);font-size:0.9rem" });
-    UNITS.forEach(function (u) {
-      select.appendChild(el("option", { value: u.id }, [document.createTextNode(u.short + " — " + u.ka)]));
-    });
-    unitRow.appendChild(select);
-    root.appendChild(unitRow);
-
-    var fileInput = el("input", { type: "file", accept: "image/*" });
+    var fileInput = el("input", { type: "file", accept: "image/*,.heic,.heif", multiple: "multiple" });
     root.appendChild(el("div", { style: "margin-bottom:14px" }, [fileInput]));
 
-    var preview = el("div", { style: "margin-bottom:14px" });
-    root.appendChild(preview);
+    var results = el("div", {});
+    root.appendChild(results);
 
-    var analyzeBtn = el("button", { class: "check-btn", type: "button", disabled: "disabled" }, [document.createTextNode("გააანალიზე სურათი")]);
-    root.appendChild(analyzeBtn);
+    var savedBox = el("div", { style: "margin-top:26px" });
+    root.appendChild(savedBox);
 
-    var statusBox = el("div", { style: "margin:12px 0;font-size:0.85rem;color:var(--ink-soft)" });
-    root.appendChild(statusBox);
+    function refreshSaved() {
+      savedBox.innerHTML = "";
+      supabaseClient.from("page_scans").select("id, file_name, page_number, unit, created_at").order("created_at", { ascending: false }).then(function (res) {
+        if (res.error || !res.data || !res.data.length) return;
+        savedBox.appendChild(el("h3", { style: "margin:0 0 8px" }, [document.createTextNode("შენახული წაკითხვები")]));
+        var viewer = el("div", { style: "margin-top:12px" });
+        res.data.forEach(function (row) {
+          var line = el("div", { style: "display:flex;gap:8px;align-items:center;margin:4px 0" });
+          var open = el("button", { class: "next-btn show", type: "button" }, [document.createTextNode("გვ. " + (row.page_number || "?") + (row.unit ? " · " + row.unit : "") + " — " + (row.file_name || ""))]);
+          open.addEventListener("click", function () {
+            supabaseClient.from("page_scans").select("file_name, result").eq("id", row.id).maybeSingle().then(function (one) {
+              if (one.error || !one.data) return;
+              renderPageScan(viewer, { page: one.data.result.page, changes: one.data.result.changes, fileName: one.data.file_name }, null);
+              viewer.scrollIntoView({ behavior: "smooth", block: "start" });
+            });
+          });
+          var remove = el("button", { class: "skip-btn", type: "button" }, [document.createTextNode("წაშლა")]);
+          remove.addEventListener("click", function () {
+            supabaseClient.from("page_scans").delete().eq("id", row.id).then(refreshSaved);
+          });
+          line.appendChild(open);
+          line.appendChild(remove);
+          savedBox.appendChild(line);
+        });
+        savedBox.appendChild(viewer);
+      });
+    }
+    refreshSaved();
 
-    var resultBox = el("div", {});
-    root.appendChild(resultBox);
-
-    var currentImageBase64 = null;
-    var currentImageMediaType = null;
-
-    function showImagePreview(blob, mediaType) {
-      currentImageMediaType = mediaType;
-      var reader = new FileReader();
-      reader.onload = function () {
-        var dataUrl = reader.result;
-        currentImageBase64 = dataUrl.split(",")[1];
-        preview.appendChild(el("img", { src: dataUrl, style: "max-width:220px;border-radius:12px;border:1px solid var(--border);display:block" }));
-        analyzeBtn.removeAttribute("disabled");
-      };
-      reader.readAsDataURL(blob);
+    /* photos are read one after another, each in its own card */
+    function readFiles(files) {
+      var queue = Array.prototype.slice.call(files);
+      fileInput.disabled = true;
+      function next() {
+        var file = queue.shift();
+        if (!file) { fileInput.disabled = false; fileInput.value = ""; refreshSaved(); return; }
+        var card = el("div", { style: "border:1px solid var(--border);border-radius:16px;padding:16px;margin:0 0 16px;background:var(--paper)" });
+        var status = el("p", { style: "margin:0;font-size:0.9rem" }, [document.createTextNode(file.name + " — ფოტოს ვამზადებ…")]);
+        card.appendChild(status);
+        results.appendChild(card);
+        var image = null;
+        preparePageImage(file).then(function (prepared) {
+          image = prepared;
+          return readPage(image, function (stage) { status.textContent = file.name + " — " + stage; });
+        }).then(function (scan) {
+          scan.fileName = file.name;
+          renderPageScan(card, scan, image.dataUrl);
+          return savePageScan(scan).catch(function (err) {
+            card.appendChild(el("p", { style: "color:var(--rust);font-size:0.85rem" }, [document.createTextNode("წაკითხვა მზადაა, მაგრამ შენახვა ვერ მოხერხდა: " + err.message)]));
+          });
+        }).catch(function (err) {
+          console.error("page reader failed", err);
+          status.style.color = "var(--rust)";
+          status.textContent = file.name + " — ვერ წავიკითხე: " + err.message;
+        }).then(next);
+      }
+      next();
     }
 
     fileInput.addEventListener("change", function () {
-      var file = fileInput.files[0];
-      preview.innerHTML = "";
-      currentImageBase64 = null;
-      analyzeBtn.setAttribute("disabled", "disabled");
-      if (!file) return;
-
-      if (isHeicFile(file)) {
-        preview.appendChild(el("p", { style: "color:var(--ink-soft);font-size:0.85rem" }, [document.createTextNode("HEIC ფაილი კონვერტირდება...")]));
-        loadHeic2Any().then(function () {
-          return window.heic2any({ blob: file, toType: "image/jpeg", quality: 0.82 });
-        }).then(function (result) {
-          var outBlob = Array.isArray(result) ? result[0] : result;
-          preview.innerHTML = "";
-          showImagePreview(outBlob, "image/jpeg");
-        }).catch(function (err) {
-          preview.innerHTML = "";
-          preview.appendChild(el("p", { style: "color:var(--rust)" }, [document.createTextNode("HEIC კონვერტაცია ვერ მოხერხდა: " + err.message)]));
-        });
-        return;
-      }
-
-      showImagePreview(file, file.type || "image/jpeg");
-    });
-
-    analyzeBtn.addEventListener("click", function () {
-      if (!currentImageBase64) return;
-      analyzeBtn.setAttribute("disabled", "disabled");
-      statusBox.textContent = "იტვირთება და აანალიზებს სურათს...";
-      resultBox.innerHTML = "";
-
-      edgeFunctionHeaders({ "content-type": "application/json" }).then(function (headers) {
-        return fetch(ANTHROPIC_CHAT_FUNCTION_URL, {
-          method: "POST",
-          headers: headers,
-          body: JSON.stringify({
-            model: CHAT_MODEL,
-            max_tokens: 4000,
-            system: ADMIN_SYSTEM_PROMPT,
-            messages: [{
-              role: "user",
-              content: [
-                { type: "image", source: { type: "base64", media_type: currentImageMediaType, data: currentImageBase64 } },
-                { type: "text", text: "გააანალიზე ეს სურათი და დააბრუნე სტრუქტურირებული JSON, ზუსტად მოცემული სქემის მიხედვით." }
-              ]
-            }],
-            output_config: {
-              effort: "medium",
-              format: { type: "json_schema", schema: ADMIN_OUTPUT_SCHEMA }
-            }
-          })
-        });
-      }).then(function (res) {
-        return res.json().then(function (data) { return { ok: res.ok, status: res.status, data: data }; });
-      }).then(function (result) {
-        analyzeBtn.removeAttribute("disabled");
-        if (!result.ok) {
-          var msg = result.data && result.data.error && result.data.error.message ? result.data.error.message : "უცნობი შეცდომა (სტატუსი " + result.status + ")";
-          if (result.status === 401) msg = "სესია ვადაგასულია — შედი თავიდან.";
-          if (result.status === 429) msg = "დღიური ლიმიტი ამოიწურა — სცადე ხვალ, ან განაახლე Premium-ზე მაღალი ლიმიტისთვის.";
-          statusBox.textContent = "შეცდომა: " + msg;
-          return;
-        }
-        var content = result.data.content || [];
-        var textBlock = null;
-        for (var i = 0; i < content.length; i++) { if (content[i].type === "text") { textBlock = content[i]; break; } }
-        if (!textBlock) { statusBox.textContent = "პასუხი ვერ მოვიდა — სცადე ისევ."; return; }
-        var parsed;
-        try { parsed = JSON.parse(textBlock.text); } catch (e) { statusBox.textContent = "JSON ვერ დაპარსდა: " + e.message; return; }
-        statusBox.textContent = "მზადაა — გადაამოწმე შედეგი ქვემოთ:";
-        renderAdminResult(resultBox, parsed, select.value);
-      }).catch(function (err) {
-        analyzeBtn.removeAttribute("disabled");
-        statusBox.textContent = "კავშირის შეცდომა: " + err.message;
-      });
+      if (fileInput.files.length) readFiles(fileInput.files);
     });
   }
 
