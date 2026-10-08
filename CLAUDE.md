@@ -10,6 +10,13 @@ Georgian users' English-learning PWA. Always reply to the user in Georgian scrip
 - Photographed pages: 22-48 complete, then only 50, 51, 54, 57, 58, 59, 61, 69, 70, 73, 74, 75, 78. So U4-U7 have no dialogue/reading topics yet (U6 has vocabulary only) and show a "not added yet" note in those sections; every unit still shows the same four sections and seven progress tiles (the user wants identical structure in all units).
 - Book material in the photos that is NOT in the app yet: U1 personal profile (p. 29 A); U2 formal/informal introduction phrases (p. 33), Megan's email exercise (p. 31), wrap-up A and B (p. 37); U3 wrap-up A and B (p. 48), likes "check the items" practice (p. 42); U4 articles B practice (p. 51); U5 qualifiers and matching practice (pp. 58-59), conjunctions B practice (p. 57); U6 reading questions (pp. 69-70, the text itself starts on the missing p. 68); U7 quantifiers B items 6-8 check, listening pages are audio-only.
 
+**Page reader — built 2026-10-08, first real reading still to be done by the user**
+- Admin view (`#admin`, or Settings -> admin button; admin account only), `renderAdminView()`: upload textbook photos (HEIC works) -> `readPage()` makes two `claude-opus-5` calls through `anthropic-chat` (transcribe, then verify against the photo) -> blocks shown beside the photo, with numbering-gap warnings, the model's notes, what the second pass changed, and the cost. Saved in `page_scans` (migration `20261008030000`).
+- Rules the user set: printed text only; handwriting ignored (filled blanks come out as `___`); nothing solved, translated or added; nothing printed may be missed. Unreadable print is marked `[ვერ იკითხება]`, never guessed.
+- This step is reading only. Placing scanned material into units is the next stage and has not been designed in code yet; the user wants it automatic eventually.
+- Not verified end to end: the view loads on the live site, but no photo has been read yet (the Browser pane cannot be handed a local file). Watch for the Edge Function timing out on dense pages (no streaming through the proxy) and for the 50-requests-a-day limit: each page costs two requests.
+- The user replaced the old photos with a new, more complete set on 2026-10-08 (`IMG_9613`-`IMG_9680`, 67 files); the page list in "Content rule" above describes the old set and should be redone from the new one.
+
 **Done**
 - 7 Units (see "Content rule" below), 3 exercise modes, voice conversation mode, Settings, progress sync
 - "Calm Focus" design + PWA (works offline)
