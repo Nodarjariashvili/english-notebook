@@ -1,4 +1,4 @@
-var CACHE_NAME = "notebook-cache-v34";
+var CACHE_NAME = "notebook-cache-v35";
 var CACHED_FILES = [
   "./",
   "./index.html",
@@ -38,6 +38,29 @@ self.addEventListener("fetch", function (event) {
   var url = new URL(event.request.url);
   if (url.origin !== self.location.origin) return; /* never touch cross-origin (Anthropic/OpenAI/Supabase/CDN) */
   if (event.request.method !== "GET") return;
+
+  /* Pages (the app's HTML) are network-first: with a connection the newest
+     version always loads straight away, and the cached copy is only the
+     offline fallback. Cache-first here meant every update needed two app
+     launches to show up. Icons and the manifest stay cache-first. */
+  var isPage = event.request.mode === "navigate" || /\.html$/.test(url.pathname) || /\/$/.test(url.pathname);
+  if (isPage) {
+    event.respondWith(
+      fetch(event.request, { cache: "no-store" }).then(function (response) {
+        if (response && response.ok) {
+          var copy = response.clone();
+          caches.open(CACHE_NAME).then(function (cache) { cache.put(event.request, copy); });
+        }
+        return response;
+      }).catch(function () {
+        return caches.match(event.request, { ignoreSearch: true }).then(function (cached) {
+          return cached || caches.match("./index.html");
+        });
+      })
+    );
+    return;
+  }
+
   event.respondWith(
     caches.match(event.request).then(function (cached) {
       return cached || fetch(event.request);
