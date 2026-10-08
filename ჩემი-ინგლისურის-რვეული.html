@@ -556,6 +556,15 @@
   .face { position: absolute; inset: 0; backface-visibility: hidden; border: 1px solid var(--border); border-radius: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px; background: var(--surface); box-shadow: 0 10px 26px var(--shadow); }
   .face.back { transform: rotateY(180deg); background: var(--brand-soft); }
   .face .word { font-family: 'Noto Sans Georgian', sans-serif; font-size: clamp(1.4rem, 4vw, 2rem); color: var(--ink); }
+  /* the English word and its speak button sit on one row -- both tap targets
+     speak the word and stop the click from reaching the card's flip handler */
+  .face .word-row { display: flex; align-items: center; justify-content: center; gap: 10px; }
+  .face .word-row .word { cursor: pointer; }
+  .face .word-row .word:active { color: var(--brand-ink); }
+  .card-speak-btn { width: 32px; height: 32px; font-size: 0.9rem; }
+  /* once flipped, the front face is turned away -- make sure its word/🔊 tap
+     targets can't still swallow taps meant for flipping the card back */
+  .flip-card.flipped .face.front { pointer-events: none; }
   .face .ipa { color: var(--ink-faint); font-size: 0.92rem; margin-top: 4px; }
   .face .ka { font-family: 'Noto Sans Georgian', sans-serif; font-size: clamp(1.3rem, 3.6vw, 1.8rem); color: var(--brand-ink); }
   .face .example { margin-top: 10px; font-size: 0.85rem; color: var(--ink-soft); max-width: 32ch; }
@@ -583,6 +592,8 @@
   .quiz-progress { font-size: 0.78rem; color: var(--ink-faint); margin-bottom: 6px; font-variant-numeric: tabular-nums; }
   .quiz-prompt { font-size: 1.08rem; line-height: 1.55; margin: 6px 0 16px; }
   .quiz-prompt .blank-marker { border-bottom: 2px solid var(--ink-faint); padding: 0 6px; }
+  /* dialogue translate items only -- the English prompt line + its own replay button */
+  .quiz-prompt-speak-row { display: flex; align-items: center; gap: 8px; margin-top: 2px; }
   .answer-row { display: flex; gap: 10px; flex-wrap: wrap; }
   .answer-input { flex: 1 1 220px; padding: 11px 14px; border-radius: 12px; border: 1.5px solid var(--border); background: var(--surface); color: var(--ink); font-size: 1rem; font-family: inherit; }
   .answer-input:focus { border-color: var(--brand); }
@@ -593,7 +604,7 @@
   }
   .check-btn:hover { transform: translateY(-1px); box-shadow: 0 5px 0 var(--brand-ink); }
   .check-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--brand-ink); }
-  .feedback { margin-top: 16px; display: none; align-items: flex-start; gap: 10px; }
+  .feedback { margin-top: 16px; display: none; align-items: flex-start; gap: 10px; flex-wrap: wrap; }
   .feedback.show { display: flex; }
   .feedback.correct { animation: popIn 0.35s ease; }
   .feedback.wrong { animation: shake 0.4s ease; }
@@ -603,6 +614,11 @@
   .feedback.correct .msg { color: var(--green-ink); }
   .feedback.wrong .msg { color: var(--rust); }
   .feedback .correct-answer { display: block; margin-top: 2px; color: var(--ink-soft); font-size: 0.88rem; }
+  /* the full, correctly-filled-in sentence + its replay button -- always on
+     its own line below the mark/message row (flex-basis: 100% forces the
+     wrap inside .feedback's flex-wrap row) */
+  .quiz-sentence-row { flex: 1 0 100%; display: flex; align-items: center; gap: 8px; margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--border); }
+  .quiz-sentence-text { flex: 1; font-size: 0.92rem; color: var(--ink); }
   .quiz-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 22px; }
   .skip-btn { background: none; border: none; color: var(--ink-faint); font-size: 0.82rem; cursor: pointer; text-decoration: underline; }
   .next-btn { border: 1px solid var(--border); background: var(--surface); color: var(--ink); padding: 9px 18px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.88rem; display: none; transition: border-color 0.15s ease; }
@@ -1003,7 +1019,7 @@
   var SETTINGS_STORAGE = "nonaEnglishNotebook.settings";
   var MISTAKE_STATS_STORAGE = "nonaEnglishNotebook.mistakeStats";
   var MISTAKE_CATEGORIES = ["grammar", "vocabulary", "pronunciation", "other"];
-  var SETTINGS_DEFAULTS = { level: "beginner", soundEffects: true, autoSpeak: false, reminders: true };
+  var SETTINGS_DEFAULTS = { level: "beginner", soundEffects: true, autoSpeak: false, reminders: true, exerciseSpeak: true };
   var LEVEL_META = {
     beginner: { label: "დამწყები (A1-A2)", prompt: "an elementary (A1-A2)" },
     intermediate: { label: "საშუალო (A2-B1)", prompt: "a pre-intermediate/intermediate (A2-B1)" },
@@ -2818,13 +2834,31 @@
 
     var flipWrap = el("div", { class: "flip-wrap" });
     var flip = el("div", { class: "flip-card" });
-    var frontHtml = "<div class='word'>" + item.en + "</div>" +
-      (item.ipa ? "<div class='ipa'>" + item.ipa + "</div>" : "") +
-      "<div class='tap-hint'>დააჭირე გადასაბრუნებლად</div>";
+    /* Front face is built as real nodes (not an HTML string) so the word and its
+       🔊 button can carry their own click handlers: both speak the word with the
+       browser's own speechSynthesis, called straight out of the tap so iOS Safari
+       accepts it as a user gesture, and both stopPropagation() so that tapping
+       them never flips the card -- flipping stays on the rest of the face. */
+    function speakThisWord(e) {
+      e.stopPropagation();
+      speakPracticeText(item.en, "en-US");
+    }
+    var wordEl = el("div", { class: "word", title: "მოსმენა" }, [document.createTextNode(item.en)]);
+    wordEl.addEventListener("click", speakThisWord);
+    var wordSpeakBtn = el("button", {
+      class: "chat-speak-btn card-speak-btn", type: "button",
+      title: "მოსმენა", "aria-label": "სიტყვის მოსმენა"
+    }, [document.createTextNode("🔊")]);
+    wordSpeakBtn.addEventListener("click", speakThisWord);
+
     var backHtml = "<div class='ka'>" + item.ka + "</div>" +
       (item.ex ? "<div class='example'>" + item.ex + (item.exKa ? "<br>" + item.exKa : "") + "</div>" : "") +
       "<div class='tap-hint'>დააჭირე უკან გადასატრიალებლად</div>";
-    var front = el("div", { class: "face front", html: frontHtml });
+    var front = el("div", { class: "face front" }, [
+      el("div", { class: "word-row" }, [wordEl, wordSpeakBtn]),
+      item.ipa ? el("div", { class: "ipa" }, [document.createTextNode(item.ipa)]) : null,
+      el("div", { class: "tap-hint" }, [document.createTextNode("სიტყვაზე — მოსმენა · ბარათზე — გადაბრუნება")])
+    ]);
     var backFace = el("div", { class: "face back", html: backHtml });
     flip.appendChild(front); flip.appendChild(backFace);
     flip.addEventListener("click", function () { flip.classList.toggle("flipped"); });
@@ -2952,6 +2986,56 @@
     u.rate = 0.9;
     if (onEnd) { u.onend = onEnd; u.onerror = onEnd; }
     window.speechSynthesis.speak(u);
+  }
+
+  /* speaks several pieces of English text back to back, in order. Unlike
+     speakPracticeText() this does NOT cancel() between pieces -- queuing
+     several speak() calls without a cancel() in between is how the browser's
+     own speechSynthesis plays them one after another instead of cutting the
+     first one off. Used for "the correct answer is X" followed by the full
+     corrected sentence. */
+  /* each item is either a plain string (spoken en-US, the common case) or
+     { text, lang } for a different voice -- used for reading a Georgian
+     translation back in a ka voice when the device has one. */
+  function speakPracticeSequence(items) {
+    if (!window.speechSynthesis) return;
+    window.speechSynthesis.cancel();
+    items.forEach(function (item) {
+      var text = typeof item === "string" ? item : item.text;
+      var lang = typeof item === "string" ? "en-US" : (item.lang || "en-US");
+      if (!text) return;
+      var u = new SpeechSynthesisUtterance(text);
+      u.lang = lang;
+      u.rate = 0.9;
+      window.speechSynthesis.speak(u);
+    });
+  }
+
+  /* true if the text contains Georgian script -- used to tell whether a quiz
+     item's answer is an English phrase (safe to read in an en-US voice) or a
+     Georgian translation (needs a ka voice, or must be skipped). */
+  function textIsGeorgian(s) {
+    return /[Ⴀ-ჿ]/.test(s || "");
+  }
+
+  /* ---------- quiz items (grammar / dialogue / reading): fill-in-the-blank sentence ----------
+     item.prompt holds one or more "___" markers; item.answer is what belongs
+     there. Builds the complete, correct English sentence by replacing the
+     span from the first "___" to the last one with the answer (this also
+     covers the one quiz item that uses two "___" markers for a single
+     multi-word answer) and strips a trailing "(hint words)" parenthetical --
+     that's an exercise hint, never part of the actual sentence.
+     Prompts with no "___" at all (true/false reading-comprehension items,
+     and the "თარგმნე ქართულად" dialogue items where item.answer is Georgian,
+     not English) are returned unchanged -- item.prompt there already IS the
+     complete English sentence, and it's never correct to read item.answer in
+     an en-US voice for those. */
+  function fillBlankSentence(prompt, answerText) {
+    var firstIdx = prompt.indexOf("___");
+    if (firstIdx === -1) return prompt;
+    var lastIdx = prompt.lastIndexOf("___");
+    var sentence = prompt.slice(0, firstIdx) + answerText + prompt.slice(lastIdx + 3);
+    return sentence.replace(/\s*\([^)]*\)\s*$/, "").replace(/[ \t]{2,}/g, " ").trim();
   }
 
   /* ---------- vocabulary practice: mic (independent from the chat mic) ---------- */
@@ -3126,6 +3210,18 @@
     askAgain();
   }
 
+  /* Vocabulary hint for the speech-to-text model: telling it which words
+     the learner is practising makes it far less likely to drop or mishear
+     them (especially with a non-native accent). */
+  function transcriptionHint() {
+    var scopedUnit = chatScopeUnit ? UNITS.filter(function (u) { return u.id === chatScopeUnit; })[0] : null;
+    var decks = scopedUnit ? unitDecks(scopedUnit) : DECKS;
+    var words = [];
+    decks.forEach(function (d) { d.cards.forEach(function (c) { words.push(c.en); }); });
+    var hint = "An English learner from Georgia is speaking simple English. Words they practise: " + words.join(", ");
+    return hint.length > 900 ? hint.slice(0, 900) : hint;
+  }
+
   function transcribePracticeAnswer(blob, cb) {
     if (blob.size < 2000) {
       /* Too little audio to be a real answer — ask again instead of sending
@@ -3136,8 +3232,9 @@
     var ext = extensionForMimeType(blob.type);
     var form = new FormData();
     form.append("file", blob, "answer." + ext);
-    form.append("model", "whisper-1");
+    form.append("model", TRANSCRIBE_MODEL);
     form.append("language", "en");
+    form.append("prompt", transcriptionHint());
     postToEdgeFunction(WHISPER_FUNCTION_URL, {}, form).then(function (res) {
       return res.json().then(function (data) { return { ok: res.ok, status: res.status, data: data }; });
     }).then(function (result) {
@@ -3381,7 +3478,44 @@
     var item = topic.items[pos];
     var box = el("div", { class: "quiz-box" });
     box.appendChild(el("div", { class: "quiz-progress" }, [document.createTextNode((pos + 1) + " / " + topic.items.length)]));
-    box.appendChild(el("div", { class: "quiz-prompt", html: item.instruction + "<br><strong>" + item.prompt + "</strong>" }));
+
+    var hasBlank = item.prompt.indexOf("___") !== -1;
+    /* "დიალოგი" topics mix two very different item shapes: fill-in-the-blank
+       ones (prompt has "___", same as grammar items -- hasBlank handles those
+       identically below) and "თარგმნე ქართულად/ინგლისურად" translate items
+       (no blank at all; the whole prompt is already the complete sentence in
+       one language, item.answer the translation in the other). Only the
+       latter get the extra speech behaviour this block adds. */
+    var isDialogueTranslate = topic.kind === "dialogue" && !hasBlank;
+    var promptIsGeorgian = textIsGeorgian(item.prompt);
+    var answerIsGeorgian = textIsGeorgian(item.answer);
+    var fullSentence = fillBlankSentence(item.prompt, item.answer);
+
+    var promptEl = el("div", { class: "quiz-prompt" });
+    promptEl.appendChild(el("div", { html: item.instruction }));
+    if (isDialogueTranslate && !promptIsGeorgian) {
+      var promptLine = el("div", { class: "quiz-prompt-speak-row" });
+      promptLine.appendChild(el("strong", {}, [document.createTextNode(item.prompt)]));
+      var promptSpeakBtn = el("button", { class: "chat-speak-btn", type: "button", title: "ხელახლა მოსმენა" }, [document.createTextNode("🔊")]);
+      promptSpeakBtn.addEventListener("click", function () { speakPracticeSequence([item.prompt]); });
+      promptLine.appendChild(promptSpeakBtn);
+      promptEl.appendChild(promptLine);
+    } else {
+      promptEl.appendChild(el("strong", {}, [document.createTextNode(item.prompt)]));
+    }
+    box.appendChild(promptEl);
+
+    /* a NEW question just appeared on screen, triggered synchronously by
+       whichever click brought us here (picking it from the list, "შემდეგი",
+       or "თავიდან დაწყება" all call renderGrammarView() straight from their
+       click handler, with no async gap) -- iOS Safari only allows audio to
+       start from inside that same call stack. Only the English-prompt side
+       of a translate item is read here; the Georgian instruction line never
+       is, and a Georgian prompt (a hypothetical "translate to English" item)
+       is left for the check/reveal step below instead of guessing at it. */
+    if (appSettings.exerciseSpeak && isDialogueTranslate && !promptIsGeorgian) {
+      speakPracticeSequence([item.prompt]);
+    }
 
     var answerRow = el("div", { class: "answer-row" });
     var input = el("input", { class: "answer-input", type: "text", autocomplete: "off", spellcheck: "false", placeholder: "დაწერე პასუხი..." });
@@ -3408,15 +3542,60 @@
       renderTabs();
     }
 
+    /* what to speak once the answer is checked/revealed, as an array for
+       speakPracticeSequence() -- shared between the automatic speech in
+       showFeedback() and the manual replay button below, so both always say
+       exactly the same thing.
+         - fill-in-the-blank items (grammar, dialogue, or in principle
+           reading): the full corrected sentence, with "the correct answer
+           is X" first if the check was wrong.
+         - dialogue translate items with a Georgian answer: the Georgian
+           translation in a ka voice if the device has one, otherwise the
+           English prompt again (never item.answer in an en-US voice).
+         - dialogue translate items with an English answer (a "translate to
+           English" item): the English answer, with the same "correct answer
+           is" prefix on a wrong check.
+         - anything else with no blank (true/false reading items): just the
+           unchanged prompt, regardless of right/wrong -- there's no English
+           "answer phrase" to read for those. */
+    function correctionSpeech(ok, revealed) {
+      if (isDialogueTranslate) {
+        if (answerIsGeorgian) {
+          return hasVoiceForLang("ka") ? [{ text: item.answer, lang: "ka-GE" }] : [item.prompt];
+        }
+        return (revealed || ok) ? [item.answer] : ["The correct answer is: " + item.answer + "."];
+      }
+      if (revealed || ok || !hasBlank) return [fullSentence];
+      return ["The correct answer is: " + item.answer + ".", fullSentence];
+    }
+
+    function appendSentenceSpeakRow(ok, revealed) {
+      var speech = correctionSpeech(ok, revealed);
+      var displayText = speech.map(function (s) { return typeof s === "string" ? s : s.text; }).join(" ");
+      var row = el("div", { class: "quiz-sentence-row" });
+      row.appendChild(el("span", { class: "quiz-sentence-text" }, [document.createTextNode(displayText)]));
+      var replayBtn = el("button", { class: "chat-speak-btn", type: "button", title: "ხელახლა მოსმენა" }, [document.createTextNode("🔊")]);
+      replayBtn.addEventListener("click", function () { speakPracticeSequence(speech); });
+      row.appendChild(replayBtn);
+      feedback.appendChild(row);
+    }
+
+    /* called synchronously from the check/skip click handlers (never from
+       inside a .then()) so the very first speechSynthesis.speak() call of
+       this exercise happens inside the tap's own call stack -- iOS Safari
+       only allows audio to start that way. */
     function showFeedback(ok, revealed) {
       feedback.className = "feedback show " + (ok ? "correct" : "wrong");
       var msgHtml = ok
         ? "<span class='hand'>ზუსტად ასეა!</span>"
         : "<span class='hand'>თითქმის!</span><span class='correct-answer'>სწორი პასუხია: " + (item.answer) + "</span>";
       feedback.innerHTML = markWithConfetti(ok) + "<span class='msg'>" + msgHtml + "</span>";
+      appendSentenceSpeakRow(ok, revealed);
       input.disabled = true; checkBtn.disabled = true; skip.style.display = "none";
       next.classList.add("show");
       if (!revealed) recordResult(ok);
+
+      if (appSettings.exerciseSpeak) speakPracticeSequence(correctionSpeech(ok, revealed));
     }
 
     checkBtn.addEventListener("click", function () {
@@ -3572,7 +3751,11 @@
     return attempt(false);
   }
 
-  var CHAT_MODEL = "claude-opus-4-8";
+  var CHAT_MODEL = "claude-sonnet-5";
+  /* speech-to-text model sent through whisper-transcribe (the function just
+     forwards the multipart form, so the model is chosen here) */
+  var TRANSCRIBE_MODEL = "gpt-4o-transcribe";
+  var TTS_FUNCTION_URL = "https://wddqjehzoicwkqyqfiqs.supabase.co/functions/v1/openai-tts";
   var chatHistory = [];
   var chatScopeUnit = null;
   var chatStarted = false;
@@ -4270,6 +4453,7 @@
     sec.appendChild(el("h4", {}, [document.createTextNode("პარამეტრები")]));
     sec.appendChild(renderSettingsToggleRow("🔔", "green", "ხმოვანი ეფექტები", "სწორი პასუხის დროს მოკლე ხმა", "soundEffects"));
     sec.appendChild(renderSettingsToggleRow("🔊", "blue", "ავტომატური ხმოვანი წაკითხვა", "ჩატის პასუხების ავტომატური წარმოთქმა", "autoSpeak"));
+    sec.appendChild(renderSettingsToggleRow("🗣️", "violet", "სავარჯიშოებში ხმა", "სწორი პასუხის ავტომატური წარმოთქმა გრამატიკის/დიალოგის სავარჯიშოებში", "exerciseSpeak"));
     sec.appendChild(renderSettingsToggleRow("⏰", "orange", "შეხსენებები", "შეხსენება მთავარ გვერდზე, თუ დღეს არ ისწავლე", "reminders"));
     return sec;
   }
@@ -4491,11 +4675,16 @@
 
     postToEdgeFunction(ANTHROPIC_CHAT_FUNCTION_URL, { "content-type": "application/json" }, JSON.stringify({
       model: CHAT_MODEL,
-      max_tokens: 700,
+      max_tokens: 1024,
+      /* short conversational turns: no thinking keeps replies fast (and
+         thinking tokens can't eat into max_tokens and truncate the JSON) */
+      thinking: { type: "disabled" },
+      /* caches the system prompt + earlier turns between requests */
+      cache_control: { type: "ephemeral" },
       system: buildSystemPrompt(),
       messages: chatHistory,
       output_config: {
-        effort: "medium",
+        effort: "low",
         format: { type: "json_schema", schema: CHAT_OUTPUT_SCHEMA }
       }
     })).then(function (res) {
@@ -4584,6 +4773,78 @@
      explanation if a Georgian voice is available) before resuming
      listening — so a mistake is corrected out loud, not just shown as text. */
   function speakChatTextAuto(parsed) {
+    var englishText = parsed.reply;
+    if (parsed.has_correction && parsed.corrected) {
+      englishText += " Quick correction — the right way to say that is: " + parsed.corrected;
+    }
+    speakWithAiVoice(englishText, function () {
+      speakGeorgianExplanation(parsed);
+    }, function () {
+      speakChatTextAutoBrowser(parsed);
+    });
+  }
+
+  /* The Georgian correction note is only spoken if the device has a Georgian
+     voice (the AI voice is used for English only); otherwise it stays as text. */
+  function speakGeorgianExplanation(parsed) {
+    if (!(parsed.has_correction && parsed.explanation && window.speechSynthesis && hasVoiceForLang("ka"))) {
+      if (voiceModeOn) resumeListening();
+      return;
+    }
+    var u = new SpeechSynthesisUtterance(parsed.explanation);
+    u.lang = "ka-GE";
+    u.rate = 0.95;
+    u.onend = function () { if (voiceModeOn) resumeListening(); };
+    u.onerror = function () { if (voiceModeOn) resumeListening(); };
+    window.speechSynthesis.speak(u);
+  }
+
+  /* ---------- voice: natural AI voice (OpenAI TTS via the openai-tts Edge Function) ----------
+     iOS only lets audio play from a user tap, so one <audio> element is
+     "unlocked" when voice mode is switched on (a tap) and reused for every
+     reply afterwards. Any failure (function not deployed, network, limit)
+     calls onFail so the browser's built-in voice takes over. */
+  var aiVoiceAudio = null;
+  var SILENT_WAV = "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=";
+
+  function unlockAiVoiceAudio() {
+    if (!aiVoiceAudio) aiVoiceAudio = new Audio();
+    aiVoiceAudio.src = SILENT_WAV;
+    var p = aiVoiceAudio.play();
+    if (p && p.catch) p.catch(function () {});
+  }
+
+  function stopAiVoiceAudio() {
+    if (aiVoiceAudio) { aiVoiceAudio.onended = null; aiVoiceAudio.onerror = null; aiVoiceAudio.pause(); }
+  }
+
+  function speakWithAiVoice(text, onDone, onFail) {
+    postToEdgeFunction(TTS_FUNCTION_URL, { "content-type": "application/json" }, JSON.stringify({ input: text })).then(function (res) {
+      if (!res.ok) throw new Error("TTS status " + res.status);
+      return res.blob();
+    }).then(function (blob) {
+      if (!voiceModeOn) return;
+      if (!aiVoiceAudio) aiVoiceAudio = new Audio();
+      var url = URL.createObjectURL(blob);
+      aiVoiceAudio.onended = function () { URL.revokeObjectURL(url); onDone(); };
+      aiVoiceAudio.onerror = function () { URL.revokeObjectURL(url); onFail(); };
+      aiVoiceAudio.src = url;
+      var p = aiVoiceAudio.play();
+      if (p && p.catch) p.catch(function (err) {
+        console.error("speakWithAiVoice: playback blocked", err);
+        aiVoiceAudio.onended = null;
+        aiVoiceAudio.onerror = null;
+        URL.revokeObjectURL(url);
+        onFail();
+      });
+    }).catch(function (err) {
+      console.error("speakWithAiVoice: falling back to browser voice", err);
+      if (voiceModeOn) onFail();
+    });
+  }
+
+  /* Browser built-in voice — fallback when the AI voice is unavailable. */
+  function speakChatTextAutoBrowser(parsed) {
     if (!window.speechSynthesis) {
       if (voiceModeOn) resumeListening();
       return;
@@ -4677,6 +4938,7 @@
       return;
     }
     voiceModeOn = true;
+    unlockAiVoiceAudio();
     updateMicButton();
     setVoiceStatus("listening");
     getUserMediaWithTimeout({ audio: true }, 10000).then(function (stream) {
@@ -4694,6 +4956,7 @@
 
   function exitVoiceMode() {
     voiceModeOn = false;
+    stopAiVoiceAudio();
     if (window.speechSynthesis) window.speechSynthesis.cancel();
     if (mediaRecorder && mediaRecorder.state === "recording") {
       recordingCancelled = true;
@@ -4838,7 +5101,7 @@
     if (!ensureAnalyser(stream)) return;
     var data = new Uint8Array(analyser.frequencyBinCount);
     var SPEECH_RMS_THRESHOLD = 14;
-    var SILENCE_MS = 4000;
+    var SILENCE_MS = 2000;
     var MAX_RECORD_MS = 60000;
     var MIN_RECORD_MS = 700;
     var hasSpoken = false;
@@ -4878,8 +5141,9 @@
     var ext = extensionForMimeType(blob.type);
     var form = new FormData();
     form.append("file", blob, "recording." + ext);
-    form.append("model", "whisper-1");
+    form.append("model", TRANSCRIBE_MODEL);
     form.append("language", "en");
+    form.append("prompt", transcriptionHint());
 
     postToEdgeFunction(WHISPER_FUNCTION_URL, {}, form).then(function (res) {
       return res.json().then(function (data) { return { ok: res.ok, status: res.status, data: data }; });

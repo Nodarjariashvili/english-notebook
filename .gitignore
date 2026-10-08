@@ -16,3 +16,6 @@ Thumbs.db
 # uses the small cropped illustration JPGs (unit*.jpg), not these originals.
 *.HEIC
 *.heic
+
+# Personal quiz log of the scheduled English tutor agent
+tutor/
