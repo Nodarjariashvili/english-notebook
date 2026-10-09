@@ -3514,7 +3514,7 @@
   }
 
   /* ---------- book view: a unit laid out exactly as the textbook lays it out ----------
-     Instead of the four fixed sections, a unit in BOOK_MODE_UNITS shows one
+     Instead of the four fixed sections, every unit that has scans shows one
      pill per section of the book (GRAMMAR 1 personal pronouns, SPEAKING ...,
      READING ..., LANGUAGE WRAP-UP) and, under it, one pill per thing in that
      section under the name the book prints for it (A PRACTICE, შენიშვნა,
@@ -3522,11 +3522,19 @@
      page scans (public.page_scans, read with the page reader): nothing from
      the book is written into this file. Listening material is left out.
 
-     A pill that has a matching interactive topic in BOOK_ITEM_LINKS opens
-     that topic; any other pill shows the printed content as it is. Without
-     scans (not loaded yet, or another account) the unit falls back to the
-     four standard sections. */
-  var BOOK_MODE_UNITS = { u1: true };
+     What a pill opens:
+       - a vocabulary list becomes a flashcard deck by itself;
+       - an exercise opens the interactive version built for it by
+         buildBookExercises() (public.book_exercises), once that exists;
+       - Unit 1 keeps its hand-made topics through BOOK_ITEM_LINKS;
+       - anything else shows the printed content as it is.
+     syncUnitsWithBook() redoes all of this whenever scans or built
+     exercises change, and adds a unit for every "UNIT n" the scans contain,
+     so new photos need no code change. Without scans (not loaded yet, or
+     another account) the units fall back to the four standard sections. */
+  var BOOK_EXERCISES_CACHE_KEY = "nonaEnglishNotebook.bookExercises.v1";
+  var bookExercises = {};    /* item key -> { hash, usable, items, instruction, changes } */
+  var bookOriginalIds = {};  /* unit id -> the deck/topic ids the unit had before the book took over */
   var BOOK_PAGES_CACHE_KEY = "nonaEnglishNotebook.bookPages.v1";
   var bookPages = null;      /* transcribed pages, in page order, one per page number */
   var bookSel = null;        /* { unitId, s, i } -- the open section and item */
@@ -3570,16 +3578,98 @@
     try {
       var cached = JSON.parse(localStorage.getItem(BOOK_PAGES_CACHE_KEY) || "null");
       if (cached && cached.length) setBookPages(cached);
+      bookExercises = JSON.parse(localStorage.getItem(BOOK_EXERCISES_CACHE_KEY) || "{}") || {};
     } catch (e) {}
   }
 
   function loadBookPages() {
     if (!supabaseClient || !currentAuthUser) return Promise.resolve();
-    return supabaseClient.from("page_scans").select("result").then(function (res) {
-      if (res.error || !res.data || !res.data.length) return;
-      setBookPages(res.data.map(function (row) { return row.result.page; }));
-      try { localStorage.setItem(BOOK_PAGES_CACHE_KEY, JSON.stringify(bookPages)); } catch (e) {}
-    }).catch(function () {});
+    var before = JSON.stringify(bookPages) + JSON.stringify(bookExercises);
+    return Promise.all([
+      supabaseClient.from("page_scans").select("result"),
+      supabaseClient.from("book_exercises").select("exercise_key, source_hash, usable, topic")
+    ]).then(function (res) {
+      var scans = res[0], built = res[1];
+      if (!scans.error && scans.data && scans.data.length) setBookPages(scans.data.map(function (row) { return row.result.page; }));
+      if (!built.error && built.data) {
+        bookExercises = {};
+        built.data.forEach(function (row) {
+          bookExercises[row.exercise_key] = { hash: row.source_hash, usable: row.usable, items: row.topic.items || [], instruction: row.topic.instruction || "", changes: row.topic.changes || [] };
+        });
+      }
+      try {
+        localStorage.setItem(BOOK_PAGES_CACHE_KEY, JSON.stringify(bookPages));
+        localStorage.setItem(BOOK_EXERCISES_CACHE_KEY, JSON.stringify(bookExercises));
+      } catch (e) {}
+      if (JSON.stringify(bookPages) + JSON.stringify(bookExercises) !== before) syncUnitsWithBook();
+    }).catch(function (err) { console.error("loadBookPages failed", err); });
+  }
+
+  function bookSlug(text) {
+    return String(text).toLowerCase().replace(/[^a-z0-9\u10d0-\u10ff]+/g, "-").replace(/^-+|-+$/g, "");
+  }
+
+  function bookHash(value) {
+    var text = JSON.stringify(value), h = 5381;
+    for (var i = 0; i < text.length; i++) h = ((h << 5) + h + text.charCodeAt(i)) | 0;
+    return String(h >>> 0);
+  }
+
+  function bookBlocksText(blocks) {
+    return blocks.map(function (block) {
+      var parts = [];
+      if (block.heading) parts.push(block.heading);
+      if (block.instruction) parts.push(block.instruction);
+      block.lines.forEach(function (line) { parts.push(line); });
+      block.vocabulary.forEach(function (w) { parts.push([w.en, w.ipa, w.ka].filter(Boolean).join(" ")); });
+      block.table.forEach(function (row) { parts.push(row.cells.join(" | ")); });
+      return parts.join("\n");
+    }).join("\n\n");
+  }
+
+  /* Rebuilds everything the app derives from the scans: the list of units,
+     each unit's sections, the flashcard decks made from vocabulary lists and
+     the interactive topics made from built exercises. Safe to call again. */
+  function syncUnitsWithBook() {
+    ensureBookPages();
+    if (!bookPages || !bookPages.length) return;
+    bookSectionsMemo = {};
+    for (var d = DECKS.length - 1; d >= 0; d--) if (DECKS[d].id.indexOf("bk-") === 0) DECKS.splice(d, 1);
+    for (var g = GRAMMAR.length - 1; g >= 0; g--) if (GRAMMAR[g].id.indexOf("bx-") === 0) GRAMMAR.splice(g, 1);
+
+    var titles = {};
+    bookPages.forEach(function (page) {
+      var m = /UNIT\s*(\d+)/i.exec(page.unit || "");
+      if (m && !titles[m[1]]) titles[m[1]] = page.unit_title || "";
+    });
+    Object.keys(titles).forEach(function (number) {
+      var short = "Unit " + number;
+      if (UNITS.some(function (u) { return u.short === short; })) return;
+      UNITS.push({ id: "u" + number, short: short, ka: short + (titles[number] ? " — " + titles[number] : ""), art: "u" + number, deckIds: [], grammarIds: [], image: null });
+    });
+    UNITS.sort(function (a, b) { return parseInt(a.short.replace(/\D+/g, ""), 10) - parseInt(b.short.replace(/\D+/g, ""), 10); });
+
+    UNITS.forEach(function (unit) {
+      if (!bookOriginalIds[unit.id]) bookOriginalIds[unit.id] = { decks: unit.deckIds.slice(), topics: unit.grammarIds.slice() };
+      var generated = { decks: [], topics: [] };
+      var sections = buildBookSections(unit, generated);
+      if (!sections) return;
+      var own = bookOriginalIds[unit.id];
+      var keepsOwn = !!BOOK_ITEM_LINKS[unit.id]; /* hand-linked unit: its own decks and topics stay in use */
+      if (!keepsOwn) {
+        for (var i = DECKS.length - 1; i >= 0; i--) if (own.decks.indexOf(DECKS[i].id) !== -1) DECKS.splice(i, 1);
+        for (var j = GRAMMAR.length - 1; j >= 0; j--) if (own.topics.indexOf(GRAMMAR[j].id) !== -1) GRAMMAR.splice(j, 1);
+      }
+      generated.decks.forEach(function (deck) { DECKS.push(deck); });
+      generated.topics.forEach(function (topic) { GRAMMAR.push(topic); });
+      unit.deckIds = (keepsOwn ? own.decks : []).concat(generated.decks.map(function (deck) { return deck.id; }));
+      unit.grammarIds = (keepsOwn ? own.topics : []).concat(generated.topics.map(function (topic) { return topic.id; }));
+    });
+
+    if (appStarted) {
+      renderTabs();
+      if (currentView === "home" && !currentUnit) renderHome();
+    }
   }
 
   function bookPagesForUnit(unit) {
@@ -3603,7 +3693,7 @@
      together under one printed name: an exercise with its word box and its
      material, a note, a named list, or the unnamed explanation and tables
      of a section (named after the section itself). */
-  function buildBookSections(unit) {
+  function buildBookSections(unit, generated) {
     if (bookSectionsMemo[unit.id] !== undefined) return bookSectionsMemo[unit.id];
     var pages = bookPagesForUnit(unit);
     var sections = [];
@@ -3659,8 +3749,41 @@
         sec.items.forEach(function (it) {
           var base = it.label;
           seen[base] = (seen[base] || 0) + 1;
-          it.link = links[sec.keyword + "|" + base + (seen[base] > 1 ? "#" + seen[base] : "")] || null;
+          var localKey = sec.keyword + "|" + base + (seen[base] > 1 ? "#" + seen[base] : "");
+          it.key = unit.id + "|" + localKey;
+          it.link = links[localKey] || null;
           if (seen[base] > 1) it.label = base + " (" + seen[base] + ")";
+          if (it.type === "exercise") it.hash = bookHash(it.blocks);
+          if (it.link || !generated) return;
+
+          var words = [];
+          it.blocks.forEach(function (block) {
+            block.vocabulary.forEach(function (w) { if (w.en && w.ka) words.push({ en: w.en, ipa: w.ipa || "", ka: w.ka }); });
+          });
+          if (words.length >= 3) {
+            var deck = { id: "bk-" + bookSlug(it.key), ka: it.label, en: sec.title, cards: words };
+            generated.decks.push(deck);
+            it.link = { deck: deck.id };
+            return;
+          }
+          var built = bookExercises[it.key];
+          if (it.type === "exercise" && built && built.usable && built.hash === it.hash && built.items.length) {
+            /* a reading exercise needs its text in view: everything printed in the section before it */
+            var before = [];
+            sec.items.some(function (other) { if (other === it) return true; if (other.type === "theory") before = before.concat(other.blocks); return false; });
+            var topic = {
+              id: "bx-" + bookSlug(it.key),
+              kind: /^READING/.test(sec.keyword) ? "reading" : /^(GRAMMAR|LANGUAGE)/.test(sec.keyword) ? "grammar" : "dialogue",
+              ka: sec.keyword + " — " + it.label,
+              en: sec.title,
+              items: built.items.map(function (q) {
+                return { prompt: q.prompt, instruction: chatEscapeHtml(built.instruction || ""), answer: q.answer, accept: q.accept || [] };
+              })
+            };
+            if (topic.kind === "reading" && before.length) topic.note = bookBlocksText(before);
+            generated.topics.push(topic);
+            it.link = { topic: topic.id };
+          }
         });
       });
     }
@@ -3669,9 +3792,7 @@
   }
 
   function bookSectionsFor(unit) {
-    if (!BOOK_MODE_UNITS[unit.id]) return null;
-    ensureBookPages();
-    return buildBookSections(unit);
+    return bookSectionsMemo[unit.id] || null; /* filled by syncUnitsWithBook() */
   }
 
   function renderBookTabs(unit, sections) {
@@ -3806,6 +3927,205 @@
       });
     }
     return st;
+  }
+
+  /* ---------- exercise builder (admin) ----------
+     Turns each printed exercise of the scanned book into the app's own
+     interactive form: one prompt per printed item, with the answer the app
+     will check against. The book prints no answer key and the learner's
+     pencilled answers are never used, so the model works the answers out
+     and a second call checks every one of them against the printed
+     exercise before anything is stored. Exercises with no single checkable
+     answer (speaking in pairs, describing yourself, anything that needs a
+     recording) are recorded as not usable and stay read-only.
+
+     Results live in public.book_exercises keyed by unit, section and item,
+     with a hash of the printed blocks: an exercise is built once, and built
+     again only if its scan changes. */
+  var EXERCISE_BUILDER_MODEL = "claude-sonnet-5";
+  var EXERCISE_BUILDER_USD_PER_MTOK = { input: 2, output: 10 };
+
+  function exerciseSchema(withChanges) {
+    var properties = {
+      usable: { type: "boolean", description: "False when the exercise has no single checkable written answer per item." },
+      reason: { type: "string", description: "In Georgian. Why it is not usable; empty when it is." },
+      instruction: { type: "string", description: "In Georgian. One short sentence telling the learner what to type for each item." },
+      items: {
+        type: "array",
+        items: {
+          type: "object",
+          properties: {
+            prompt: { type: "string", description: "The printed item, wording unchanged, with ___ where the answer goes." },
+            answer: { type: "string", description: "Exactly what the learner should type." },
+            accept: { type: "array", items: { type: "string" }, description: "Other answers that are equally correct; empty if none." }
+          },
+          required: ["prompt", "answer", "accept"],
+          additionalProperties: false
+        }
+      }
+    };
+    var required = ["usable", "reason", "instruction", "items"];
+    if (withChanges) {
+      properties.changes = { type: "array", items: { type: "string" }, description: "In Georgian. One entry per item you corrected, removed or added, with the reason; empty if everything was right." };
+      required.push("changes");
+    }
+    return { type: "object", properties: properties, required: required, additionalProperties: false };
+  }
+
+  var EXERCISE_BUILDER_SYSTEM = [
+    "You prepare one exercise from a printed beginner English textbook (for Georgian speakers) so that an app can check a learner's typed answers. You are given the exercise exactly as printed, and the material printed before it in the same section.",
+    "",
+    "Give one entry per printed item, in the printed order. Keep the printed sentence word for word and mark the place of the answer with ___ . The learner types one short answer per entry, so:",
+    "- Gap-fill: the gap is the ___ ; the answer is the missing word or words. If an item has several gaps, make one entry per gap, each showing the whole sentence with the other gaps already filled in.",
+    "- Choose between printed alternatives (am/is/are, I/Me): replace the alternatives with ___ and list them in brackets after the sentence, e.g. \"___ love New York. (I / Me)\"; the answer is the correct alternative.",
+    "- Multiple choice with lettered options: put the options after the question in brackets, e.g. \"... (A. me / B. them / C. you)\"; the answer is the text of the right option, and its letter goes in `accept`.",
+    "- Correct the mistake: the prompt is the printed sentence; the answer is the corrected word or phrase only, and the whole corrected sentence goes in `accept`. For a sentence that is already correct the answer is \"correct\".",
+    "- True/false: the answer is \"true\" or \"false\" (\"not mentioned\" where the exercise offers it).",
+    "- Rewrite or transform a sentence: the answer is the full new sentence; list other correct wordings in `accept`.",
+    "- Questions about a text: only where the answer is a short fact stated in the text; the answer is that fact in a few words, with other natural wordings in `accept`.",
+    "",
+    "Work every answer out from the printed material and standard English, and get it right: a wrong answer here teaches the learner a mistake. Put every equally correct answer in `accept` (short and long forms such as isn't / is not, alternative correct words). Do not include an item whose answer you cannot be sure of.",
+    "",
+    "Set `usable` to false, with no items, when the exercise cannot be checked this way: speaking or pair work, answers about the learner's own life or opinion, free writing or describing, matching by drawing lines when the pairs cannot be shown as separate questions, and anything that needs a recording. Never invent items, sentences or words that are not printed in the exercise.",
+    "",
+    "`instruction` is one short Georgian sentence that tells the learner what to type."
+  ].join("\n");
+
+  var EXERCISE_VERIFY_PROMPT = [
+    "Below is the same exercise, followed by a first conversion of it. Check the conversion item by item against the printed exercise.",
+    "",
+    "For every item: is the sentence exactly as printed, is the ___ in the right place, and is the answer certainly correct? Solve each item again yourself before you look at the given answer, then compare. Check that `accept` holds every other correct answer and nothing wrong. Check that no printed item is missing and that none was invented. Check that `usable` is right.",
+    "",
+    "Return the whole conversion again, corrected, and list every change in `changes`. Remove an item rather than keep an answer you are not sure of.",
+    "",
+    "First conversion:"
+  ].join("\n");
+
+  function exerciseSourceText(section, item) {
+    var before = [];
+    section.items.some(function (other) { if (other === item) return true; if (other.type === "theory") before = before.concat(other.blocks); return false; });
+    var context = bookBlocksText(before);
+    if (context.length > 7000) context = context.slice(context.length - 7000);
+    return "SECTION: " + section.title + "\nEXERCISE: " + item.label +
+      "\n\n--- PRINTED EARLIER IN THIS SECTION ---\n" + (context || "(nothing)") +
+      "\n\n--- THE EXERCISE AS PRINTED ---\n" + bookBlocksText(item.blocks);
+  }
+
+  function cleanBuiltItems(items) {
+    return (items || []).map(function (q) {
+      return {
+        prompt: String(q.prompt || "").trim(),
+        answer: String(q.answer || "").trim(),
+        accept: (q.accept || []).map(function (a) { return String(a).trim(); }).filter(function (a) { return a; })
+      };
+    }).filter(function (q) { return q.prompt && q.answer; }).slice(0, 60);
+  }
+
+  function buildOneExercise(section, item) {
+    var source = exerciseSourceText(section, item);
+    var tokens = { input: 0, output: 0 };
+    function count(usage) {
+      tokens.input += (usage.input_tokens || 0) + (usage.cache_creation_input_tokens || 0) + (usage.cache_read_input_tokens || 0);
+      tokens.output += usage.output_tokens || 0;
+    }
+    return callClaudeJson(EXERCISE_BUILDER_MODEL, EXERCISE_BUILDER_SYSTEM, [{ type: "text", text: source }], exerciseSchema(false)).then(function (first) {
+      count(first.usage);
+      /* nothing to verify in an exercise judged not usable */
+      if (!first.json.usable || !first.json.items.length) return first;
+      return callClaudeJson(EXERCISE_BUILDER_MODEL, EXERCISE_BUILDER_SYSTEM,
+        [{ type: "text", text: source + "\n\n" + EXERCISE_VERIFY_PROMPT + "\n" + JSON.stringify(first.json) }], exerciseSchema(true)).then(function (second) {
+          count(second.usage);
+          return second;
+        });
+    }).then(function (last) {
+      var out = last.json;
+      var items = out.usable ? cleanBuiltItems(out.items) : [];
+      var record = { hash: item.hash, usable: !!out.usable && items.length > 0, items: items, instruction: out.instruction || "", reason: out.reason || "", changes: out.changes || [] };
+      return supabaseClient.from("book_exercises").upsert({
+        user_id: currentAuthUser.id,
+        exercise_key: item.key,
+        source_hash: record.hash,
+        usable: record.usable,
+        topic: { instruction: record.instruction, items: record.items, reason: record.reason, changes: record.changes },
+        model: EXERCISE_BUILDER_MODEL,
+        updated_at: new Date().toISOString()
+      }, { onConflict: "user_id,exercise_key" }).then(function (res) {
+        if (res.error) throw new Error(res.error.message);
+        bookExercises[item.key] = record;
+        return { record: record, cost: (tokens.input * EXERCISE_BUILDER_USD_PER_MTOK.input + tokens.output * EXERCISE_BUILDER_USD_PER_MTOK.output) / 1e6 };
+      });
+    });
+  }
+
+  /* every printed exercise that still has no (current) built version */
+  function pendingBookExercises() {
+    var pending = [];
+    UNITS.forEach(function (unit) {
+      (bookSectionsFor(unit) || []).forEach(function (section) {
+        section.items.forEach(function (item) {
+          if (item.type !== "exercise" || (item.link && !item.link.topic) || (BOOK_ITEM_LINKS[unit.id] || {})[item.key.slice(unit.id.length + 1)]) return;
+          var built = bookExercises[item.key];
+          if (built && built.hash === item.hash) return;
+          pending.push({ unit: unit, section: section, item: item });
+        });
+      });
+    });
+    return pending;
+  }
+
+  function buildBookExercises(onProgress) {
+    var queue = pendingBookExercises();
+    var total = queue.length, done = 0, usable = 0, failed = 0, cost = 0, stopped = "";
+    function step() {
+      onProgress({ total: total, done: done, usable: usable, failed: failed, cost: cost, finished: false, stopped: "" });
+      var job = queue.shift();
+      if (!job) return Promise.resolve();
+      return buildOneExercise(job.section, job.item).then(function (result) {
+        done++;
+        cost += result.cost;
+        if (result.record.usable) usable++;
+      }).catch(function (err) {
+        console.error("exercise builder failed", job.item.key, err);
+        failed++;
+        if (err.stopsBatch) { stopped = err.message; queue = []; }
+      }).then(step);
+    }
+    return step().then(function () {
+      try { localStorage.setItem(BOOK_EXERCISES_CACHE_KEY, JSON.stringify(bookExercises)); } catch (e) {}
+      syncUnitsWithBook();
+      onProgress({ total: total, done: done, usable: usable, failed: failed, cost: cost, finished: true, stopped: stopped });
+    });
+  }
+
+  /* what is wrong or missing in the scanned book, unit by unit */
+  function bookHealthReport() {
+    var lines = [];
+    UNITS.forEach(function (unit) {
+      var pages = bookPagesForUnit(unit);
+      if (!pages.length) return;
+      var numbers = pages.map(function (page) { return parseInt(page.page_number, 10); });
+      var missing = [];
+      for (var n = numbers[0]; n <= numbers[numbers.length - 1]; n++) if (numbers.indexOf(n) === -1) missing.push(n);
+      var unreadable = 0, gaps = 0, exercises = 0, built = 0, readOnly = 0;
+      pages.forEach(function (page) {
+        unreadable += JSON.stringify(page).split(UNREADABLE_MARK).length - 1;
+        gaps += pageNumberingWarnings(page).filter(function (w) { return w.indexOf("გამორჩა") !== -1; }).length;
+      });
+      (bookSectionsFor(unit) || []).forEach(function (section) {
+        section.items.forEach(function (item) {
+          if (item.type !== "exercise") return;
+          exercises++;
+          if (item.link && item.link.topic) built++;
+          else if (bookExercises[item.key] && bookExercises[item.key].hash === item.hash && !bookExercises[item.key].usable) readOnly++;
+        });
+      });
+      lines.push(unit.short + ": გვ. " + numbers[0] + "–" + numbers[numbers.length - 1] +
+        (missing.length ? " · ⚠️ აკლია გვ. " + missing.join(", ") : "") +
+        (unreadable ? " · ⚠️ ვერ იკითხება " + unreadable + " ადგილას" : "") +
+        (gaps ? " · ⚠️ ნუმერაციის წყვეტა " + gaps : "") +
+        " · სავარჯიშო " + exercises + " (შემოწმებით " + built + ", მხოლოდ წასაკითხი " + readOnly + ", ასაგები " + (exercises - built - readOnly) + ")");
+    });
+    return lines;
   }
 
   /* ---------- daily quiz (opened from the home button or a push notification) ----------
@@ -5867,11 +6187,11 @@
     });
   }
 
-  function callPageReader(content, schema) {
+  function callClaudeJson(model, system, content, schema) {
     return postToEdgeFunction(ANTHROPIC_CHAT_FUNCTION_URL, { "content-type": "application/json" }, JSON.stringify({
-      model: PAGE_READER_MODEL,
+      model: model,
       max_tokens: 16000,
-      system: PAGE_READER_SYSTEM,
+      system: system,
       messages: [{ role: "user", content: content }],
       output_config: { format: { type: "json_schema", schema: schema } }
     })).then(function (res) {
@@ -5894,8 +6214,14 @@
         if (data.stop_reason === "max_tokens") throw new Error("გვერდზე ძალიან ბევრი ტექსტია და პასუხი შუაში შეწყდა.");
         var textBlock = (data.content || []).filter(function (c) { return c.type === "text"; })[0];
         if (!textBlock) throw new Error("პასუხი ცარიელი მოვიდა.");
-        return { page: JSON.parse(textBlock.text), usage: data.usage || {} };
+        return { json: JSON.parse(textBlock.text), usage: data.usage || {} };
       });
+    });
+  }
+
+  function callPageReader(content, schema) {
+    return callClaudeJson(PAGE_READER_MODEL, PAGE_READER_SYSTEM, content, schema).then(function (out) {
+      return { page: out.json, usage: out.usage };
     });
   }
 
@@ -6118,6 +6444,44 @@
     var results = el("div", {});
     root.appendChild(results);
 
+    var bookBox = el("div", { style: "margin-top:22px;border:1px solid var(--border);border-radius:16px;padding:16px;background:var(--paper)" });
+    root.appendChild(bookBox);
+    var building = false;
+
+    function renderBookBox(progress) {
+      bookBox.innerHTML = "";
+      bookBox.appendChild(el("h3", { style: "margin:0 0 6px" }, [document.createTextNode("📚 წიგნი აპლიკაციაში")]));
+      var report = bookHealthReport();
+      if (!report.length) {
+        bookBox.appendChild(el("p", { style: "margin:0;font-size:0.88rem;color:var(--ink-soft)" }, [document.createTextNode("ჯერ არცერთი გვერდი არ არის წაკითხული.")]));
+        return;
+      }
+      report.forEach(function (line) { bookBox.appendChild(el("div", { style: "font-size:0.88rem;margin:3px 0" }, [document.createTextNode(line)])); });
+      var pending = pendingBookExercises().length;
+      var status = el("p", { style: "margin:10px 0 8px;font-size:0.9rem;font-weight:600" });
+      if (progress) {
+        status.textContent = (progress.finished ? (progress.stopped ? "შეჩერდა (" + progress.stopped + ")" : "დასრულდა") : "სავარჯიშოებს ვაგებ და ვამოწმებ") +
+          ": " + progress.done + " / " + progress.total + " · შემოწმებით " + progress.usable +
+          (progress.failed ? " · ვერ აიგო " + progress.failed : "") + " · დაიხარჯა ~$" + progress.cost.toFixed(2);
+      } else {
+        status.textContent = pending ? "ასაგებია " + pending + " სავარჯიშო (პასუხების ამოხსნა და გადამოწმება)." : "ყველა სავარჯიშო აგებულია.";
+      }
+      bookBox.appendChild(status);
+      if (pending && !building) {
+        var buildBtn = el("button", { class: "check-btn", type: "button" }, [document.createTextNode("🔧 სავარჯიშოების აგება")]);
+        buildBtn.addEventListener("click", runBuilder);
+        bookBox.appendChild(buildBtn);
+      }
+    }
+
+    function runBuilder() {
+      if (building) return;
+      building = true;
+      buildBookExercises(renderBookBox).catch(function (err) { console.error("builder stopped", err); }).then(function () { building = false; });
+    }
+
+    loadBookPages().then(function () { renderBookBox(null); });
+
     var savedBox = el("div", { style: "margin-top:26px" });
     root.appendChild(savedBox);
 
@@ -6179,6 +6543,8 @@
         fileInput.value = "";
         report(word);
         refreshSaved();
+        /* new pages are placed in their units at once, and their exercises built, with no further step */
+        if (done) loadBookPages().then(function () { renderBookBox(null); runBuilder(); });
       }
       function next() {
         report();
@@ -6336,6 +6702,7 @@
       switchView("settings");
     });
     initTheme();
+    syncUnitsWithBook(); /* from the copy cached on this device; loadBookPages() refreshes it */
     if (goToAdmin) { showAdminDirectly(); }
     else if (location.hash === "#quiz") { openDailyQuiz(); } /* opened from a quiz push notification */
     else { switchView("home"); }
