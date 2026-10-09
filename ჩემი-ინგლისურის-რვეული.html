@@ -435,6 +435,7 @@
   @media (min-width: 760px) {
     .page.unit-mode { display: grid; grid-template-columns: 1fr 1fr; align-items: start; column-gap: 6px; }
     .page.unit-mode #view-home { grid-column: 1 / -1; }
+    .page.unit-mode #view-book { grid-column: 1 / -1; }
     .page.unit-mode:has(#view-cards.active):not(:has(#view-grammar.active)) #view-cards { grid-column: 1 / -1; }
     .page.unit-mode:has(#view-grammar.active):not(:has(#view-cards.active)) #view-grammar { grid-column: 1 / -1; }
     .page.unit-mode:has(#view-cards.active):has(#view-grammar.active) #view-grammar { border-left: 1px solid var(--border); }
@@ -533,6 +534,11 @@
     transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease, padding 0.15s ease, font-size 0.15s ease;
   }
   .unit-section-tab:hover { border-color: var(--brand); }
+  .page.unit-mode #view-book { padding-top: 10px; }
+  .book-block { border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; margin: 0 0 10px; background: var(--surface); }
+  .book-block-line { margin: 3px 0; white-space: pre-wrap; font-size: 0.95rem; line-height: 1.55; }
+  .book-block table { border-collapse: collapse; width: 100%; font-size: 0.9rem; margin: 6px 0; }
+  .book-block td { border: 1px solid var(--border); padding: 5px 8px; vertical-align: top; white-space: pre-wrap; }
   .unit-section-tab.active {
     background: var(--brand-gradient); border-color: transparent; color: #fff;
     font-size: 1rem; padding: 10px 20px; font-weight: 800;
@@ -980,6 +986,7 @@
         <section id="view-chat" class="view"></section>
         <section id="view-settings" class="view"></section>
         <section id="view-quiz" class="view"></section>
+        <section id="view-book" class="view"></section>
         <section id="view-admin" class="view"></section>
       </div>
     </div>
@@ -1326,21 +1333,19 @@
 
   var GRAMMAR = [
     {
-      id: "pronouns", kind: "grammar", ka: "პირის ნაცვალსახელები", en: "Subject & object pronouns",
-      note: "ინგლისურ ენაში პირის ნაცვალსახელები გამოიყენება არსებითი სახელების ჩასანაცვლებლად, რათა თავიდან იქნას აცილებული მათი გამეორება. არსებობს ორი სახის პირის ნაცვალსახელი: სუბიექტური (სუბიექტის აღმნიშვნელი) და ობიექტური (ობიექტის აღმნიშვნელი). სუბიექტური ნაცვალსახელებია: I, you, he, she, it, we და they — მხოლობითში: I (მე), you (შენ), he/she/it (ის); მრავლობითში: you (თქვენ), we (ჩვენ), they (ისინი). შენიშვნა: he გამოიყენება მამრობითი სქესის აღსანიშნავად, she — მდედრობითი სქესის, it კი ცხოველებისა და უსულო საგნების აღსანიშნავად (მათ შორის აბსტრაქტული ცნებებისთვისაც, მაგალითად სილამაზე, სიყვარული, ბუნება და ა.შ.). ობიექტური ნაცვალსახელები (me, you, him, her, it, us, them) გამოიყენება მაშინ, როცა სახელი ზმნის შემდეგ ან წინდებულის შემდეგ დგას.",
-      sections: [
-        { type: "intro", html: "ინგლისურ ენაში პირის ნაცვალსახელები გამოიყენება არსებითი სახელების ჩასანაცვლებლად, რათა თავიდან იქნას აცილებული მათი გამეორება. არსებობს ორი სახის პირის ნაცვალსახელი: სუბიექტური (სუბიექტის აღმნიშვნელი) და ობიექტური (ობიექტის აღმნიშვნელი)." },
-        { type: "block", label: "სუბიექტური ნაცვალსახელები", html: "სუბიექტური ნაცვალსახელებია: <span class='pronoun-word'>I</span>, <span class='pronoun-word'>you</span>, <span class='pronoun-word'>he</span>, <span class='pronoun-word'>she</span>, <span class='pronoun-word'>it</span>, <span class='pronoun-word'>we</span> და <span class='pronoun-word'>they</span> — მხოლობითში: <span class='pronoun-word'>I</span> (მე), <span class='pronoun-word'>you</span> (შენ), <span class='pronoun-word'>he</span>/<span class='pronoun-word'>she</span>/<span class='pronoun-word'>it</span> (ის); მრავლობითში: <span class='pronoun-word'>you</span> (თქვენ), <span class='pronoun-word'>we</span> (ჩვენ), <span class='pronoun-word'>they</span> (ისინი)." },
-        { type: "block", label: "ობიექტური ნაცვალსახელები", html: "ობიექტური ნაცვალსახელები (<span class='pronoun-word'>me</span>, <span class='pronoun-word'>you</span>, <span class='pronoun-word'>him</span>, <span class='pronoun-word'>her</span>, <span class='pronoun-word'>it</span>, <span class='pronoun-word'>us</span>, <span class='pronoun-word'>them</span>) გამოიყენება მაშინ, როცა სახელი ზმნის შემდეგ ან წინდებულის შემდეგ დგას." },
-        { type: "block", label: "შენიშვნა", html: "<span class='pronoun-word'>he</span> გამოიყენება მამრობითი სქესის აღსანიშნავად, <span class='pronoun-word'>she</span> — მდედრობითი სქესის, <span class='pronoun-word'>it</span> კი ცხოველებისა და უსულო საგნების აღსანიშნავად (მათ შორის აბსტრაქტული ცნებებისთვისაც, მაგალითად სილამაზე, სიყვარული, ბუნება და ა.შ.)." }
-      ],
+      id: "pronounsA", kind: "grammar", ka: "GRAMMAR 1 — A PRACTICE", en: "Complete the sentences with subject pronouns",
       items: [
         { prompt: "My name is Alex. ___ am a manager.", instruction: "შეავსე სწორი სუბიექტური ნაცვალსახელით.", answer: "I" },
         { prompt: "This is Lucy. ___ are friends.", instruction: "შეავსე სწორი სუბიექტური ნაცვალსახელით.", answer: "We" },
         { prompt: "___ is my cat.", instruction: "შეავსე სწორი სუბიექტური ნაცვალსახელით.", answer: "It" },
         { prompt: "___ are Ana, Mariam and Nika. I am Alex.", instruction: "შეავსე სწორი სუბიექტური ნაცვალსახელით.", answer: "They" },
         { prompt: "___ is a beautiful girl.", instruction: "შეავსე სწორი სუბიექტური ნაცვალსახელით.", answer: "She" },
-        { prompt: "___ is a good boy.", instruction: "შეავსე სწორი სუბიექტური ნაცვალსახელით.", answer: "He" },
+        { prompt: "___ is a good boy.", instruction: "შეავსე სწორი სუბიექტური ნაცვალსახელით.", answer: "He" }
+      ]
+    },
+    {
+      id: "pronounsB", kind: "grammar", ka: "GRAMMAR 1 — B PRACTICE", en: "Fill in the blanks with he, she, it, they, or we",
+      items: [
         { prompt: "The boy is tall. ___ is tall.", instruction: "შეავსე he, she, it, they ან we.", answer: "He" },
         { prompt: "The girl is beautiful. ___ is beautiful.", instruction: "შეავსე he, she, it, they ან we.", answer: "She" },
         { prompt: "My friends and I work. ___ work.", instruction: "შეავსე he, she, it, they ან we.", answer: "We" },
@@ -1350,7 +1355,12 @@
         { prompt: "The books are interesting. ___ are interesting.", instruction: "შეავსე he, she, it, they ან we.", answer: "They" },
         { prompt: "Nicolo is my name. ___ am Nicolo.", instruction: "შეავსე he, she, it, they ან we.", answer: "I" },
         { prompt: "Anastasia is Russian. ___ is Russian.", instruction: "შეავსე he, she, it, they ან we.", answer: "She" },
-        { prompt: "You and I are immigrants. ___ are immigrants.", instruction: "შეავსე he, she, it, they ან we.", answer: "We" },
+        { prompt: "You and I are immigrants. ___ are immigrants.", instruction: "შეავსე he, she, it, they ან we.", answer: "We" }
+      ]
+    },
+    {
+      id: "pronounsC", kind: "grammar", ka: "GRAMMAR 1 — C PRACTICE", en: "Mark the correct answer",
+      items: [
         { prompt: "I always help out <u>my friends</u>.", instruction: "ჩაანაცვლე ხაზგასმული ნაწილი ნაცვალსახელით.", answer: "them" },
         { prompt: "I am helping out <u>my girlfriend</u>.", instruction: "ჩაანაცვლე ხაზგასმული ნაწილი ნაცვალსახელით.", answer: "her" },
         { prompt: "The boys are riding <u>their bikes</u>.", instruction: "ჩაანაცვლე ხაზგასმული ნაწილი ნაცვალსახელით.", answer: "them" },
@@ -1358,7 +1368,12 @@
         { prompt: "I don't know <u>the answer</u>.", instruction: "ჩაანაცვლე ხაზგასმული ნაწილი ნაცვალსახელით.", answer: "it" },
         { prompt: "Alex is meeting <u>Thomas</u>.", instruction: "ჩაანაცვლე ხაზგასმული ნაწილი ნაცვალსახელით.", answer: "him" },
         { prompt: "Please tell <u>Alexander and me</u> what you think.", instruction: "ჩაანაცვლე ხაზგასმული ნაწილი ნაცვალსახელით.", answer: "us" },
-        { prompt: "Sally doesn't like <u>cookies</u>.", instruction: "ჩაანაცვლე ხაზგასმული ნაწილი ნაცვალსახელით.", answer: "them" },
+        { prompt: "Sally doesn't like <u>cookies</u>.", instruction: "ჩაანაცვლე ხაზგასმული ნაწილი ნაცვალსახელით.", answer: "them" }
+      ]
+    },
+    {
+      id: "pronounsD", kind: "grammar", ka: "GRAMMAR 1 — D PRACTICE", en: "Underline the correct option(s)",
+      items: [
         { prompt: "Do you love ___? (he / him)", instruction: "აირჩიე სწორი ფორმა.", answer: "him" },
         { prompt: "Where are ___? (they / them)", instruction: "აირჩიე სწორი ფორმა.", answer: "they" },
         { prompt: "Is it for ___? (me / I)", instruction: "აირჩიე სწორი ფორმა.", answer: "me" },
@@ -1374,7 +1389,7 @@
       ]
     },
     {
-      id: "possAdj", kind: "grammar", ka: "კუთვნილებითი ნაცვალსახელები", en: "my / your / his / her / its / our / their",
+      id: "possAdj", kind: "grammar", ka: "GRAMMAR 2 — A PRACTICE", en: "my / your / his / her / its / our / their",
       note: "კუთვნილების გამოსახატავად გამოიყენება კუთვნილებითი ნაცვალსახელები: my, your, his, her, its, our და their — ისინი ყოველთვის დგას არსებითი სახელის წინ: my brother, her name, our friends. მხოლობით რიცხვში: my — ჩემი, your — შენი, his/her/its — მისი. მრავლობით რიცხვში: your — თქვენი, our — ჩვენი, their — მათი.",
       items: [
         { prompt: "Hi, I am Sandra. What is ___ name?", instruction: "შეავსე სწორი კუთვნილებითი ნაცვალსახელით.", answer: "your" },
@@ -1388,7 +1403,7 @@
       ]
     },
     {
-      id: "possS", kind: "grammar", ka: "კუთვნილება 's / s'", en: "Alex's sister / the Jacksons' jobs",
+      id: "possS", kind: "grammar", ka: "GRAMMAR 2 — B PRACTICE", en: "Alex's sister / the Jacksons' jobs",
       note: "მხოლობითში ემატება 's (Nick's), ხოლო -s-ზე დაბოლოებულ მრავლობითს — მხოლოდ ' (the Jacksons').",
       items: [
         { prompt: "Tamar is his wife. (Nick)", instruction: "გადააკეთე კუთვნილებით ფორმაში.", answer: "Tamar is Nick's wife.", accept: ["nick's wife"] },
@@ -1463,7 +1478,7 @@
       ]
     },
     {
-      id: "wrapupPoss", kind: "grammar", ka: "შერეული გამეორება — კუთვნილება", en: "Language Wrap-up: possession review",
+      id: "wrapupPoss", kind: "grammar", ka: "LANGUAGE WRAP-UP — B PRACTICE", en: "Language Wrap-up: possession review",
       note: "შეცდომების გასწორება — ზოგან საჭიროა კუთვნილებითი ნაცვალსახელი (my/your/his...), ზოგან — 's.",
       items: [
         { prompt: "That's <u>I</u> bag.", instruction: "იპოვე შეცდომა და გაასწორე.", answer: "my" },
@@ -1498,7 +1513,7 @@
       ]
     },
     {
-      id: "selfIntro", kind: "dialogue", ka: "საკუთარი თავის წარდგენა", en: "Introducing yourself",
+      id: "selfIntro", kind: "dialogue", ka: "SPEAKING — საკუთარი თავის წარდგენა", en: "Introducing yourself",
       note: "შეავსე საკუთარი თავის წარდგენის ნიმუში საკუთარი მონაცემებით — წიგნის თანახმად.",
       items: [
         { prompt: "Hello, I am ___.", instruction: "შეავსე საკუთარი სახელით.", answer: "Nono" },
@@ -1574,7 +1589,7 @@
       ]
     },
     {
-      id: "readingIntro", kind: "reading", ka: "წაკითხვის გაგება: სამი გაცნობა", en: "Reading comprehension — Alex, Tamar & Ana",
+      id: "readingIntro", kind: "reading", ka: "READING — PRACTICE", en: "Reading comprehension — Alex, Tamar & Ana",
       note: "Commenter 1 (Alex): \"I am Alex. My surname is Jackson. I am 35 years old, and I am a doctor. I am from London, but I don't live in London. I live in Brooklyn, New York.\" Commenter 2 (Tamar): \"My name is Tamar Kurdadze, and I am 26 years old. I am a dancer, and I love my profession. I am from Georgia, and I live in Kharagauli.\" Commenter 3 (Ana): \"I am Ana. My full name is Ana Maria Solomonidze. My age is 20. I am a student. I am from Georgia and I live in Sighnagi.\" — უპასუხე კითხვებს.",
       commenters: [
         { name: "Alex", text: "I am Alex. My surname is Jackson. I am 35 years old, and I am a doctor. I am from London, but I don't live in London. I live in Brooklyn, New York." },
@@ -1679,7 +1694,7 @@
      `art` picks the unit's drawing from UNIT_ICONS / UNIT_PERSON, which are
      still keyed by the slots of the earlier nine-unit layout. */
   var UNITS = [
-    { id: "u1", short: "Unit 1", ka: "Unit 1 — მისალმება და გაცნობა", art: "u1", deckIds: ["greetings"], grammarIds: ["pronouns", "possAdj", "possS", "wrapupPoss", "greetingsQA", "selfIntro", "readingIntro"], image: "unit1-greetings.jpg" },
+    { id: "u1", short: "Unit 1", ka: "Unit 1 — მისალმება და გაცნობა", art: "u1", deckIds: ["greetings"], grammarIds: ["pronounsA", "pronounsB", "pronounsC", "pronounsD", "possAdj", "possS", "wrapupPoss", "greetingsQA", "selfIntro", "readingIntro"], image: "unit1-greetings.jpg" },
     { id: "u2", short: "Unit 2", ka: "Unit 2 — ოჯახი, მეგობრები და ურთიერთობები", art: "u3", deckIds: ["family", "relationships"], grammarIds: ["toBe", "demonstratives", "readingJacob"], image: "unit3-family.jpg" },
     { id: "u3", short: "Unit 3", ka: "Unit 3 — დღის რეჟიმი, მოწონება და არმოწონება", art: "u7", deckIds: ["likes", "routine", "calendar", "freqAdverbs"], grammarIds: ["presentForms", "presentQuestions", "frequency", "readingTom", "readingKeiraLiam"], image: "unit7-routine.jpg" },
     { id: "u4", short: "Unit 4", ka: "Unit 4 — პროფესიები", art: "u8", deckIds: ["jobs"], grammarIds: ["articles"], image: null },
@@ -2284,6 +2299,9 @@
     document.querySelectorAll(".view").forEach(function (v) { v.classList.remove("active"); });
     document.getElementById("view-home").classList.add("active");
     renderTabs();
+    bookSel = null;
+    document.getElementById("view-book").classList.remove("active");
+    if (bookSectionsFor(unit)) { selectBookItem(unit, 0, 0); return; }
     var firstSection = UNIT_SECTION_DEFS.filter(function (s) { return unitSectionAvailable(unit, s.key); })[0];
     if (firstSection) {
       gotoUnitSection(unit, firstSection.key);
@@ -2521,7 +2539,12 @@
 
   function openDeck(id) { stopPracticeMic(); cardsSub = id; practicePos = 0; practiceListOpen = true; renderCardsView(); }
   function openDeckFlip(id) { cardsMode = "flip"; openDeck(id); }
-  function backToDecks() { stopPracticeMic(); cardsSub = null; renderCardsView(); }
+  function backToDecks() {
+    stopPracticeMic();
+    if (bookSel) { selectBookItem(currentUnitObj(), bookSel.s, bookSel.i); return; }
+    cardsSub = null;
+    renderCardsView();
+  }
   function openPracticeItem(idx) { practicePos = idx; practiceListOpen = false; if (cardsMode === "flip") { cardIndex[cardsSub] = idx; } renderCardsView(); }
   function backToPracticeList() { practiceListOpen = true; renderCardsView(); }
 
@@ -2562,6 +2585,8 @@
   }
 
   function renderUnitSectionTabs(unit, activeKey) {
+    var bookSections = bookSectionsFor(unit);
+    if (bookSections) return renderBookTabs(unit, bookSections);
     var wrap = el("div", { class: "unit-section-tabs" });
     UNIT_SECTION_DEFS.forEach(function (s) {
       if (!unitSectionAvailable(unit, s.key)) return;
@@ -3286,7 +3311,7 @@
     var topic = GRAMMAR.filter(function (t) { return t.id === grammarSub; })[0];
     var back = el("button", { class: "back-link", type: "button" }, [document.createTextNode("← თემებთან დაბრუნება")]);
     back.addEventListener("click", function () { grammarSub = null; renderGrammarView(); });
-    root.appendChild(back);
+    if (!bookSel) root.appendChild(back); /* in the book view the pills above are the way back */
     root.appendChild(el("h2", { class: topic.kind === "grammar" ? "topic-heading-warm" : topic.kind === "reading" ? "topic-heading-accent" : "" }, [document.createTextNode(topic.ka)]));
     if (topic.commenters) {
       var commentersWrap = el("div", { class: "commenters-wrap" });
@@ -3486,6 +3511,301 @@
     });
     input.addEventListener("keydown", function (e) { if (e.key === "Enter") checkBtn.click(); });
     skip.addEventListener("click", function () { showFeedback(false, true); });
+  }
+
+  /* ---------- book view: a unit laid out exactly as the textbook lays it out ----------
+     Instead of the four fixed sections, a unit in BOOK_MODE_UNITS shows one
+     pill per section of the book (GRAMMAR 1 personal pronouns, SPEAKING ...,
+     READING ..., LANGUAGE WRAP-UP) and, under it, one pill per thing in that
+     section under the name the book prints for it (A PRACTICE, შენიშვნა,
+     პასუხები ...). The layout and all the text come from the learner's own
+     page scans (public.page_scans, read with the page reader): nothing from
+     the book is written into this file. Listening material is left out.
+
+     A pill that has a matching interactive topic in BOOK_ITEM_LINKS opens
+     that topic; any other pill shows the printed content as it is. Without
+     scans (not loaded yet, or another account) the unit falls back to the
+     four standard sections. */
+  var BOOK_MODE_UNITS = { u1: true };
+  var BOOK_PAGES_CACHE_KEY = "nonaEnglishNotebook.bookPages.v1";
+  var bookPages = null;      /* transcribed pages, in page order, one per page number */
+  var bookSel = null;        /* { unitId, s, i } -- the open section and item */
+  var bookSectionsMemo = {};
+
+  /* section keyword | item label [#occurrence]  ->  what the pill opens */
+  var BOOK_ITEM_LINKS = {
+    u1: {
+      "GRAMMAR 1|A PRACTICE": { topic: "pronounsA" },
+      "GRAMMAR 1|B PRACTICE": { topic: "pronounsB" },
+      "GRAMMAR 1|C PRACTICE": { topic: "pronounsC" },
+      "GRAMMAR 1|D PRACTICE": { topic: "pronounsD" },
+      "GRAMMAR 2|A PRACTICE": { topic: "possAdj" },
+      "GRAMMAR 2|B PRACTICE": { topic: "possS" },
+      "SPEAKING|SPEAKING": { deck: "greetings" },
+      "SPEAKING|პასუხები": { practice: "greetingsQA" },
+      "SPEAKING|საკუთარი თავის წარდგენა": { topic: "selfIntro" },
+      "READING|PRACTICE": { topic: "readingIntro" },
+      "LANGUAGE WRAP-UP|B PRACTICE": { topic: "wrapupPoss" }
+    }
+  };
+
+  function setBookPages(pages) {
+    var byNumber = {};
+    pages.forEach(function (page) {
+      var n = parseInt(page.page_number, 10);
+      if (isNaN(n) || !page.blocks) return;
+      var unread = JSON.stringify(page).split(UNREADABLE_MARK).length;
+      /* a page photographed twice: keep the cleaner reading */
+      if (!byNumber[n] || unread < byNumber[n].unread) byNumber[n] = { page: page, unread: unread };
+    });
+    bookPages = Object.keys(byNumber).map(Number).sort(function (a, b) { return a - b; }).map(function (n) { return byNumber[n].page; });
+    bookSectionsMemo = {};
+  }
+
+  /* the copy kept from the last visit, so the unit opens in book layout at once and offline */
+  var bookCacheTried = false;
+  function ensureBookPages() {
+    if (bookPages !== null || bookCacheTried) return;
+    bookCacheTried = true;
+    try {
+      var cached = JSON.parse(localStorage.getItem(BOOK_PAGES_CACHE_KEY) || "null");
+      if (cached && cached.length) setBookPages(cached);
+    } catch (e) {}
+  }
+
+  function loadBookPages() {
+    if (!supabaseClient || !currentAuthUser) return Promise.resolve();
+    return supabaseClient.from("page_scans").select("result").then(function (res) {
+      if (res.error || !res.data || !res.data.length) return;
+      setBookPages(res.data.map(function (row) { return row.result.page; }));
+      try { localStorage.setItem(BOOK_PAGES_CACHE_KEY, JSON.stringify(bookPages)); } catch (e) {}
+    }).catch(function () {});
+  }
+
+  function bookPagesForUnit(unit) {
+    if (!bookPages) return [];
+    var number = parseInt(unit.short.replace(/\D+/g, ""), 10);
+    var own = new RegExp("UNIT\\s*" + number + "\\b", "i");
+    var pages = [], inside = false;
+    bookPages.forEach(function (page) {
+      if (page.unit) inside = own.test(page.unit);
+      if (inside) pages.push(page);
+    });
+    return pages;
+  }
+
+  function bookKeyword(title) {
+    var m = /^(GRAMMAR(?:\s+\d)?|SPEAKING(?:\s+\d)?|READING(?:\s+\d)?|LISTENING|LANGUAGE\s+WRAP-?\s?UP)/i.exec(title);
+    return m ? m[1].toUpperCase().replace(/\s+/g, " ") : "";
+  }
+
+  /* Pages -> sections -> items. An item is a run of blocks that belong
+     together under one printed name: an exercise with its word box and its
+     material, a note, a named list, or the unnamed explanation and tables
+     of a section (named after the section itself). */
+  function buildBookSections(unit) {
+    if (bookSectionsMemo[unit.id] !== undefined) return bookSectionsMemo[unit.id];
+    var pages = bookPagesForUnit(unit);
+    var sections = [];
+    if (pages.length) {
+      var listening = listeningFlagsByScan(pages.map(function (page) { return { id: page.page_number, page: page }; }));
+      var section = null, item = null, pendingBox = null, inListeningSection = false;
+      var startSection = function (title) {
+        section = { title: title, keyword: bookKeyword(title) || title, items: [] };
+        sections.push(section);
+        item = null;
+      };
+      var startItem = function (label, type, unnamed) {
+        item = { label: label, type: type, unnamed: !!unnamed, blocks: [], lineCount: 0 };
+        section.items.push(item);
+      };
+      pages.forEach(function (page) {
+        page.blocks.forEach(function (block, index) {
+          if (block.kind === "page_header" || block.kind === "page_footer") return;
+          var banner = blockBannerText(block);
+          if (banner) {
+            inListeningSection = /^LISTENING/i.test(banner);
+            if (/^UNIT\s+\d/i.test(banner) || inListeningSection) { if (inListeningSection) { section = null; item = null; } return; }
+            startSection(banner.replace(/\s+/g, " ").trim());
+            return;
+          }
+          if (listening[page.page_number][index] || inListeningSection) return;
+          var heading = (block.heading || "").replace(/\s+/g, " ").trim();
+          if (!section) startSection(heading || unit.short);
+          if (block.kind === "word_box") { pendingBox = block; return; }
+
+          if (block.kind === "exercise" || block.kind === "dialogue") {
+            if (heading || !(item && item.type === "exercise")) startItem(heading || "PRACTICE", "exercise");
+            if (pendingBox) { item.blocks.push(pendingBox); pendingBox = null; }
+            item.blocks.push(block);
+            item.lineCount += block.lines.length;
+            return;
+          }
+          var isNote = block.kind === "note" || /^\s*შენიშვნა/.test(block.lines[0] || "");
+          var named = heading && (block.kind === "vocabulary" || block.kind === "explanation" || block.kind === "reading_text" || block.kind === "examples");
+          if (isNote) startItem("შენიშვნა", "theory", true);
+          else if (named) startItem(heading, "theory", false);
+          else if (!(item && ((item.type === "theory" && item.unnamed) || (item.type === "exercise" && !item.lineCount)))) startItem(section.keyword, "theory", true);
+          if (pendingBox) { item.blocks.push(pendingBox); pendingBox = null; }
+          item.blocks.push(block);
+        });
+      });
+      if (pendingBox && item) item.blocks.push(pendingBox);
+
+      sections = sections.filter(function (sec) { return sec.items.length; });
+      var links = BOOK_ITEM_LINKS[unit.id] || {};
+      sections.forEach(function (sec) {
+        var seen = {};
+        sec.items.forEach(function (it) {
+          var base = it.label;
+          seen[base] = (seen[base] || 0) + 1;
+          it.link = links[sec.keyword + "|" + base + (seen[base] > 1 ? "#" + seen[base] : "")] || null;
+          if (seen[base] > 1) it.label = base + " (" + seen[base] + ")";
+        });
+      });
+    }
+    bookSectionsMemo[unit.id] = sections.length ? sections : null;
+    return bookSectionsMemo[unit.id];
+  }
+
+  function bookSectionsFor(unit) {
+    if (!BOOK_MODE_UNITS[unit.id]) return null;
+    ensureBookPages();
+    return buildBookSections(unit);
+  }
+
+  function renderBookTabs(unit, sections) {
+    var sel = bookSel && bookSel.unitId === unit.id ? bookSel : { s: -1, i: -1 };
+    var wrap = el("div", {});
+    function row(labels, activeIndex, onPick) {
+      var tabs = el("div", { class: "unit-section-tabs" });
+      labels.forEach(function (label, index) {
+        var btn = el("button", { class: "unit-section-tab" + (index === activeIndex ? " active" : ""), type: "button" }, [document.createTextNode(label)]);
+        btn.addEventListener("click", function () { onPick(index); });
+        tabs.appendChild(btn);
+      });
+      return tabs;
+    }
+    wrap.appendChild(row(sections.map(function (sec) { return sec.title; }), sel.s, function (s) { selectBookItem(unit, s, 0); }));
+    if (sections[sel.s]) {
+      wrap.appendChild(row(sections[sel.s].items.map(function (it) { return it.label; }), sel.i, function (i) { selectBookItem(unit, sel.s, i); }));
+    }
+    return wrap;
+  }
+
+  function showUnitViews(cards, grammar, book) {
+    document.getElementById("view-cards").classList.toggle("active", cards);
+    document.getElementById("view-grammar").classList.toggle("active", grammar);
+    document.getElementById("view-book").classList.toggle("active", book);
+  }
+
+  function topicById(id) { return GRAMMAR.filter(function (g) { return g.id === id; })[0]; }
+
+  function openBookTopic(topicId) {
+    var topic = topicById(topicId);
+    unitActiveSection = topic.kind;
+    cardsSub = null;
+    showUnitViews(false, true, false);
+    document.getElementById("view-book").innerHTML = "";
+    openTopic(topicId);
+    renderCardsView();
+    renderHome();
+  }
+
+  function openBookDeck(deckId) {
+    unitActiveSection = "lex";
+    grammarSub = null;
+    showUnitViews(true, false, false);
+    document.getElementById("view-book").innerHTML = "";
+    openDeckFlip(deckId);
+    renderGrammarView();
+    renderHome();
+  }
+
+  function selectBookItem(unit, s, i) {
+    var sections = bookSectionsFor(unit);
+    var item = sections[s].items[i];
+    bookSel = { unitId: unit.id, s: s, i: i };
+    stopPracticeMic();
+    if (item.link && item.link.topic && topicById(item.link.topic)) { openBookTopic(item.link.topic); return; }
+    unitActiveSection = "book";
+    cardsSub = null;
+    grammarSub = null;
+    showUnitViews(false, false, true);
+    renderCardsView();
+    renderGrammarView();
+    renderBookItem(sections[s], item);
+    renderHome();
+  }
+
+  function renderBookItem(section, item) {
+    var root = document.getElementById("view-book");
+    root.innerHTML = "";
+    var headingClass = /^GRAMMAR/.test(section.keyword) ? "topic-heading-warm" : /^READING/.test(section.keyword) ? "topic-heading-accent" : "";
+    root.appendChild(el("h2", { class: headingClass }, [document.createTextNode(section.title + " — " + item.label)]));
+
+    item.blocks.forEach(function (block) {
+      var card = el("div", { class: "book-block" });
+      var heading = (block.heading || "").replace(/\s+/g, " ").trim();
+      if (heading && heading !== item.label.replace(/ \(\d+\)$/, "")) card.appendChild(el("div", { style: "font-weight:700;margin:0 0 4px" }, [document.createTextNode(heading)]));
+      if (block.instruction) card.appendChild(el("div", { style: "font-weight:600;margin:0 0 6px" }, [document.createTextNode(block.instruction)]));
+      block.lines.forEach(function (line) { card.appendChild(el("div", { class: "book-block-line" }, [document.createTextNode(line)])); });
+      var rows = block.vocabulary.map(function (w) { return [w.en, w.ipa, w.ka]; }).concat(block.table.map(function (r) { return r.cells; }));
+      if (rows.length) {
+        var table = el("table", {});
+        rows.forEach(function (cells) {
+          var tr = el("tr", {});
+          cells.forEach(function (cell) { tr.appendChild(el("td", {}, [document.createTextNode(cell)])); });
+          table.appendChild(tr);
+        });
+        card.appendChild(table);
+      }
+      if (card.firstChild) root.appendChild(card);
+    });
+
+    var link = item.link || {};
+    var deck = link.deck && DECKS.filter(function (d) { return d.id === link.deck; })[0];
+    if (deck) {
+      var deckBtn = el("button", { class: "check-btn", type: "button", style: "margin:6px 8px 0 0" }, [document.createTextNode("🃏 ბარათებით ვარჯიში — " + deck.cards.length + " სიტყვა")]);
+      deckBtn.addEventListener("click", function () { openBookDeck(deck.id); });
+      root.appendChild(deckBtn);
+    }
+    if (link.practice && topicById(link.practice)) {
+      var practiceBtn = el("button", { class: "check-btn", type: "button", style: "margin:6px 8px 0 0" }, [document.createTextNode("✍️ ვარჯიში — " + topicById(link.practice).items.length + " კითხვა")]);
+      practiceBtn.addEventListener("click", function () { openBookTopic(link.practice); });
+      root.appendChild(practiceBtn);
+    }
+  }
+
+  /* The "pronouns" topic was split into the book's four practices: carry the
+     learner's answers and daily-quiz history over to the new topic ids. */
+  function migrateSplitTopics(st) {
+    var ranges = [["pronounsA", 0, 6], ["pronounsB", 6, 16], ["pronounsC", 16, 24], ["pronounsD", 24, 36]];
+    function target(pos) {
+      for (var r = 0; r < ranges.length; r++) if (pos >= ranges[r][1] && pos < ranges[r][2]) return [ranges[r][0], pos - ranges[r][1]];
+      return null;
+    }
+    var old = st.quiz && st.quiz.pronouns;
+    if (old && old.answers) {
+      Object.keys(old.answers).forEach(function (pos) {
+        var to = target(parseInt(pos, 10));
+        if (!to) return;
+        st.quiz[to[0]] = st.quiz[to[0]] || { answers: {} };
+        st.quiz[to[0]].answers[to[1]] = old.answers[pos];
+      });
+    }
+    if (st.quiz) delete st.quiz.pronouns;
+    var items = st.daily && st.daily.items;
+    if (items) {
+      Object.keys(items).forEach(function (key) {
+        var m = /^q:pronouns:(\d+)$/.exec(key);
+        if (!m) return;
+        var to = target(parseInt(m[1], 10));
+        if (to) items["q:" + to[0] + ":" + to[1]] = items[key];
+        delete items[key];
+      });
+    }
+    return st;
   }
 
   /* ---------- daily quiz (opened from the home button or a push notification) ----------
@@ -5656,8 +5976,13 @@
   var SECTION_BANNER_RE = /^\s*(GRAMMAR|SPEAKING|READING|LISTENING|LANGUAGE\s+WRAP|UNIT\s+\d)/i;
 
   function blockBannerText(block) {
-    var text = block.heading || block.lines[0] || "";
-    return (block.kind === "section_banner" || block.kind === "unit_title" || SECTION_BANNER_RE.test(text)) && SECTION_BANNER_RE.test(text) ? text : "";
+    /* "SPEAKING TAGS" at the top of every page is the book's running header, not a section */
+    if (block.kind === "page_header" || block.kind === "page_footer") return "";
+    var text = (block.heading || block.lines[0] || "").replace(/^[^A-Za-z]+/, "");
+    if (/^SPEAKING\s+TAGS\b/i.test(text)) return "";
+    /* outside a banner block only the book's own capitals count ("READING 1 ..."), not a sentence that starts with "Reading" */
+    if (block.kind !== "section_banner" && block.kind !== "unit_title" && !/^(GRAMMAR|SPEAKING|READING|LISTENING|LANGUAGE WRAP|UNIT)\b/.test(text)) return "";
+    return SECTION_BANNER_RE.test(text) ? text : "";
   }
 
   /* returns { flags: [true where the block is listening material], endsInListening } */
@@ -6027,13 +6352,14 @@
     var wantsAdmin = location.hash === "#admin";
     if (wantsAdmin && !isAdminUser) location.hash = ""; /* not authorized -- silently fall back to the normal app */
     loadSubscriptionStatus().then(function (sub) { subscriptionStatus = sub; });
+    loadBookPages();
     if (appStarted) {
       loadProfileFromSupabase(); /* refreshes PROFILE in the background; already-rendered views just keep their current values until next render */
       if (wantsAdmin && isAdminUser) showAdminDirectly();
       return; /* already running -- state is already loaded and kept in sync via saveState() */
     }
     Promise.all([loadState(), loadProfileFromSupabase()]).then(function (results) {
-      state = results[0];
+      state = migrateSplitTopics(results[0]);
       startAppOnce(wantsAdmin && isAdminUser);
     });
   }
