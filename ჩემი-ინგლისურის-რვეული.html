@@ -534,6 +534,13 @@
     transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease, padding 0.15s ease, font-size 0.15s ease;
   }
   .unit-section-tab:hover { border-color: var(--brand); }
+  /* book-layout pills tinted by what they hold (trial: Unit 1 only). The open pill keeps the brand gradient. */
+  .unit-section-tab[data-tone]:not(.active) { color: var(--ink); }
+  .unit-section-tab[data-tone="grammar"]:not(.active) { background: var(--gold-soft); border-color: color-mix(in oklab, var(--gold) 50%, transparent); }
+  .unit-section-tab[data-tone="speaking"]:not(.active) { background: var(--info-soft); border-color: color-mix(in oklab, var(--info) 60%, transparent); }
+  .unit-section-tab[data-tone="reading"]:not(.active) { background: var(--violet-soft); border-color: color-mix(in oklab, var(--violet) 45%, transparent); }
+  .unit-section-tab[data-tone="practice"]:not(.active) { background: var(--green-soft); border-color: color-mix(in oklab, var(--green) 45%, transparent); }
+  .unit-section-tab[data-tone="note"]:not(.active) { background: var(--rust-soft); border-color: color-mix(in oklab, var(--rust) 45%, transparent); }
   .page.unit-mode #view-book { padding-top: 10px; }
   .book-block { border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; margin: 0 0 10px; background: var(--surface); }
   .book-block-line { margin: 3px 0; white-space: pre-wrap; font-size: 0.95rem; line-height: 1.55; }
@@ -3535,6 +3542,7 @@
   var BOOK_EXERCISES_CACHE_KEY = "nonaEnglishNotebook.bookExercises.v1";
   var bookExercises = {};    /* item key -> { hash, usable, items, instruction, changes } */
   var bookOriginalIds = {};  /* unit id -> the deck/topic ids the unit had before the book took over */
+  var BOOK_TONE_UNITS = { u1: true }; /* units whose pills are tinted by content type -- a trial the user is judging */
   var BOOK_PAGES_CACHE_KEY = "nonaEnglishNotebook.bookPages.v1";
   var bookPages = null;      /* transcribed pages, in page order, one per page number */
   var bookSel = null;        /* { unitId, s, i } -- the open section and item */
@@ -3801,18 +3809,28 @@
   function renderBookTabs(unit, sections) {
     var sel = bookSel && bookSel.unitId === unit.id ? bookSel : { s: -1, i: -1 };
     var wrap = el("div", {});
-    function row(labels, activeIndex, onPick) {
+    var tinted = !!BOOK_TONE_UNITS[unit.id];
+    function sectionTone(sec) {
+      return /^GRAMMAR/.test(sec.keyword) ? "grammar" : /^SPEAKING/.test(sec.keyword) ? "speaking" : /^READING/.test(sec.keyword) ? "reading" : /^LANGUAGE/.test(sec.keyword) ? "practice" : "";
+    }
+    function itemTone(sec, it) {
+      if (it.type === "exercise") return "practice";
+      return /^შენიშვნა/.test(it.label) ? "note" : sectionTone(sec);
+    }
+    function row(labels, tones, activeIndex, onPick) {
       var tabs = el("div", { class: "unit-section-tabs" });
       labels.forEach(function (label, index) {
         var btn = el("button", { class: "unit-section-tab" + (index === activeIndex ? " active" : ""), type: "button" }, [document.createTextNode(label)]);
+        if (tinted && tones[index]) btn.setAttribute("data-tone", tones[index]);
         btn.addEventListener("click", function () { onPick(index); });
         tabs.appendChild(btn);
       });
       return tabs;
     }
-    wrap.appendChild(row(sections.map(function (sec) { return sec.title; }), sel.s, function (s) { selectBookItem(unit, s, 0); }));
+    wrap.appendChild(row(sections.map(function (sec) { return sec.title; }), sections.map(sectionTone), sel.s, function (s) { selectBookItem(unit, s, 0); }));
     if (sections[sel.s]) {
-      wrap.appendChild(row(sections[sel.s].items.map(function (it) { return it.label; }), sel.i, function (i) { selectBookItem(unit, sel.s, i); }));
+      var open = sections[sel.s];
+      wrap.appendChild(row(open.items.map(function (it) { return it.label; }), open.items.map(function (it) { return itemTone(open, it); }), sel.i, function (i) { selectBookItem(unit, sel.s, i); }));
     }
     return wrap;
   }
