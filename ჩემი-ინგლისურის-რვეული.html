@@ -3601,7 +3601,10 @@
         localStorage.setItem(BOOK_PAGES_CACHE_KEY, JSON.stringify(bookPages));
         localStorage.setItem(BOOK_EXERCISES_CACHE_KEY, JSON.stringify(bookExercises));
       } catch (e) {}
-      if (JSON.stringify(bookPages) + JSON.stringify(bookExercises) !== before) syncUnitsWithBook();
+      /* setBookPages() drops the derived sections, so they are always rebuilt here; the
+         screen is only touched when something actually changed */
+      var changed = JSON.stringify(bookPages) + JSON.stringify(bookExercises) !== before;
+      syncUnitsWithBook(!changed);
     }).catch(function (err) { console.error("loadBookPages failed", err); });
   }
 
@@ -3630,7 +3633,7 @@
   /* Rebuilds everything the app derives from the scans: the list of units,
      each unit's sections, the flashcard decks made from vocabulary lists and
      the interactive topics made from built exercises. Safe to call again. */
-  function syncUnitsWithBook() {
+  function syncUnitsWithBook(quiet) {
     ensureBookPages();
     if (!bookPages || !bookPages.length) return;
     bookSectionsMemo = {};
@@ -3666,7 +3669,7 @@
       unit.grammarIds = (keepsOwn ? own.topics : []).concat(generated.topics.map(function (topic) { return topic.id; }));
     });
 
-    if (appStarted) {
+    if (appStarted && !quiet) {
       renderTabs();
       if (currentView === "home" && !currentUnit) renderHome();
     }
