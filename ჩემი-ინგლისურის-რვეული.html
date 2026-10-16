@@ -3724,14 +3724,17 @@
       };
       pages.forEach(function (page) {
         page.blocks.forEach(function (block, index) {
-          if (block.kind === "page_header" || block.kind === "page_footer") return;
           var banner = blockBannerText(block);
           if (banner) {
             inListeningSection = /^LISTENING/i.test(banner);
             if (/^UNIT\s+\d/i.test(banner) || inListeningSection) { if (inListeningSection) { section = null; item = null; } return; }
-            startSection(banner.replace(/\s+/g, " ").trim());
+            var title = banner.replace(/\s+/g, " ").trim();
+            /* a bare "READING" at the top of the next page continues the section, it is not a new one */
+            if (section && title.toUpperCase() === section.keyword) return;
+            startSection(title);
             return;
           }
+          if (block.kind === "page_header" || block.kind === "page_footer") return;
           if (listening[page.page_number][index] || inListeningSection) return;
           var heading = (block.heading || "").replace(/\s+/g, " ").trim();
           if (!section) startSection(heading || unit.short);
@@ -4707,8 +4710,12 @@
     var log = (state.daily && state.daily.log) || {};
     var days = [];
     for (var i = 13; i >= 0; i--) { var d = new Date(); d.setDate(d.getDate() - i); days.push(d); }
-    var max = 1;
+    var max = 0;
     days.forEach(function (d) { var e = log[dateKeyOf(d)]; if (e) max = Math.max(max, e.ok + e.wrong); });
+    if (!max) {
+      box.appendChild(el("p", { style: "margin:8px 0;font-size:0.88rem;color:var(--ink-soft)" }, [document.createTextNode("გრაფიკი შეივსება, როგორც კი ივარჯიშებ: ყოველ დღეს აქ გამოჩნდება სწორი და არასწორი პასუხების რაოდენობა.")]));
+      return;
+    }
     var chart = el("div", { style: "display:flex;align-items:flex-end;gap:4px;height:90px;margin:8px 0 2px" });
     days.forEach(function (d) {
       var e = log[dateKeyOf(d)] || { ok: 0, wrong: 0 };
@@ -4719,8 +4726,9 @@
     });
     box.appendChild(chart);
     box.appendChild(el("div", { style: "display:flex;justify-content:space-between;font-size:0.75rem;color:var(--ink-soft)" }, [
-      document.createTextNode("14 დღის წინ"), document.createTextNode("მწვანე — სწორი · წითელი — შეცდომა"), document.createTextNode("დღეს")
+      el("span", {}, [document.createTextNode("14 დღის წინ")]), el("span", {}, [document.createTextNode("დღეს")])
     ]));
+    box.appendChild(el("div", { style: "font-size:0.78rem;color:var(--ink-soft);margin-top:2px" }, [document.createTextNode("მწვანე — სწორი პასუხები · წითელი — შეცდომები")]));
   }
 
   function renderMistakeOverview(box) {
@@ -6729,8 +6737,9 @@
   var SECTION_BANNER_RE = /^\s*(GRAMMAR|SPEAKING|READING|LISTENING|LANGUAGE\s+WRAP|UNIT\s+\d)/i;
 
   function blockBannerText(block) {
-    /* "SPEAKING TAGS" at the top of every page is the book's running header, not a section */
-    if (block.kind === "page_header" || block.kind === "page_footer") return "";
+    /* "SPEAKING TAGS" at the top of every page is the book's running header, not a section --
+       but a page that opens with a big "LANGUAGE WRAP-UP" can come back marked page_header too */
+    if (block.kind === "page_footer") return "";
     var text = (block.heading || block.lines[0] || "").replace(/^[^A-Za-z]+/, "");
     if (/^SPEAKING\s+TAGS\b/i.test(text)) return "";
     /* outside a banner block only the book's own capitals count ("READING 1 ..."), not a sentence that starts with "Reading" */
