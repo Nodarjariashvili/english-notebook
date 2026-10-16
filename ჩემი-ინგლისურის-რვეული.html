@@ -4137,6 +4137,244 @@
     return lines;
   }
 
+  /* ---------- content checker (admin) ----------
+     Proofreads everything the app shows from the book, as the user asked:
+       - the book's own text (each scanned page): misread letters, broken
+         words, an English word whose Georgian meaning or transcription is
+         plainly wrong. These are only SUGGESTED: the user approves or
+         dismisses each one, because the book may translate loosely on
+         purpose and the app must stay true to the book. An approved fix is
+         written back into the page scan (all copies of that page);
+       - the answers of the built exercises, which the model wrote itself
+         (the book prints none): these are corrected automatically and the
+         change is listed for the user to see.
+     Results live in public.content_checks, one row per page or exercise,
+     with a hash of what was checked: nothing is checked twice unless it
+     changes. Listening material is not checked; it is not in the app. */
+  var CONTENT_CHECK_MODEL = "claude-sonnet-5";
+  var CONTENT_CHECK_USD_PER_MTOK = { input: 2, output: 10 };
+  var contentChecks = {}; /* check key -> { hash, findings } */
+
+  var PAGE_CHECK_SCHEMA = {
+    type: "object",
+    properties: {
+      findings: {
+        type: "array",
+        items: {
+          type: "object",
+          properties: {
+            id: { type: "string", description: "The id of the text unit, exactly as given." },
+            kind: { type: "string", enum: ["typo", "translation", "ipa", "other"] },
+            original: { type: "string", description: "The whole text unit exactly as given." },
+            suggestion: { type: "string", description: "The whole text unit as it should read." },
+            reason: { type: "string", description: "In Georgian, one short sentence." }
+          },
+          required: ["id", "kind", "original", "suggestion", "reason"],
+          additionalProperties: false
+        }
+      }
+    },
+    required: ["findings"],
+    additionalProperties: false
+  };
+
+  var PAGE_CHECK_SYSTEM = [
+    "You proofread a machine transcription of one printed page of a beginner English textbook for Georgian speakers. The transcription was made from a photo and can contain reading mistakes. Each text unit is given on its own line as `id | text`.",
+    "",
+    "Report only errors you are sure of:",
+    "- typo: a letter misread in transcription, giving a word that does not exist or a wrong word, in English or in Georgian; a broken or merged word; a garbled phonetic transcription.",
+    "- translation: in a vocabulary entry or a word list, a Georgian meaning that does not fit the English word at all (for example the meaning of a different word).",
+    "- ipa: a transcription that is plainly for a different word.",
+    "- other: any other certain error, such as a sentence that has lost words in a way that makes it nonsense.",
+    "",
+    "Do NOT report: the book's own choice of translation when it is a valid meaning, even a loose, informal or partial one (\"What's up?\" — \"როგორ ხარ?\" is fine); style; British or American spelling; anything you would merely write differently; blanks (___); the mark [ვერ იკითხება]; numbering; capitalisation of headings. When in doubt, leave it out. A clean page gets an empty list.",
+    "",
+    "For each finding give the id, the whole unit exactly as given in `original`, the whole unit as it should read in `suggestion` (change only what is wrong), the kind, and one short Georgian sentence saying what is wrong."
+  ].join("\n");
+
+  var ANSWER_CHECK_PROMPT = [
+    "Below is an exercise exactly as printed, followed by the app's version of it with the answers the app will accept. The book prints no answers; these were worked out earlier.",
+    "",
+    "Solve every item yourself first, then compare. Correct any wrong answer, add missing correct alternatives to `accept`, remove wrong ones, and remove an item whose answer is not certain. Keep each prompt as it is unless it misquotes the printed item. Return the whole exercise in the same form and list every change in `changes` (empty if all is right).",
+    "",
+    "App's version:"
+  ].join("\n");
+
+  /* the page's text units, addressed "page:block:field..." so a fix can be written back */
+  function pageTextUnits(page, skip) {
+    var units = [];
+    page.blocks.forEach(function (block, b) {
+      if (skip && skip[b]) return;
+      if (block.kind === "page_header" || block.kind === "page_footer") return;
+      var base = page.page_number + ":" + b;
+      if (block.heading) units.push([base + ":h", block.heading]);
+      if (block.instruction) units.push([base + ":i", block.instruction]);
+      block.lines.forEach(function (line, n) { units.push([base + ":l:" + n, line]); });
+      block.vocabulary.forEach(function (w, n) {
+        units.push([base + ":v:" + n + ":en", w.en]);
+        if (w.ipa) units.push([base + ":v:" + n + ":ipa", w.ipa]);
+        if (w.ka) units.push([base + ":v:" + n + ":ka", w.ka]);
+      });
+      block.table.forEach(function (row, r) { row.cells.forEach(function (cell, c) { if (cell) units.push([base + ":t:" + r + ":" + c, cell]); }); });
+    });
+    return units;
+  }
+
+  /* reads or writes one text unit of a page object; returns the old value */
+  function pageTextUnit(page, id, newValue) {
+    var parts = id.split(":");
+    var block = page.blocks[parseInt(parts[1], 10)];
+    if (!block) return undefined;
+    var holder, field;
+    if (parts[2] === "h") { holder = block; field = "heading"; }
+    else if (parts[2] === "i") { holder = block; field = "instruction"; }
+    else if (parts[2] === "l") { holder = block.lines; field = parseInt(parts[3], 10); }
+    else if (parts[2] === "v") { holder = block.vocabulary[parseInt(parts[3], 10)]; field = parts[4]; }
+    else if (parts[2] === "t") { var row = block.table[parseInt(parts[3], 10)]; holder = row && row.cells; field = parseInt(parts[4], 10); }
+    if (!holder || holder[field] === undefined) return undefined;
+    var old = holder[field];
+    if (newValue !== undefined) holder[field] = newValue;
+    return old;
+  }
+
+  function saveContentCheck(key, hash, findings) {
+    contentChecks[key] = { hash: hash, findings: findings };
+    return supabaseClient.from("content_checks").upsert({
+      user_id: currentAuthUser.id, check_key: key, source_hash: hash, findings: findings, updated_at: new Date().toISOString()
+    }, { onConflict: "user_id,check_key" }).then(function (res) { if (res.error) throw new Error(res.error.message); });
+  }
+
+  function loadContentChecks() {
+    return supabaseClient.from("content_checks").select("check_key, source_hash, findings").then(function (res) {
+      if (res.error || !res.data) return;
+      contentChecks = {};
+      res.data.forEach(function (row) { contentChecks[row.check_key] = { hash: row.source_hash, findings: row.findings || [] }; });
+    });
+  }
+
+  function checkCost(usage) {
+    var input = (usage.input_tokens || 0) + (usage.cache_creation_input_tokens || 0) + (usage.cache_read_input_tokens || 0);
+    return (input * CONTENT_CHECK_USD_PER_MTOK.input + (usage.output_tokens || 0) * CONTENT_CHECK_USD_PER_MTOK.output) / 1e6;
+  }
+
+  /* everything that has not been checked in its current form */
+  function pendingContentChecks() {
+    var jobs = [];
+    if (!bookPages) return jobs;
+    var listening = listeningFlagsByScan(bookPages.map(function (page) { return { id: page.page_number, page: page }; }));
+    bookPages.forEach(function (page) {
+      var key = "page:" + page.page_number;
+      var hash = bookHash(page.blocks);
+      if (contentChecks[key] && contentChecks[key].hash === hash) return;
+      jobs.push({ type: "page", key: key, hash: hash, page: page, skip: listening[page.page_number] });
+    });
+    UNITS.forEach(function (unit) {
+      (bookSectionsFor(unit) || []).forEach(function (section) {
+        section.items.forEach(function (item) {
+          var built = bookExercises[item.key];
+          if (item.type !== "exercise" || !built || !built.usable || built.hash !== item.hash) return;
+          var key = "ex:" + item.key;
+          var hash = bookHash(built.items);
+          if (contentChecks[key] && contentChecks[key].hash === hash) return;
+          jobs.push({ type: "exercise", key: key, hash: hash, section: section, item: item, built: built });
+        });
+      });
+    });
+    return jobs;
+  }
+
+  function checkOnePage(job) {
+    var units = pageTextUnits(job.page, job.skip);
+    if (!units.length) return saveContentCheck(job.key, job.hash, []).then(function () { return 0; });
+    var listing = units.map(function (u) { return u[0] + " | " + String(u[1]).replace(/\n/g, " "); }).join("\n");
+    return callClaudeJson(CONTENT_CHECK_MODEL, PAGE_CHECK_SYSTEM, [{ type: "text", text: "Page " + job.page.page_number + ":\n" + listing }], PAGE_CHECK_SCHEMA).then(function (out) {
+      var known = {};
+      units.forEach(function (u) { known[u[0]] = u[1]; });
+      /* keep only findings that point at a real unit, quote it exactly and change something */
+      var findings = out.json.findings.filter(function (f) {
+        return known[f.id] !== undefined && known[f.id] === f.original && f.suggestion && f.suggestion !== f.original;
+      }).map(function (f) { return { id: f.id, kind: f.kind, original: f.original, suggestion: f.suggestion, reason: f.reason, status: "open" }; });
+      return saveContentCheck(job.key, job.hash, findings).then(function () { return checkCost(out.usage); });
+    });
+  }
+
+  function checkOneExercise(job) {
+    var source = exerciseSourceText(job.section, job.item);
+    var current = { usable: true, reason: "", instruction: job.built.instruction, items: job.built.items };
+    return callClaudeJson(CONTENT_CHECK_MODEL, EXERCISE_BUILDER_SYSTEM,
+      [{ type: "text", text: source + "\n\n" + ANSWER_CHECK_PROMPT + "\n" + JSON.stringify(current) }], exerciseSchema(true)).then(function (out) {
+      var cost = checkCost(out.usage);
+      var changes = out.json.changes || [];
+      var items = cleanBuiltItems(out.json.items);
+      if (!changes.length || !items.length) return saveContentCheck(job.key, job.hash, []).then(function () { return cost; });
+      /* answers were the model's own work: the correction is applied straight away and listed */
+      var record = { hash: job.built.hash, usable: true, items: items, instruction: out.json.instruction || job.built.instruction, reason: "", changes: changes };
+      return supabaseClient.from("book_exercises").update({
+        topic: { instruction: record.instruction, items: record.items, reason: "", changes: changes }, updated_at: new Date().toISOString()
+      }).eq("exercise_key", job.item.key).then(function (res) {
+        if (res.error) throw new Error(res.error.message);
+        bookExercises[job.item.key] = record;
+        var findings = changes.map(function (text) { return { id: job.item.key, kind: "answer", original: "", suggestion: "", reason: text, status: "auto-fixed" }; });
+        return saveContentCheck(job.key, bookHash(items), findings).then(function () { return cost; });
+      });
+    });
+  }
+
+  function runContentChecks(onProgress) {
+    return loadContentChecks().then(function () {
+      var queue = pendingContentChecks();
+      var total = queue.length, done = 0, failed = 0, cost = 0, stopped = "";
+      function step() {
+        onProgress({ total: total, done: done, failed: failed, cost: cost, finished: false });
+        var job = queue.shift();
+        if (!job) return Promise.resolve();
+        return (job.type === "page" ? checkOnePage(job) : checkOneExercise(job)).then(function (spent) {
+          done++;
+          cost += spent;
+        }).catch(function (err) {
+          console.error("content check failed", job.key, err);
+          failed++;
+          if (err.stopsBatch) { stopped = err.message; queue = []; }
+        }).then(step);
+      }
+      return step().then(function () {
+        try { localStorage.setItem(BOOK_EXERCISES_CACHE_KEY, JSON.stringify(bookExercises)); } catch (e) {}
+        syncUnitsWithBook(true);
+        onProgress({ total: total, done: done, failed: failed, cost: cost, finished: true, stopped: stopped });
+      });
+    });
+  }
+
+  /* writes an approved fix into every saved copy of that page */
+  function applyContentFix(finding, approve) {
+    var pageNumber = finding.id.split(":")[0];
+    var key = "page:" + pageNumber;
+    var check = contentChecks[key];
+    function markAndSave(newHash) {
+      check.findings.forEach(function (f) { if (f.id === finding.id && f.original === finding.original) f.status = approve ? "applied" : "dismissed"; });
+      return saveContentCheck(key, newHash || check.hash, check.findings);
+    }
+    if (!approve) return markAndSave(null);
+    return supabaseClient.from("page_scans").select("id, result").eq("page_number", pageNumber).then(function (res) {
+      if (res.error) throw new Error(res.error.message);
+      var writes = (res.data || []).filter(function (row) {
+        return pageTextUnit(row.result.page, finding.id) === finding.original;
+      }).map(function (row) {
+        pageTextUnit(row.result.page, finding.id, finding.suggestion);
+        return supabaseClient.from("page_scans").update({ result: row.result }).eq("id", row.id);
+      });
+      if (!writes.length) throw new Error("ეს ადგილი გვერდზე უკვე შეცვლილია.");
+      return Promise.all(writes);
+    }).then(function () {
+      var local = (bookPages || []).filter(function (page) { return page.page_number === pageNumber; })[0];
+      if (local && pageTextUnit(local, finding.id) === finding.original) pageTextUnit(local, finding.id, finding.suggestion);
+      try { localStorage.setItem(BOOK_PAGES_CACHE_KEY, JSON.stringify(bookPages)); } catch (e) {}
+      syncUnitsWithBook(true);
+      /* the page now differs from what was checked; record the new hash so the fix itself is not re-checked */
+      return markAndSave(local ? bookHash(local.blocks) : null);
+    });
+  }
+
   /* ---------- daily quiz (opened from the home button or a push notification) ----------
      Twenty questions drawn from everything in the units the learner has
      reached: vocabulary cards (multiple choice) plus the grammar and
@@ -6486,10 +6724,85 @@
     function runBuilder() {
       if (building) return;
       building = true;
-      buildBookExercises(renderBookBox).catch(function (err) { console.error("builder stopped", err); }).then(function () { building = false; });
+      buildBookExercises(renderBookBox).catch(function (err) { console.error("builder stopped", err); }).then(function () {
+        building = false;
+        runChecker(); /* newly built answers and newly read pages are proofread right after */
+      });
     }
 
-    loadBookPages().then(function () { renderBookBox(null); });
+    var checkBox = el("div", { style: "margin-top:16px;border:1px solid var(--border);border-radius:16px;padding:16px;background:var(--paper)" });
+    root.appendChild(checkBox);
+    var checking = false;
+    var kindNames = { typo: "წაკითხვის შეცდომა", translation: "თარგმანი", ipa: "ტრანსკრიფცია", other: "სხვა", answer: "პასუხი" };
+
+    function renderCheckBox(progress) {
+      checkBox.innerHTML = "";
+      checkBox.appendChild(el("h3", { style: "margin:0 0 6px" }, [document.createTextNode("🔎 შემოწმება: თარგმანები, ტექსტი, პასუხები")]));
+      var status = el("p", { style: "margin:0 0 8px;font-size:0.9rem;font-weight:600" });
+      var pending = pendingContentChecks().length;
+      if (progress) {
+        status.textContent = (progress.finished ? (progress.stopped ? "შეჩერდა (" + progress.stopped + ")" : "დასრულდა") : "ვამოწმებ") +
+          ": " + progress.done + " / " + progress.total + (progress.failed ? " · ვერ შემოწმდა " + progress.failed : "") + " · დაიხარჯა ~$" + progress.cost.toFixed(2);
+      } else {
+        status.textContent = pending ? "შესამოწმებელია " + pending + " (გვერდები და სავარჯიშოების პასუხები)." : "ყველაფერი შემოწმებულია.";
+      }
+      checkBox.appendChild(status);
+      if (pending && !checking && !building) {
+        var checkBtn = el("button", { class: "check-btn", type: "button", style: "margin-bottom:10px" }, [document.createTextNode("🔎 შემოწმების დაწყება")]);
+        checkBtn.addEventListener("click", runChecker);
+        checkBox.appendChild(checkBtn);
+      }
+
+      var open = [], fixed = [];
+      Object.keys(contentChecks).sort(function (a, b) {
+        return (parseInt(a.replace(/\D+/g, ""), 10) || 0) - (parseInt(b.replace(/\D+/g, ""), 10) || 0);
+      }).forEach(function (key) {
+        contentChecks[key].findings.forEach(function (f) {
+          if (f.status === "open") open.push(f);
+          if (f.status === "auto-fixed") fixed.push(f);
+        });
+      });
+      checkBox.appendChild(el("div", { style: "font-weight:700;margin:8px 0 4px" }, [document.createTextNode(open.length ? "შემოთავაზებული გასწორებები (" + open.length + ") — წიგნის ტექსტი იცვლება მხოლოდ შენი თანხმობით:" : "წიგნის ტექსტში შეცდომა არ არის ნაპოვნი.")]));
+      open.forEach(function (f) {
+        var row = el("div", { style: "border:1px solid var(--border);border-radius:12px;padding:10px 12px;margin:0 0 8px;background:var(--surface);font-size:0.9rem" });
+        row.appendChild(el("div", { style: "color:var(--ink-soft);font-size:0.82rem" }, [document.createTextNode("გვ. " + f.id.split(":")[0] + " · " + (kindNames[f.kind] || f.kind))]));
+        row.appendChild(el("div", { style: "margin:4px 0" }, [el("span", { style: "text-decoration:line-through;color:var(--rust)" }, [document.createTextNode(f.original)])]));
+        row.appendChild(el("div", { style: "margin:4px 0;color:var(--green-ink);font-weight:600" }, [document.createTextNode("→ " + f.suggestion)]));
+        row.appendChild(el("div", { style: "margin:4px 0 8px" }, [document.createTextNode(f.reason)]));
+        var yes = el("button", { class: "next-btn show", type: "button", style: "margin-right:8px" }, [document.createTextNode("✓ გასწორება")]);
+        var no = el("button", { class: "skip-btn", type: "button" }, [document.createTextNode("წიგნში ასეა, დატოვე")]);
+        function decide(approve) {
+          yes.disabled = true; no.disabled = true;
+          applyContentFix(f, approve).then(function () { renderCheckBox(null); renderBookBox(null); }).catch(function (err) {
+            row.appendChild(el("div", { style: "color:var(--rust);margin-top:6px" }, [document.createTextNode("ვერ მოხერხდა: " + err.message)]));
+            yes.disabled = false; no.disabled = false;
+          });
+        }
+        yes.addEventListener("click", function () { decide(true); });
+        no.addEventListener("click", function () { decide(false); });
+        row.appendChild(yes);
+        row.appendChild(no);
+        checkBox.appendChild(row);
+      });
+      if (fixed.length) {
+        checkBox.appendChild(el("div", { style: "font-weight:700;margin:12px 0 4px" }, [document.createTextNode("ავტომატურად გასწორებული პასუხები (" + fixed.length + "):")]));
+        fixed.forEach(function (f) {
+          checkBox.appendChild(el("div", { style: "font-size:0.86rem;margin:2px 0" }, [document.createTextNode("• " + f.id.replace(/^u(\d+)\|/, "Unit $1 · ").replace(/\|/g, " · ") + ": " + f.reason)]));
+        });
+      }
+    }
+
+    function runChecker() {
+      if (checking || building) return;
+      checking = true;
+      runContentChecks(renderCheckBox).catch(function (err) { console.error("checker stopped", err); }).then(function () {
+        checking = false;
+        renderCheckBox(null);
+        renderBookBox(null);
+      });
+    }
+
+    loadBookPages().then(loadContentChecks).then(function () { renderBookBox(null); renderCheckBox(null); });
 
     var savedBox = el("div", { style: "margin-top:26px" });
     root.appendChild(savedBox);
