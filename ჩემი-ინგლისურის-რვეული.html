@@ -3698,7 +3698,9 @@
   }
 
   function bookKeyword(title) {
-    var m = /^(GRAMMAR(?:\s+\d)?|SPEAKING(?:\s+\d)?|READING(?:\s+\d)?|LISTENING|LANGUAGE\s+WRAP-?\s?UP)/i.exec(title);
+    /* "LANGUAGE WRAP-U[unreadable]" on a damaged scan is still the wrap-up */
+    if (/^LANGUAGE\s+WRAP/i.test(title)) return "LANGUAGE WRAP-UP";
+    var m = /^(GRAMMAR(?:\s+\d)?|SPEAKING(?:\s+\d)?|READING(?:\s+\d)?|LISTENING)/i.exec(title);
     return m ? m[1].toUpperCase().replace(/\s+/g, " ") : "";
   }
 
@@ -3731,7 +3733,7 @@
             var title = banner.replace(/\s+/g, " ").trim();
             /* a bare "READING" at the top of the next page continues the section, it is not a new one */
             if (section && title.toUpperCase() === section.keyword) return;
-            startSection(title);
+            startSection(bookKeyword(title) === "LANGUAGE WRAP-UP" ? "LANGUAGE WRAP-UP" : title);
             return;
           }
           if (block.kind === "page_header" || block.kind === "page_footer") return;
