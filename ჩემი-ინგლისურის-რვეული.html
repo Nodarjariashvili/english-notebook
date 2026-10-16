@@ -2359,7 +2359,10 @@
     quizCta.addEventListener("click", openDailyQuiz);
     var analysisCta = el("button", { class: "next-btn show", type: "button" }, [document.createTextNode("📊 ჩემი ანალიზი")]);
     analysisCta.addEventListener("click", openDailyAnalysis);
-    root.appendChild(el("div", { style: "display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:0 0 16px" }, [quizCta, analysisCta]));
+    var waitingMistakes = mistakeItems().filter(function (q) { return mistakeDueIn(dailyStats()[q.key], Date.now()) <= 0; }).length;
+    var mistakesCta = el("button", { class: "next-btn show", type: "button" }, [document.createTextNode("🔁 ჩემი შეცდომები" + (waitingMistakes ? " (" + waitingMistakes + ")" : ""))]);
+    mistakesCta.addEventListener("click", openMistakeQuiz);
+    root.appendChild(el("div", { style: "display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:0 0 16px" }, [quizCta, mistakesCta, analysisCta]));
 
     var hero = el("div", { class: "home-hero" });
     var heroCard = el("div", { class: "hero-card" }, [
@@ -2722,6 +2725,7 @@
         state.cards[deck.id] = state.cards[deck.id] || {};
         state.cards[deck.id].flip = state.cards[deck.id].flip || {};
         state.cards[deck.id].flip[idx] = applyCardResult(state.cards[deck.id].flip[idx], level);
+        noteAnswer("c:" + deck.id + ":" + idx, level === "green"); /* "თითქმის" still needs practice */
         saveState();
         renderTabs();
         /* show the choice for a moment, then move on to the next card */
@@ -2764,6 +2768,7 @@
   }
 
   function markPracticeResult(deck, idx, ok, mode) {
+    noteAnswer("c:" + deck.id + ":" + idx, ok);
     state.cards[deck.id] = state.cards[deck.id] || {};
     state.cards[deck.id][mode] = state.cards[deck.id][mode] || {};
     state.cards[deck.id][mode][idx] = applyCardResult(state.cards[deck.id][mode][idx], ok ? "green" : "rust");
@@ -3438,6 +3443,7 @@
     root.appendChild(box);
 
     function recordResult(ok) {
+      noteAnswer("q:" + topic.id + ":" + pos, ok);
       state.quiz[topic.id] = state.quiz[topic.id] || { answers: {} };
       state.quiz[topic.id].answers[pos] = ok;
       saveState();
@@ -4510,18 +4516,12 @@
   }
 
   function recordDailyAnswer(q, ok) {
-    var stats = dailyStats();
-    var st = stats[q.key] || { n: 0, w: 0, c: 0 };
-    st.n++;
-    if (ok) { st.c++; } else { st.w++; st.c = 0; }
-    st.ok = ok;
-    st.t = new Date().toISOString();
-    stats[q.key] = st;
     if (ok) dailyQuiz.score++; else dailyQuiz.mistakes.push(q);
 
     if (q.type === "card") {
-      markPracticeResult(q.deck, q.idx, ok, "mc"); /* saves state */
+      markPracticeResult(q.deck, q.idx, ok, "mc"); /* notes the answer and saves state */
     } else {
+      noteAnswer(q.key, ok);
       state.quiz[q.topic.id] = state.quiz[q.topic.id] || { answers: {} };
       state.quiz[q.topic.id].answers[q.pos] = ok;
       saveState();
@@ -4587,6 +4587,174 @@
     box.appendChild(el("p", { style: "margin:10px 0 0;font-size:0.85rem;color:var(--ink-soft)" }, [document.createTextNode("ეს სავარჯიშოები შემდეგ ტესტებში უფრო ხშირად შეგხვდება, სანამ ორჯერ ზედიზედ სწორად არ უპასუხებ.")]));
   }
 
+  /* ---------- answer history and the mistakes practice ----------
+     noteAnswer() is called for every answer the learner gives anywhere in
+     the app (flashcards, card practice, unit exercises, the daily quiz), so
+     state.daily.items knows each word and exercise item's record, and
+     state.daily.log keeps a count of right and wrong answers per day for
+     the progress chart.
+
+     "ჩემი შეცდომები" practises only what went wrong, spaced over time: a
+     mistake comes back after a few hours, then after 1 day, then 3 days;
+     three right answers in a row on different occasions and it counts as
+     learned and leaves the list. Each session is at most
+     MISTAKES_SESSION_SIZE items, the ones most due first, and items asked in
+     the previous session are held back while there are others to ask, so
+     the same handful does not come up every time. */
+  var MISTAKES_SESSION_SIZE = 10;
+  var MISTAKE_REST_HOURS = [4, 24, 72]; /* after a wrong answer, then after 1 and 2 right ones */
+  var MISTAKE_LEARNED_STREAK = 3;
+
+  function noteAnswer(key, ok) {
+    var stats = dailyStats();
+    var st = stats[key] || { n: 0, w: 0, c: 0 };
+    st.n++;
+    if (ok) { st.c++; } else { st.w++; st.c = 0; }
+    st.ok = ok;
+    st.t = new Date().toISOString();
+    stats[key] = st;
+    var log = state.daily.log = state.daily.log || {};
+    var day = dateKeyOf(new Date());
+    log[day] = log[day] || { ok: 0, wrong: 0 };
+    log[day][ok ? "ok" : "wrong"]++;
+    var days = Object.keys(log).sort();
+    while (days.length > 90) delete log[days.shift()];
+  }
+
+  /* every word and exercise item of every unit */
+  function allPracticeItems() {
+    var pool = [], seen = {};
+    UNITS.forEach(function (unit) {
+      unitDecks(unit).forEach(function (deck) {
+        deck.cards.forEach(function (card, idx) {
+          var key = "c:" + deck.id + ":" + idx;
+          if (!card.en || !card.ka || seen[key]) return;
+          seen[key] = true;
+          pool.push({ key: key, type: "card", deck: deck, idx: idx, card: card, unit: unit });
+        });
+      });
+      unitGrammarTopics(unit).forEach(function (topic) {
+        if (topic.kind === "reading" || !topic.items) return;
+        topic.items.forEach(function (item, pos) {
+          var key = "q:" + topic.id + ":" + pos;
+          if (!item.prompt || !item.answer || seen[key]) return;
+          seen[key] = true;
+          pool.push({ key: key, type: "typed", topic: topic, pos: pos, item: item, unit: unit });
+        });
+      });
+    });
+    return pool;
+  }
+
+  function mistakeStatus(st) {
+    if (!st || !st.w) return null;
+    if (st.ok && st.c >= MISTAKE_LEARNED_STREAK) return "learned";
+    return st.ok && st.c > 0 ? "improving" : "learning";
+  }
+
+  /* hours until the item is due again (0 or less = due now) */
+  function mistakeDueIn(st, now) {
+    var rest = MISTAKE_REST_HOURS[Math.min(st.ok ? st.c : 0, MISTAKE_REST_HOURS.length - 1)];
+    return rest - (now - Date.parse(st.t)) / 3600000;
+  }
+
+  function mistakeItems() {
+    var stats = dailyStats();
+    return allPracticeItems().filter(function (q) {
+      var status = mistakeStatus(stats[q.key]);
+      return status === "learning" || status === "improving";
+    });
+  }
+
+  function buildMistakeQuiz() {
+    var stats = dailyStats(), now = Date.now();
+    var previous = (state.daily.lastMistakeSession || []);
+    var due = mistakeItems().map(function (q) {
+      return { q: q, dueIn: mistakeDueIn(stats[q.key], now), st: stats[q.key] };
+    }).filter(function (r) { return r.dueIn <= 0; });
+    var fresh = due.filter(function (r) { return previous.indexOf(r.q.key) === -1; });
+    var chosen = (fresh.length >= Math.min(MISTAKES_SESSION_SIZE, due.length) ? fresh : due);
+    chosen = shuffleArr(chosen).sort(function (a, b) { return a.dueIn - b.dueIn || b.st.w - a.st.w; }).slice(0, MISTAKES_SESSION_SIZE);
+    if (chosen.length < MISTAKES_SESSION_SIZE) {
+      /* top up with held-back ones only if there is nothing else */
+      due.forEach(function (r) { if (chosen.length < MISTAKES_SESSION_SIZE && chosen.indexOf(r) === -1) chosen.push(r); });
+    }
+    var cardPool = allPracticeItems().filter(function (q) { return q.type === "card"; });
+    var questions = chosen.map(function (r) {
+      var q = r.q;
+      if (q.type !== "card") return q;
+      var toGeorgian = Math.random() < 0.5; /* ask it both ways over time */
+      var side = toGeorgian ? "ka" : "en";
+      var wrong = [];
+      shuffleArr(cardPool).forEach(function (other) {
+        if (wrong.length >= 3 || other.card[side] === q.card[side]) return;
+        if (wrong.some(function (w) { return w[side] === other.card[side]; })) return;
+        wrong.push(other.card);
+      });
+      return { key: q.key, type: "card", deck: q.deck, idx: q.idx, card: q.card, toGeorgian: toGeorgian, options: shuffleArr([q.card].concat(wrong)) };
+    });
+    state.daily.lastMistakeSession = questions.map(function (q) { return q.key; });
+    return { questions: shuffleArr(questions), pos: 0, score: 0, mistakes: [], mistakesMode: true };
+  }
+
+  function openMistakeQuiz() {
+    dailyQuiz = buildMistakeQuiz();
+    switchView("quiz");
+  }
+
+  /* right/wrong answers per day for the last 14 days, as small stacked bars */
+  function renderAnswerChart(box) {
+    var log = (state.daily && state.daily.log) || {};
+    var days = [];
+    for (var i = 13; i >= 0; i--) { var d = new Date(); d.setDate(d.getDate() - i); days.push(d); }
+    var max = 1;
+    days.forEach(function (d) { var e = log[dateKeyOf(d)]; if (e) max = Math.max(max, e.ok + e.wrong); });
+    var chart = el("div", { style: "display:flex;align-items:flex-end;gap:4px;height:90px;margin:8px 0 2px" });
+    days.forEach(function (d) {
+      var e = log[dateKeyOf(d)] || { ok: 0, wrong: 0 };
+      var col = el("div", { style: "flex:1;display:flex;flex-direction:column-reverse;height:100%", title: dateKeyOf(d) + ": ✓ " + e.ok + " · ✗ " + e.wrong });
+      col.appendChild(el("div", { style: "height:" + Math.round(e.ok / max * 100) + "%;background:var(--green-soft);border-radius:3px 3px 0 0" }));
+      col.appendChild(el("div", { style: "height:" + Math.round(e.wrong / max * 100) + "%;background:var(--rust-soft)" }));
+      chart.appendChild(col);
+    });
+    box.appendChild(chart);
+    box.appendChild(el("div", { style: "display:flex;justify-content:space-between;font-size:0.75rem;color:var(--ink-soft)" }, [
+      document.createTextNode("14 დღის წინ"), document.createTextNode("მწვანე — სწორი · წითელი — შეცდომა"), document.createTextNode("დღეს")
+    ]));
+  }
+
+  function renderMistakeOverview(box) {
+    var stats = dailyStats(), now = Date.now();
+    var groups = { learning: [], improving: [], learned: [] };
+    allPracticeItems().forEach(function (q) {
+      var status = mistakeStatus(stats[q.key]);
+      if (status) groups[status].push({ q: q, st: stats[q.key] });
+    });
+    box.appendChild(el("div", { class: "eyebrow", style: "margin-top:18px" }, [document.createTextNode("შეცდომები დროში")]));
+    renderAnswerChart(box);
+    var total = groups.learning.length + groups.improving.length + groups.learned.length;
+    if (!total) {
+      box.appendChild(el("p", { style: "margin:8px 0;font-size:0.92rem;color:var(--ink-soft)" }, [document.createTextNode("ჯერ შეცდომა არ დაგიშვია. აქ გამოჩნდება ყველა სიტყვა და სავარჯიშო, რომელშიც შეცდები.")]));
+      return;
+    }
+    var dueNow = groups.learning.concat(groups.improving).filter(function (r) { return mistakeDueIn(r.st, now) <= 0; }).length;
+    box.appendChild(el("p", { style: "margin:8px 0;font-size:0.92rem" }, [document.createTextNode(
+      "შეცდომა გქონდა " + total + "-ში: ჯერ სწავლობ " + groups.learning.length + " · უმჯობესდება " + groups.improving.length + " · უკვე ისწავლე " + groups.learned.length +
+      " · ახლა გასამეორებელია " + dueNow)]));
+    [["learning", "ჯერ სწავლობ"], ["improving", "უმჯობესდება (სწორად უპასუხე, კიდევ უნდა გაიმეორო)"], ["learned", "ისწავლე ✓"]].forEach(function (g) {
+      var list = groups[g[0]];
+      if (!list.length) return;
+      list.sort(function (a, b) { return b.st.w - a.st.w; });
+      box.appendChild(el("p", { style: "margin:10px 0 4px;font-size:0.92rem;font-weight:600" }, [document.createTextNode(g[1] + ":")]));
+      var ul = el("ul", { style: "margin:0;padding-left:20px;font-size:0.9rem;line-height:1.6" });
+      list.slice(0, 15).forEach(function (r) {
+        ul.appendChild(el("li", {}, [document.createTextNode(dailyItemLabel(r.q) + "  (" + r.st.w + "× შეცდომა)")]));
+      });
+      if (list.length > 15) ul.appendChild(el("li", { style: "color:var(--ink-soft)" }, [document.createTextNode("… და კიდევ " + (list.length - 15))]));
+      box.appendChild(ul);
+    });
+  }
+
   function renderDailyQuizView() {
     var root = document.getElementById("view-quiz");
     root.innerHTML = "";
@@ -4595,20 +4763,32 @@
     var back = el("button", { class: "back-link", type: "button" }, [document.createTextNode("← მთავარზე დაბრუნება")]);
     back.addEventListener("click", function () { dailyQuiz = null; switchView("home"); });
     root.appendChild(back);
-    root.appendChild(el("h2", {}, [document.createTextNode(dailyQuiz.analysisOnly ? "ჩემი ანალიზი" : "დღის ტესტი")]));
+    root.appendChild(el("h2", {}, [document.createTextNode(dailyQuiz.analysisOnly ? "ჩემი ანალიზი" : dailyQuiz.mistakesMode ? "ჩემი შეცდომები" : "დღის ტესტი")]));
 
     var box = el("div", { class: "quiz-box" });
     root.appendChild(box);
 
     if (dailyQuiz.analysisOnly) {
+      renderMistakeOverview(box);
       renderDailyAnalysis(box);
-      var start = el("button", { class: "check-btn", type: "button", style: "margin-top:16px" }, [document.createTextNode("📝 ტესტის დაწყება")]);
+      var start = el("button", { class: "check-btn", type: "button", style: "margin:16px 10px 0 0" }, [document.createTextNode("📝 ტესტის დაწყება")]);
       start.addEventListener("click", openDailyQuiz);
       box.appendChild(start);
+      var practise = el("button", { class: "check-btn", type: "button", style: "margin-top:16px" }, [document.createTextNode("🔁 შეცდომების გამეორება")]);
+      practise.addEventListener("click", openMistakeQuiz);
+      box.appendChild(practise);
       return;
     }
 
     var total = dailyQuiz.questions.length;
+    if (!total && dailyQuiz.mistakesMode) {
+      var waiting = mistakeItems().map(function (q) { return mistakeDueIn(dailyStats()[q.key], Date.now()); });
+      var soonest = waiting.length ? Math.max(1, Math.ceil(Math.min.apply(null, waiting))) : 0;
+      box.appendChild(el("p", {}, [document.createTextNode(waiting.length
+        ? "ახლა გასამეორებელი შეცდომა არ გაქვს. შემდეგი გამეორება — დაახლოებით " + soonest + " საათში."
+        : "შეცდომები არ გაქვს გასამეორებელი 👏")]));
+      return;
+    }
     if (!total) {
       box.appendChild(el("p", {}, [document.createTextNode("ჯერ სავარჯიშოები არ არის გასამეორებელი — დაიწყე Unit 1-ის ბარათებით.")]));
       return;
@@ -4626,7 +4806,7 @@
       }
       renderDailyAnalysis(box);
       var again = el("button", { class: "check-btn", type: "button", style: "margin-top:16px" }, [document.createTextNode("კიდევ ერთი ტესტი")]);
-      again.addEventListener("click", openDailyQuiz);
+      again.addEventListener("click", dailyQuiz.mistakesMode ? openMistakeQuiz : openDailyQuiz);
       box.appendChild(again);
       return;
     }
